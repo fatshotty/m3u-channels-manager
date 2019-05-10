@@ -1,0 +1,23 @@
+{
+  "name": "m3u-channels",
+  "version": "1.0.0",
+  "description": "M3U channels list splitter and serves channel links",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "fatshotty",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "1.18.3",
+    "express": "4.16.3",
+    "yargs": "13.2.2",
+    "request": "2.88.0",
+    "request-promise": "4.2.4",
+    "xml-writer": "1.7.0",
+    "moment": "2.24.0",
+    "pretty-data": "0.40.0",
+    "batch-promise": "1.0.0",
+    "winston": "3.2.1"
+  }
+}

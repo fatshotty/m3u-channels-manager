@@ -1,0 +1,7 @@
+.DS_Store
+.vscode/
+cache/
+config.json
+*.log
+node_modules/
+yarn.lock
