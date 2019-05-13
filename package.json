@@ -1,5 +1,5 @@
 {
-  "name": "m3u-channels",
+  "name": "tv-channels-manager",
   "version": "1.0.0",
   "description": "M3U channels list splitter and serves channel links",
   "main": "index.js",
