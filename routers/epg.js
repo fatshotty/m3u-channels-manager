@@ -30,7 +30,7 @@ function parseCommand(Argv, cb) {
     })
 
   } else if ( Argv.show ) {
-    returnCachedEPGFormatted(Argv.shift, Argv.format);
+    returnCachedEPGFormatted(Argv.shift, Argv.format, cb);
   }
 
 }
@@ -207,10 +207,10 @@ function returnCachedEPGFormatted(shift, format, cb) {
 
   switch( format ) {
     case 'json':
-      cb(  JSON.stringify( returnCachedEPG() ) );
+      cb(  JSON.stringify( json ) );
       break;
     default:
-      cb( Utils.createXMLTV(returnCachedEPG(), shifts).toString() );
+      cb( Utils.createXMLTV(json, shifts).toString() );
   }
 }
 

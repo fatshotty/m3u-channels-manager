@@ -3,7 +3,7 @@ const HTTPS = require("https");
 const HTTP = require("http");
 const XMLWriter = require('xml-writer');
 const Winston = require('winston');
-
+const Moment = require('moment');
 
 let WinstonTransportFile;
 let Log = Winston.createLogger({
@@ -91,7 +91,7 @@ function createXMLTV(EPG, SHIFT) {
   TV.writeAttribute('generator-info-url', '');
   for( let CHL of EPG ) {
     for ( let shift of SHIFT ) {
-      const chl_id = shift ? `${CHL.Id}-${shift}` : CHL.Id;
+      const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;
 
       const chl_name = shift ? `${CHL.Name} +${shift}` : CHL.Name;
       const chl_el = TV.startElement('channel');
@@ -125,7 +125,7 @@ function createXMLTV(EPG, SHIFT) {
   for( let CHL of EPG ) {
 
     for( let shift of SHIFT ) {
-      const chl_id = shift ? `${CHL.Id}-${shift}` : CHL.Id;
+      const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;
 
       const dates = Object.keys( CHL.Epg );
 

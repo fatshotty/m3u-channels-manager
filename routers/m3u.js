@@ -83,6 +83,8 @@ Router.get('/update', (req, res, next) => {
 
 function respondStreamUrl(chlId) {
 
+  Log.info(`Compute the channel stream-url for ${chlId}` )
+
   if ( !chlId ) {
     Log.error('No channel specified');
     return null;
@@ -90,6 +92,7 @@ function respondStreamUrl(chlId) {
 
   const live_channel = M3UList.getChannelById( chlId );
   if ( live_channel ) {
+    Log.info(`found stram url ${live_channel.StreamUrl.split('/').pop()}` )
     return live_channel.StreamUrl;
 
   } else {
@@ -140,7 +143,7 @@ function respondSingleGroup(groupId, format) {
 
 Router.get('/list/:group.:format?', (req, res, next) => {
 
-  Log.log(`Request list by group ${req.params.group}. Respond with ${req.params.format || 'm3u'}`);
+  Log.info(`Request list by group ${req.params.group}. Respond with ${req.params.format || 'm3u'}`);
 
   const response = respondSingleGroup( req.params.group, req.params.format );
 
@@ -259,7 +262,7 @@ Router.on('mount', () => {
 
   console.log('## M3U router mounted');
   console.log(`- GET ${Router.mountpath}/update`);
-  console.log(`Updates M3U list from ${Config.M3U.Url}`);
+  console.log(`Updates M3U list from Config.M3U.Url`);
   console.log(`- GET ${Router.mountpath}/live/:channel_id`);
   console.log(`Redirects to the url of the channel by its ID`);
   console.log(`- ${Router.mountpath}/list/:group_id.:format?`);

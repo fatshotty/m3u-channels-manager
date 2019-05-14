@@ -1,6 +1,8 @@
 const Utils = require('./utils');
 const FS = require('fs');
 const Args = require('yargs');
+const Net = require('net');
+const Pretty = require('pretty-data').pd;
 
 process.chdir(__dirname);
 
@@ -65,6 +67,14 @@ const Argv = Args
       type: 'boolean',
       describe: 'update epg by day'
     })
+      .option('sock', {
+        type: 'string',
+        describe: 'specifies the sock file to pipe the EPG'
+      })
+      .option('beauty', {
+        type: 'boolean',
+        describe: 'output beautifier'
+      })
       .option('today', {
         type: 'string',
         describe: 'spcifies the referrer date expressed in \'YYYYMMDD\' format, default today',
@@ -187,6 +197,17 @@ function start() {
       Modules['/epg'] = require('./routers/epg');
       if ( !Argv.serve && !Argv.m3u ) {
         Modules['/epg'].parseCommand(Argv, (resp) => {
+          if ( Argv.beauty ) {
+            resp = Pretty.xml( resp )
+          }
+          if ( Argv.sock ) {
+            const Client = Net.connect( {path: Argv.sock}, function () {
+              Client.write( resp );
+              Client.end();
+              Client.unref();
+            });
+            return;
+          }
           console.log( resp );
         });
       }

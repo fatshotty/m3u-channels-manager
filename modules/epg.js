@@ -102,11 +102,12 @@ class SkyEpg {
 
       Bulk( all_channel_req, bulk || 1).then( () => {
 
-        const all_events_req = [];
+        let all_events_req = [];
         for( let chl of this._channels ) {
-          all_events_req.push( (res, rej) => {
-            chl.loadEventsDetail(date, bulk).then( res, rej );
-          });
+          // all_events_req.push( (res, rej) => {
+          //   chl.loadEventsDetail(date, bulk).then( res, rej );
+          // });
+          all_events_req =  all_events_req.concat( chl.loadEventsDetail(date, bulk) );
         }
 
         Bulk( all_events_req, bulk || 1).then( resolve, reject );
@@ -215,6 +216,10 @@ class Channel {
   get Id() {
     return this.data.id;
   }
+
+  get IdEpg() {
+    return this.Name.replace(/[^\w|\+]/g, '_');
+  }
   get Name() {
     return this.data.name;
   }
@@ -286,8 +291,8 @@ class Channel {
         event.loadDetails().then(res, rej);
       });
     }
-
-    return Bulk( events_req, bulk || 1);
+    return events_req;
+    // return Bulk( events_req, bulk || 1);
   }
 
 
@@ -380,11 +385,12 @@ class Event {
     const req = this.request( SINGLE_EVENT.replace('{event}', this.data.id) );
 
     return req.then( (event_detail) => {
-      Log.debug(`Loaded event details for ${this.data.id} ${this.data.desc}`);
+      Log.debug(`Loaded event details for ${this.data.id} ${this.data.desc} - ${JSON.stringify(event_detail)}`);
       if ( !event_detail || !event_detail.description ) {
         Log.warn(`no description for ${this.data.id} ${event_detail}`);
       }
       Object.assign(this.data, event_detail || {});
+      Log.debug(`Details for ${this.data.id} - ${JSON.stringify(this.data)}`);
     });
   }
 

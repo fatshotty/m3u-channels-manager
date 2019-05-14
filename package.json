@@ -19,6 +19,7 @@
     "moment": "2.24.0",
     "pretty-data": "0.40.0",
     "batch-promise": "1.0.0",
-    "winston": "3.2.1"
+    "winston": "3.2.1",
+    "pretty-data": "0.40.0"
   }
 }
