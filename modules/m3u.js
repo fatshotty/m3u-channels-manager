@@ -64,6 +64,7 @@ class M3U {
     Log.debug('gettin headers');
 
     while( row = data.shift() ) {
+      row = row.replace(/\r/, '');
       if ( row.indexOf('#EXTM3U') === 0 ) {
         // skip header
         continue;
@@ -88,6 +89,7 @@ class M3U {
     let channel_index = 0;
 
     for( let i = 0; row = data[ i ]; i++ ) {
+      row = row.replace(/\r/, '');
 
       if ( i % 100 === 0 ) {
         Log.debug( `parsing channel ${i}`);
@@ -295,7 +297,7 @@ class Channel {
     return this._tvgLogo
   }
   get StreamUrl() {
-    return this._streamUrl
+    return this._streamUrl.replace(/\r/, '');
   }
   get RedirectUrl() {
     return this._redirect ? [this._redirect, this.Id].join('/') : this.StreamUrl;

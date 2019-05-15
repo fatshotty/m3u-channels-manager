@@ -106,7 +106,7 @@ function respondStreamUrl(chlId) {
 
   const live_channel = M3UList.getChannelById( chlId );
   if ( live_channel ) {
-    Log.info(`found stram url ${live_channel.StreamUrl.split('/').pop()}` )
+    Log.info(`found stram url '${live_channel.StreamUrl.split('/').pop()}'` )
     return live_channel.StreamUrl;
 
   } else {
