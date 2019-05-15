@@ -223,9 +223,6 @@ function start() {
     }
   }
 
-
-
-
   const IFACES = OS.networkInterfaces();
 
   Object.keys(IFACES).forEach(function (ifname) {
