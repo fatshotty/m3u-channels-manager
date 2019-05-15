@@ -58,14 +58,28 @@ function parseCommand(Argv, cb) {
 
 
 function refreshM3U(cb) {
-  Request(Config.M3U.Url, {'User-Agent': 'VLC'}, (err, body) => {
-    if ( !err ) {
-      M3U_LIST_STRING = body;
-      loadM3U();
-      FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
-    }
-    cb && cb(err, body)
-  });
+
+
+
+  if ( (`${Config.M3U.Url}`).indexOf('http') == 0 ) {
+    Log.info(`Refreshing M3U list from remote url`);
+    Log.debug(`remote url: ${Config.M3U.Url}`);
+    Request(Config.M3U.Url, {'User-Agent': 'VLC'}, (err, body) => {
+      if ( !err ) {
+        M3U_LIST_STRING = body;
+        loadM3U();
+        FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
+      }
+      cb && cb(err, body)
+    });
+  } else {
+    Log.info(`Refreshing M3U list from local m3u file`);
+    Log.debug(`local file: ${Config.M3U.Url}`);
+    const filedata = FS.readFileSync(Config.M3U.Url, {encoding: 'utf-8'})
+    process.nextTick( () => {
+      cb(filedata);
+    })
+  }
 }
 
 Router.get('/update', (req, res, next) => {
