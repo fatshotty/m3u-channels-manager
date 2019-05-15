@@ -238,14 +238,17 @@ function start() {
     });
   });
 
-  loadRouters()
-
-
   function serveHTTP() {
     App.listen(Config.Port, () => {
       Log.info(`Server listing on port ${Config.Port}`);
       console.log(`Server listing on port ${Config.Port}`)
     });
+  }
+
+  loadRouters()
+
+  if ( Argv.serve ) {
+    serveHTTP();
   }
 
   function exitHandler(options, exitCode) {
