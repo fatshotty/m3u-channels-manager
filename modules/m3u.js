@@ -151,7 +151,7 @@ class M3U {
       chl_count += g.channels.length;
     }
 
-    Log.info(`Loaded ${this.groups.length} for ${chl_count} channels`);
+    Log.info(`Loaded ${this.groups.length} groups and ${chl_count} channels`);
 
   }
 

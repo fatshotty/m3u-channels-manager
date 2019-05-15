@@ -152,7 +152,6 @@ function start() {
   }
 
 
-  const DNS = require('dns');
   const OS = require('os');
 
   const Express = require("express");
@@ -224,14 +223,25 @@ function start() {
     }
   }
 
-  DNS.lookup( OS.hostname(), (err, address, fma) => {
-    Log.info('got the local machine ip address', address);
-    Config.LocalIp = address;
-    loadRouters()
-    if ( Argv.serve ) {
-      serveHTTP();
-    }
+
+
+
+  const IFACES = OS.networkInterfaces();
+
+  Object.keys(IFACES).forEach(function (ifname) {
+    let alias = 0;
+
+    IFACES[ifname].forEach(function (iface) {
+      if ('IPv4' !== iface.family || iface.internal !== false) {
+        // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+        return;
+      }
+      Log.info(`got the local machine ip address ${iface.address}`);
+      Config.LocalIp = iface.address;
+    });
   });
+
+  loadRouters()
 
 
   function serveHTTP() {
