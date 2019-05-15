@@ -225,7 +225,7 @@ function start() {
   }
 
   DNS.lookup( OS.hostname(), (err, address, fma) => {
-    Log.info('got the local machine ip address', address);
+    Log.info(`got the local machine ip address ${address}`);
     Config.LocalIp = address;
     loadRouters()
     if ( Argv.serve ) {
