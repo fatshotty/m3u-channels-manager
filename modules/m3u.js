@@ -11,6 +11,11 @@ class M3U {
     Log.debug(`M3U module instanciated using a baseurl '${baseUrl}'`);
   }
 
+  clear() {
+    this.groups = [];
+    this.headers = {};
+  }
+
   getGroup(name) {
 
     for( let g of this.groups ) {

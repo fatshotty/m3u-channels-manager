@@ -14,6 +14,7 @@ let M3U_LIST_STRING = '';
 const BASE_URL = ['http:/', `${Config.LocalIp}:${Config.Port}`, 'tv'].join('/');
 
 let M3UList = null;
+M3UList = new M3UK([BASE_URL, 'live'].join('/'));
 
 
 if ( FS.existsSync(M3U_CACHE_FILE) ) {
@@ -24,8 +25,6 @@ if ( FS.existsSync(M3U_CACHE_FILE) ) {
 }
 
 function loadM3U() {
-  M3UList = new M3UK([BASE_URL, 'live'].join('/'));
-
   M3UList.load(M3U_LIST_STRING);
   M3UList.removeGroups( Config.M3U.ExcludeGroups );
 }
@@ -59,12 +58,17 @@ function parseCommand(Argv, cb) {
 
 function refreshM3U(cb) {
 
+  if ( ! Config.M3U.Url ) {
+    Log.error('No M3U path specified');
+    return cb && cb('No M3U path specified');
+  }
   if ( (`${Config.M3U.Url}`).indexOf('http') == 0 ) {
     Log.info(`Refreshing M3U list from remote url`);
     Log.debug(`remote url: ${Config.M3U.Url}`);
     Request(Config.M3U.Url, {'User-Agent': 'VLC'}, (err, body) => {
       if ( !err ) {
         M3U_LIST_STRING = body;
+        M3UList.clear();
         loadM3U();
         FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
       }
@@ -86,8 +90,10 @@ Router.get('/update', (req, res, next) => {
   refreshM3U( (err, body) => {
     if ( !err ) {
       res.status(204).end();
+    } else {
+      res.status(422).end(`${err}`);
     }
-  })
+  });
 
 });
 
@@ -293,18 +299,18 @@ Router.get('/search', (req, res, next) => {
 })
 
 
-function info() {
+function info(mountpath) {
 
   console.log('## M3U router mounted');
-  console.log(`- GET ${Router.mountpath}/update`);
+  console.log(`- GET ${mountpath}/update`);
   console.log(`Updates M3U list from Config.M3U.Url`);
-  console.log(`- GET ${Router.mountpath}/live/:channel_id`);
+  console.log(`- GET ${mountpath}/live/:channel_id`);
   console.log(`Redirects to the url of the channel by its ID`);
-  console.log(`- ${Router.mountpath}/list/:group_id.:format?`);
+  console.log(`- ${mountpath}/list/:group_id.:format?`);
   console.log(`Responds all channels by given group_id. format can be one of 'm3u', 'json'`);
   console.log(`- ${Router.mountpath}/list.:format?`);
   console.log(`Responds entire list of channels. format can be one of 'm3u', 'json'. You can specify groups passing '?groups=group_id,group_id' as query string`);
-  console.log(`- ${Router.mountpath}/groups.:format?`);
+  console.log(`- ${mountpath}/groups.:format?`);
   console.log(`Responds all groups details. format can be one of 'm3u', 'json'`);
 
 };

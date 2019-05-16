@@ -140,6 +140,25 @@ if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
 }
 
 function start() {
+
+  if ( ! FS.existsSync(Argv.config) ) {
+    const def_conf = {
+      "LogLevel": "info",
+      "Log": "./manager.log",
+      "M3U": {
+        "Url": "",
+        "ExcludeGroups": []
+      },
+      "Port": 3000,
+      "Path": "./cache",
+      "EPG": {
+        "bulk": 2,
+        "Sock": ""
+      }
+    };
+    FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
+  }
+
   Config = global.Config = require( Argv.config );
 
   Utils.setLogLevel(Argv.debug ? 'debug' : undefined);
@@ -215,8 +234,8 @@ function start() {
           if ( Argv.beauty ) {
             resp = Pretty.xml( resp )
           }
-          if ( Argv.sock ) {
-            const Client = Net.connect( {path: Argv.sock}, function () {
+          if ( Argv.sock || Config.EPG.Sock ) {
+            const Client = Net.connect( {path: Argv.sock || Config.EPG.Sock }, function () {
               Client.write( resp );
               Client.end();
               Client.unref();
@@ -240,7 +259,7 @@ function start() {
       const r = Object.keys( Modules );
       for( let path of r ) {
         App.use( path,  Modules[path].Router  );
-        Modules[path].info();
+        Modules[path].info(path);
         console.log('');
       }
     }
@@ -272,6 +291,8 @@ function start() {
       let url = req.body.url;
       let groups = req.body.groups;
       let bulk = req.body.bulk;
+      let loglevel = req.body.loglevel
+      let sock = req.body.sock;
 
       port = parseInt(port);
       bulk = parseInt(bulk);
@@ -285,6 +306,7 @@ function start() {
       }
 
       Config = global.Config = {
+        "LogLevel": loglevel || Config.LogLevel,
         "LocalIp": ip,
         "Log": Config.Log,
         "M3U": {
@@ -296,7 +318,8 @@ function start() {
         "Port": Number(port),
         "Path": cache,
         "EPG": {
-          "bulk": Number(bulk)
+          "bulk": Number(bulk),
+          "Sock": sock
         }
       };
 

@@ -1,12 +1,15 @@
 {
+  "LogLevel": "info",
+  "LocalIp": "",
   "Log": "./manager.log",
   "M3U": {
-    "Url": "http://path/to/m3u",
-    "ExcludeGroups": ["for adults", "-unknown-", "xxx live", "xxx movie", "-inghilterra-", "-sky germania-", "-albania-", "-spagna-", "-francia-", "-russia-", "-ex-yu-", "-romania-", "-portogallo-", "-arabi-", "-pakistan-", "-polonia-", "-brasile-", "-usa-", "-svedesi-", "-bulgaria-", "-malta-", "-norvegia-", "-turchia-", "-canada-", "-greci-", "-olanda-", "-svizzera-", "-republica ceca-", "-africa-", "-belgio-", "-cinese-", "-indiani-", "-finlandia-", "-danimarca-", "-viasat-", "-colombiani-", "ondemand england", "ondemand france", "ondemand germany", "ondemand turckey", "-argentina-", "sky calcio", "eleven sports(seriea)", "lega pro", "mysports", "sport", "bambini", "kids_channels", "regionali", "sport internazionale", "wwe weslemannia"]
+    "Url": "",
+    "ExcludeGroups": ["group_1"]
   },
   "Port": 3000,
   "Path": "./cache",
   "EPG": {
-    "bulk": 3
+    "bulk": 4,
+    "Sock": ""
   }
 }

@@ -8,7 +8,8 @@
     BtnUpdate.prop('disabled', true);
     $.get(`${PATH}/update`).then( () => {
       window.location.reload();
-    }, () => {
+    }, (resp) => {
+      alert(resp.responseText);
       BtnUpdate.removeAttr('disabled');
     });
   })

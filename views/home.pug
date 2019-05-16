@@ -11,6 +11,15 @@ block content
         fieldset
           h5 Generali
           .form-group
+            label(for='loglevel') Livello di Log
+            select#loglevel.form-control(name="loglevel" value=Config.LogLevel)
+              option(value="debug" selected=Config.LogLevel == 'debug') debug
+              option(value="info" selected=Config.LogLevel == 'info') info
+              option(value="warn" selected=Config.LogLevel == 'warn') warn
+              option(value="error" selected=Config.LogLevel == 'error') error
+
+            small.form-text.text-muted specificare il livello di log dell'applicativo (NOTE: 'debug' e' molto verboso!)
+          .form-group
             label(for='port') Indirizzo IP all'interno della rete domestica
             input#port.form-control(type='text' placeholder='192.168.1.2' name="ip" value=Config.LocalIp)
             small.form-text.text-muted specificare l'indirizzo ip di questo dispositivo all'interno della rete domestica
@@ -40,5 +49,9 @@ block content
             label(for='bulk') Richeste concorrenti
             input#bulk.form-control(type='number' placeholder='3' value=Config.EPG.bulk name="bulk")
             small.form-text.text-muted specificare il numero di richieste parallele (solitamente non oltre il num di core del cpu)
+          .form-group
+            label(for='sock') File di socket
+            input#sock.form-control(type='text' placeholder='Percorso del file .sock' value=Config.EPG.Sock name="sock")
+            small.form-text.text-muted specificare path del file socket su cui scrivere l'epg risultante (usato solitamente per TvHeadEnd Server)
 
         button(type="submit" class="btn btn-primary" id="btn-settings-save") Salva
