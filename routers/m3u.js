@@ -1,7 +1,7 @@
 const Path = require("path")
 const FS = require('fs');
 const Express = require('express');
-const Router = Express();
+const Router = Express.Router();
 const Request = require('../utils').request;
 const M3UK = require('../modules/m3u').M3U;
 
@@ -36,7 +36,7 @@ function parseCommand(Argv, cb) {
 
     if ( Argv.refresh ) {
       refreshM3U( (err, body) => {
-        cb(body || err);
+        cb(err || "M3U Updated!");
       });
 
     } else if ( Argv.s ) {
@@ -58,8 +58,6 @@ function parseCommand(Argv, cb) {
 
 
 function refreshM3U(cb) {
-
-
 
   if ( (`${Config.M3U.Url}`).indexOf('http') == 0 ) {
     Log.info(`Refreshing M3U list from remote url`);
@@ -272,7 +270,30 @@ Router.get('/groups.:format?', (req, res, next) => {
 });
 
 
-Router.on('mount', () => {
+Router.get('/', (req, res, next) => {
+  res.render('m3u/index', {M3UList});
+});
+
+Router.get('/search', (req, res, next) => {
+
+  const query = req.query.q || '';
+  const result = {};
+  for ( let group of M3UList.groups ) {
+    for( let chl of group.channels ) {
+      if ( chl.Name.toLowerCase().indexOf( query.toLowerCase() ) > -1  ) {
+        const chls = result[ group.Id ] || (result[ group.Id ] = []);
+        chls.push( chl.toJson() );
+      }
+    }
+  }
+
+  res.set('content-type', 'application/json');
+  res.status(200).end( JSON.stringify(result) );
+
+})
+
+
+function info() {
 
   console.log('## M3U router mounted');
   console.log(`- GET ${Router.mountpath}/update`);
@@ -286,6 +307,6 @@ Router.on('mount', () => {
   console.log(`- ${Router.mountpath}/groups.:format?`);
   console.log(`Responds all groups details. format can be one of 'm3u', 'json'`);
 
-});
+};
 
-module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand};
+module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info};

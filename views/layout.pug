@@ -1,0 +1,36 @@
+html
+  head
+    link(href="/dist/css/bootstrap.css" rel="stylesheet" type="text/css")
+
+    link(rel="stylesheet", href="/css/style.css")
+    script(src="https://code.jquery.com/jquery-3.4.1.min.js")
+    script(src="/dist/js/bootstrap.min.js")
+    script(src="/socket.io/socket.io.js")
+  body
+
+    .wrapper
+      nav.sidebar
+        .sidebar-content
+          ul.sidebar-nav
+            li.sidebar-header
+              a.sidebar-link(href="/") Home
+            each module in Modules
+              li.sidebar-item.active
+                a.sidebar-link(href=`${module}/`)= module.substring(1).toUpperCase()
+
+
+
+      .page
+        .container-fluid
+          block content
+
+
+
+
+
+    .container-fluid(id="logger")
+      .row
+        div.col-md.logger(id="log")
+
+    script(src="/js/app.js")
+    block extrajs

@@ -3,8 +3,11 @@ const FS = require('fs');
 const Args = require('yargs');
 const Net = require('net');
 const Pretty = require('pretty-data').pd;
+const Path = require('path')
 
 process.chdir(__dirname);
+
+let Config = null;
 
 const Argv = Args
   .option('config', {
@@ -157,31 +160,44 @@ function start() {
   const Express = require("express");
   const App = Express();
   const BodyParser = require('body-parser');
+  const CORS = require('cors')
 
+  App.disable('x-powered-by');
+
+  App.set('view engine', 'pug');
+  App.set('views', Path.join(__dirname, '/views') );
+  App.use( Express.static( `${__dirname}/public`) );
+  App.use( Express.static( `${__dirname}/node_modules/bootstrap`) );
+
+
+  App.use( CORS() );
   App.use( BodyParser.urlencoded({ extended: false }) );
   App.use( BodyParser.json({ extended: false }) );
   App.use( Express.urlencoded({ extended: false }) );
 
   App.use( (req, res, next) => {
-    Log.info(`incoming request: ${req.originalUrl}`)
+    Log.debug(`incoming request: ${req.originalUrl}`)
     next();
   })
 
   App.use( (err, req, res, next) => {
     Log.error(`Error got in request: ${req.originalUrl} ${err}`);
-    Log.error(err.stack)
-    // try {
-    //   console.error(err.stack);
-    //   res.status(500).send(err);
-    // } catch(e) {
-
-    // }
+    Log.error( JSON.stringify(err.stack, null, 2) );
     next(err);
   })
 
   const Modules = {};
+  let Server = null;
 
   function loadRouters() {
+
+    if ( Argv.serve ) {
+      Server = require('http').createServer(App);
+      const IO = require('socket.io')(Server);
+      require('./socket-io')(IO, Argv.debug ? 'debug' : undefined);
+    }
+
+
     if ( Argv.m3u ) {
       Log.debug('loading module M3U...')
       Modules['/tv'] = require('./routers/m3u');
@@ -212,34 +228,93 @@ function start() {
       }
     }
 
+    Object.assign(App.locals, {Config}, {Modules: Object.keys( Modules )});
+
+    App.get('/', (req, res, next) => {
+      res.render('home');
+    });
+
     // Load routers
     if ( Argv.serve ) {
       Log.debug('loading HTTP module...');
       const r = Object.keys( Modules );
       for( let path of r ) {
         App.use( path,  Modules[path].Router  );
+        Modules[path].info();
         console.log('');
       }
     }
   }
 
-  const IFACES = OS.networkInterfaces();
+  if ( !Config.LocalIp) {
+    const IFACES = OS.networkInterfaces();
 
-  Object.keys(IFACES).forEach(function (ifname) {
-    let alias = 0;
-
-    IFACES[ifname].forEach(function (iface) {
-      if ('IPv4' !== iface.family || iface.internal !== false) {
-        // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-        return;
-      }
-      Log.info(`got the local machine ip address ${iface.address}`);
-      Config.LocalIp = iface.address;
+    Object.keys(IFACES).forEach(function (ifname) {
+      IFACES[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+          return;
+        }
+        Log.info(`got the local machine ip address ${iface.address}`);
+        Config.LocalIp = iface.address;
+      });
     });
-  });
+  }
 
   function serveHTTP() {
-    App.listen(Config.Port, () => {
+
+    App.post('/settings', (req, res, next) => {
+
+      Log.info('updating settings')
+
+      let ip = req.body.ip;
+      let port = req.body.port;
+      let cache = req.body.cache;
+      let url = req.body.url;
+      let groups = req.body.groups;
+      let bulk = req.body.bulk;
+
+      port = parseInt(port);
+      bulk = parseInt(bulk);
+
+      if ( isNaN(port) ) {
+        port = Config.Port;
+      }
+
+      if ( isNaN(bulk) ) {
+        bulk = Config.EPG.bulk;
+      }
+
+      Config = global.Config = {
+        "LocalIp": ip,
+        "Log": Config.Log,
+        "M3U": {
+          "Url": url,
+          "ExcludeGroups": groups.split(',').map( (g) => {
+            return g.trim();
+          })
+        },
+        "Port": Number(port),
+        "Path": cache,
+        "EPG": {
+          "bulk": Number(bulk)
+        }
+      };
+
+      Object.assign(App.locals, {Config});
+
+      Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
+
+      FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
+
+      Log.info('updated!')
+      setTimeout(() => {
+        res.redirect(302, '/')
+      }, 1000)
+    });
+
+
+
+    Server.listen(Config.Port, () => {
       Log.info(`Server listing on port ${Config.Port}`);
       console.log(`Server listing on port ${Config.Port}`)
     });

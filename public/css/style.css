@@ -1,0 +1,120 @@
+html {
+
+}
+
+html, body {
+
+}
+
+body {
+
+}
+
+
+#logger {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0px;
+  height: 35%;
+  overflow: auto;
+  border-top: 2px solid #343c34;
+}
+#log {
+  padding: 1px 5px 5px 3px;
+}
+
+#log .log-line {
+  font-size: 70%;
+}
+
+
+#log .log-line span.level {
+  text-transform: uppercase;
+  margin-right: 10px;
+}
+
+#log .log-line span.level.level-info {
+  color: blue;
+}
+#log .log-line span.level.level-debug {
+  color: gray;
+}
+#log .log-line span.level.level-warn {
+  color: yellow;
+}
+#log .log-line span.level.level-error {
+  color: red;
+}
+
+.wrapper {
+  display: flex;
+  height: 65%;
+}
+
+nav.sidebar {
+  background-color: #354052;
+  min-width: 250px;
+  max-width: 250px;
+  height: 100%;
+}
+
+.sidebar-content {
+  margin-top: 50px;
+  color: white;
+}
+
+.sidebar-link:visited {
+  color: white;
+}
+.sidebar-link {
+  color: white;
+}
+.sidebar-link:hover {
+  color: grey;
+}
+
+
+.sidebar-nav {
+  list-style: none;
+}
+
+.page {
+  width: calc(100% - 250px);
+  height: 100%;
+  overflow: auto;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+input::placeholder {
+  font-style: italic;
+  font-size: 70%;
+  color: red;
+}
+
+
+form fieldset {
+  margin-top: 50px;
+}
+
+
+#m3u-page #update {
+  margin-left: 10px;
+  font-size: 40%;
+}
+
+#m3u-page #uncheckall {
+  margin-left: 10px;
+  font-size: 40%;
+}
+
+#m3u-page #generate-url {
+  margin-left: 10px;
+  font-size: 40%;
+}
+
+#m3u-page #groups-url {
+  margin-left: 10px;
+  font-size: 40%;
+}

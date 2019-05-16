@@ -1,0 +1,44 @@
+extend ./layout
+
+block content
+  h3 Impostazioni
+  small Qui puoi modificare le impostazioni
+
+  .row
+    .col-md
+      form(method="post" action="/settings")
+
+        fieldset
+          h5 Generali
+          .form-group
+            label(for='port') Indirizzo IP all'interno della rete domestica
+            input#port.form-control(type='text' placeholder='192.168.1.2' name="ip" value=Config.LocalIp)
+            small.form-text.text-muted specificare l'indirizzo ip di questo dispositivo all'interno della rete domestica
+          .form-group
+            label(for='port') Porta di ascolto del server http
+            input#port.form-control(type='number' placeholder='3000' name="port" value=Config.Port)
+            small.form-text.text-muted consigliato 3000
+          .form-group
+            label(for='cache') Percorso della cartella di cache
+            input#cache.form-control(type='text', placeholder='./cache' name="cache" value=Config.Path)
+            small.form-text.text-muted specificare la cartella usata come cache
+
+        fieldset
+          h5 Channels
+          .form-group
+            label(for='urlm3u') Percorso da cui recuperare la lista M3U
+            input#urlm3u.form-control(type='text' placeholder='URL o percorso' name="url" value=Config.M3U.Url)
+            small.form-text.text-muted puoi specificare un path in locale
+          .form-group
+            label(for='excludegroups') Gruppi da escludere
+            input#excludegroups.form-control(type='text', placeholder='' name="groups" value=(Config.M3U.ExcludeGroups||[]).join(',') )
+            small.form-text.text-muted specificare i gruppi da escludere separati da virgola
+
+        fieldset
+          h5 EPG
+          .form-group
+            label(for='bulk') Richeste concorrenti
+            input#bulk.form-control(type='number' placeholder='3' value=Config.EPG.bulk name="bulk")
+            small.form-text.text-muted specificare il numero di richieste parallele (solitamente non oltre il num di core del cpu)
+
+        button(type="submit" class="btn btn-primary" id="btn-settings-save") Salva

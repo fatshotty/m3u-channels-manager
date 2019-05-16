@@ -1,0 +1,39 @@
+extend ../layout
+
+block content
+  #m3u-page
+    h3 Canali TV
+      button#update.btn.btn-primary.btn-sm(title="Aggiorna la lista") Aggiorna
+    small Qui puoi spulciare la tua lista
+
+    p= `Lista attuale: ${M3UList.groups.length} gruppi e ${(()=>{let count=0; M3UList.groups.map( g => count += g.channels.length ); return count})()} canali`
+
+    .row
+      .col-md
+        h5 Gruppi
+          button#uncheckall.btn.btn-secondary.btn-sm Deseleziona tutti
+          button#generate-url.btn.btn-primary.btn-sm(title="Genera l'url in base ai gruppi selezionati") Genera url
+          a#groups-url.btn.btn-outline-info.btn-sm(title="Url dei gruppi organizzati in m3u" href="/tv/groups.m3u") Lista gruppi
+
+          p
+            a#show-url-json(target="_blank")
+          p
+            a#show-url-m3u(target="_blank")
+        .row
+          ul#groups
+      .col-md
+        h5 Cerca nella lista
+        form.form-inline#search-form
+          .form-group.mx-sm-3.mb-2
+            input#search-text.form-control.form-control-sm(type='text', placeholder='stringa di ricerca', title="immettere anche solo poche lettere")
+          button.btn.btn-secondary.mb-2.btn-sm(type='submit' title="Cerca un canale nella lista in base al nome") Cerca
+
+
+        .row
+          #search-result
+
+
+
+
+block extrajs
+  script(src="/js/m3u.js")

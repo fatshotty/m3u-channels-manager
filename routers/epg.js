@@ -1,7 +1,7 @@
 const Path = require("path")
 const FS = require('fs');
 const Express = require('express');
-const Router = Express();
+const Router = Express.Router();
 const Utils = require('../utils');
 const Moment = require('moment');
 const EpgModule = require('../modules/epg');
@@ -235,7 +235,7 @@ Router.get('/show.:format?', (req, res, next) => {
 });
 
 
-Router.on('mount', () => {
+function info() {
 
   console.log('## EPG router mounted');
   console.log(`- GET ${Router.mountpath}/update.:format?`);
@@ -250,6 +250,6 @@ Router.on('mount', () => {
   console.log(`Shows cached epg and respond the XMLTV. format can be one of 'xml', 'json'`);
   console.log(`\t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
 
-});
+}
 
-module.exports = {Router, EPG, loadChannles, returnCachedEPG, parseCommand};
+module.exports = {Router, EPG, loadChannles, returnCachedEPG, parseCommand, info};
