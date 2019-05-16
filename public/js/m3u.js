@@ -84,10 +84,10 @@
       $.get(`${PATH}/search?q=${str}`).then( (data) => {
         const groups = Object.keys(data);
         for ( let group of groups ) {
-          const UL = $('<ul></ul>');
+          const UL = $(`<ul><li class="group-title">${group}</li></ul>`);
           for ( let chl of data[group] ) {
             $(`
-              <li data-channel-id="${chl.Id}">
+              <li data-channel-id="${chl.Id}" class="channel-name">
                 <a href="${chl.Redirect}">${chl.Name}</a>
               </li>
             `).appendTo( UL );

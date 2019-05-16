@@ -118,3 +118,10 @@ form fieldset {
   margin-left: 10px;
   font-size: 40%;
 }
+
+#search-result ul {
+  list-style: none;
+}
+#search-result ul li.channel-name {
+  padding-left: 10px;
+}
