@@ -5,6 +5,8 @@ const Router = Express.Router();
 const Utils = require('../utils');
 const Moment = require('moment');
 const EpgModule = require('../modules/epg');
+const Net = require('net');
+const Pretty = require('pretty-data').pd;
 
 
 const Log = Utils.Log;
@@ -25,7 +27,7 @@ let ChlPromise = null;
 function parseCommand(Argv, cb) {
 
   if ( Argv.update ) {
-    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, (resp) => {
+    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, (resp) => {
       cb(resp);
     })
 
@@ -49,10 +51,9 @@ function loadFromCache() {
 
     EPG.clear();
 
-    for( let chl of data ) {
+    for( let chl_data of data ) {
 
-      const chl_data = chl.data;
-      const chl_epg = chl._epg;
+      const chl_epg = chl_data.Epg;
       const epg_keys = Object.keys( chl_epg );
 
       const Chl = new SkyChannel( chl_data );
@@ -61,7 +62,7 @@ function loadFromCache() {
         const events = chl_epg[ epgK ];
         const arr_events = Chl._epg[ epgK ] = [];
         for( let evt of events ) {
-          const Event = new SkyEvent(evt.data);
+          const Event = new SkyEvent(evt);
           if ( evt._start ) {
             Event._start = new Date( evt._start );
           }
@@ -99,7 +100,7 @@ function loadChannles() {
 }
 
 
-function updateEPG(today, days, yesterday, cb) {
+function updateEPG(today, days, yesterday, details, cb) {
 
   today = ( today ? Moment(today, 'YYYYMMDD') : Moment() );
   today.hour(0).minute(0).seconds(0).millisecond(0);
@@ -128,7 +129,7 @@ function updateEPG(today, days, yesterday, cb) {
         const onFinally = () => {
           loadByDate(index);
         };
-        EPG.scrapeEpg(date, Config.EPG.bulk).then( onFinally, onFinally );
+        EPG.scrapeEpg(date, !!details, Config.EPG.bulk).then( onFinally, onFinally );
       });
     } else {
       // write file cache
@@ -140,7 +141,7 @@ function updateEPG(today, days, yesterday, cb) {
 }
 
 
-function updateAndReturnEPG(today, days, yesterday, shift, format, cb) {
+function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) {
 
   let shifts = Array.isArray(shift) ? shift : shift.split(',');
   shifts = shifts.map( (s) => {
@@ -149,14 +150,20 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, cb) {
     return !isNaN( s );
   });
 
-  updateEPG( today, days, yesterday, (result) => {
-
+  updateEPG( today, days, yesterday, !!details, (result) => {
     switch( format ) {
       case 'json':
         cb(JSON.stringify(result) );
         break;
       default:
         cb( Utils.createXMLTV(result, shifts).toString() );
+    }
+    if ( Config.EPG.Sock ) {
+      const Client = Net.connect( {path: Config.EPG.Sock }, function () {
+        Client.write( Utils.createXMLTV(result, shifts).toString() );
+        Client.end();
+        Client.unref();
+      });
     }
   });
 }
@@ -167,11 +174,12 @@ Router.get('/update.:format?', (req, res, next) => {
   let days = parseInt(req.query.days || 0, 10);
   let yesterday = req.query.y || false;
   let shift = req.query.shift || '0';
+  let details = !!(req.query.details || false);
   const format = req.params.format
 
 
   try {
-    updateAndReturnEPG( today, days, yesterday, shift, format, (result) => {
+    updateAndReturnEPG( today, days, yesterday, shift, format, details, (result) => {
       res.status(200);
 
       switch( format ) {
@@ -180,6 +188,7 @@ Router.get('/update.:format?', (req, res, next) => {
           break;
         default:
           res.set('content-type', 'application/xml')
+          result = Pretty.xml( result );
       }
       res.end( result );
     });
@@ -229,10 +238,18 @@ Router.get('/show.:format?', (req, res, next) => {
       default:
         res.set('content-type', 'application/xml')
     }
-    res.end(  result );
+    res.end( result );
   });
 
 });
+
+Router.get('/', (req, res, next) => {
+  res.render('epg/index', {
+    EPG,
+    currentDate: Moment().format('YYYY-MM-DD'),
+    maxDate: Moment().add(2, 'days').format('YYYY-MM-DD')
+  });
+})
 
 
 function info(mountpath) {

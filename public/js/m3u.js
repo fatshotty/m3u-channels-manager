@@ -24,9 +24,7 @@
   BtnUncheckAll.on('click', (e) => {
     e.preventDefault();
     UL_GROUPS.find('input[type=checkbox]').prop('checked', false);
-    ShowUrlJson.html('')
     ShowUrlJson.attr('href', '')
-    ShowUrlM3u.html('')
     ShowUrlM3u.attr('href', '')
   });
 
@@ -41,9 +39,7 @@
       pj = `${PATH}/list.json?groups=${groups.join(',')}`;
       pm = `${PATH}/list.m3u?groups=${groups.join(',')}`;
     }
-    ShowUrlJson.html(pj)
     ShowUrlJson.attr('href', pj)
-    ShowUrlM3u.html(pm)
     ShowUrlM3u.attr('href', pm)
   });
 
@@ -80,9 +76,17 @@
   SearchForm.on('submit', (e) => {
     e.preventDefault();
     const str = SearchInput.val();
-    SearchResult.html('')
+    SearchResult.html('Loading...')
     if ( str.trim() ) {
-      $.get(`${PATH}/search?q=${str}`).then( (data) => {
+      $.get(`${PATH}/search.json?q=${str}`).then( (data) => {
+
+        SearchResult.html( `
+          <small>
+            <a class="btn btn-outline-info btn-sm" href="${PATH}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato JSON">Scarica JSON</a>
+            <a class="btn btn-outline-info btn-sm" href="${PATH}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato M3U">Scarica M3U</a>
+          </small>
+        ` )
+
         const groups = Object.keys(data);
         for ( let group of groups ) {
           const UL = $(`<ul><li class="group-title">${group}</li></ul>`);
@@ -95,6 +99,8 @@
           }
           UL.appendTo( SearchResult );
         }
+      }, () => {
+        SearchResult.html('');
       })
 
       return;

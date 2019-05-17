@@ -16,9 +16,8 @@ block content
           a#groups-url.btn.btn-outline-info.btn-sm(title="Url dei gruppi organizzati in m3u" href="/tv/groups.m3u") Lista gruppi
 
           p
-            a#show-url-json(target="_blank")
-          p
-            a#show-url-m3u(target="_blank")
+            a#show-url-json.btn.btn-outline-info.btn-sm(target="_blank" title="Scarica i gruppi selezionati in formato JSON") Scarica JSON
+            a#show-url-m3u.btn.btn-outline-info.btn-sm(target="_blank" title="Scarica i gruppi selezionati in formato M3U") Scarica M3U
         .row
           ul#groups
       .col-md
@@ -26,7 +25,7 @@ block content
         form.form-inline#search-form
           .form-group.mx-sm-3.mb-2
             input#search-text.form-control.form-control-sm(type='text', placeholder='stringa di ricerca', title="immettere anche solo poche lettere")
-          button.btn.btn-secondary.mb-2.btn-sm(type='submit' title="Cerca un canale nella lista in base al nome") Cerca
+          button.btn.btn-secondary.mb-2(type='submit' title="Cerca un canale nella lista in base al nome") Cerca
 
 
         .row

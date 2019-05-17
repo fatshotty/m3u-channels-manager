@@ -10,6 +10,22 @@ body {
 
 }
 
+a[href=""], a:not([href]) {
+  display: none;
+}
+
+.btn-sm {
+  font-size: 40%;
+  margin-left: 10px;
+}
+
+.margin-left {
+  margin-left: 10px;
+}
+
+ul {
+  list-style: none;
+}
 
 #logger {
   position: absolute;
@@ -75,9 +91,6 @@ nav.sidebar {
 }
 
 
-.sidebar-nav {
-  list-style: none;
-}
 
 .page {
   width: calc(100% - 250px);
@@ -99,29 +112,34 @@ form fieldset {
 }
 
 
-#m3u-page #update {
-  margin-left: 10px;
-  font-size: 40%;
-}
-
-#m3u-page #uncheckall {
-  margin-left: 10px;
-  font-size: 40%;
-}
-
-#m3u-page #generate-url {
-  margin-left: 10px;
-  font-size: 40%;
-}
-
-#m3u-page #groups-url {
-  margin-left: 10px;
-  font-size: 40%;
-}
-
-#search-result ul {
-  list-style: none;
-}
 #search-result ul li.channel-name {
   padding-left: 10px;
+}
+
+
+
+
+#channels-list .channel-item span {
+  margin-left: 5px;
+}
+#channels-list .channel-item .logo img {
+  height: 20px;
+}
+#channels-list .channel-item .number{
+
+}
+#channels-list .channel-item .name{
+
+}
+#channels-list .channel-item .epg{
+  cursor: pointer;
+}
+
+#channels-list ul.epg-list {
+  font-family: "Courier New";
+  font-size: 80%;
+}
+
+#epg-page ul.epg-list li.event-details:hover {
+  background-color: #EEE;
 }

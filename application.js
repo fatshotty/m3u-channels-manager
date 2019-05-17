@@ -99,6 +99,11 @@ const Argv = Args
         default: ['0'],
         describe: 'specifies the time-shift expressed in hours'
       })
+      .option('full', {
+        type: 'boolean',
+        default: false,
+        describe: 'load full EPG details'
+      })
 
       .implies('update', 'today')
 
@@ -186,7 +191,7 @@ function start() {
   App.set('view engine', 'pug');
   App.set('views', Path.join(__dirname, '/views') );
   App.use( Express.static( `${__dirname}/public`) );
-  App.use( Express.static( `${__dirname}/node_modules/bootstrap`) );
+  App.use( Express.static( `${__dirname}/node_modules`) );
 
 
   App.use( CORS() );
@@ -230,19 +235,14 @@ function start() {
       Log.debug('loading module EPG...')
       Modules['/epg'] = require('./routers/epg');
       if ( !Argv.serve && !Argv.m3u ) {
+        Config.EPG.Sock = Argv.sock || Config.EPG.Sock;
         Modules['/epg'].parseCommand(Argv, (resp) => {
           if ( Argv.beauty ) {
             resp = Pretty.xml( resp )
           }
-          if ( Argv.sock || Config.EPG.Sock ) {
-            const Client = Net.connect( {path: Argv.sock || Config.EPG.Sock }, function () {
-              Client.write( resp );
-              Client.end();
-              Client.unref();
-            });
-            return;
+          if ( !Argv.sock ) {
+            console.log( resp );
           }
-          console.log( resp );
         });
       }
     }

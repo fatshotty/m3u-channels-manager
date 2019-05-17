@@ -12,7 +12,7 @@ const SINGLE_EVENT = "http://guidatv.sky.it/EpgBackend/event_description.do?eid=
 
 const URL_CHANNELS = "http://guidatv.sky.it/app/guidatv/contenuti/data/grid/grid_{category}_channels.js";
 
-const PROGRAM_POSTER = `${SKY_DOMAIN}/app/guidatv/images`;
+const PROGRAM_POSTER = `${SKY_DOMAIN}/app/guidatv/images{icon}`;
 const REG_EXP_SEASON_EPISODE = /^((S(\w+)?(\d+))?)(\s?)((E(\w+)?(\d+))?)/i;
 
 const CATEGORY = [
@@ -53,6 +53,7 @@ class SkyEpg {
     const ps = [];
     for ( let link of SCRAP_LINK ) {
       ps.push( (resolve, reject) => {
+        Log.info(`Loading channels from ${link}`);
         this.request(link).then(resolve, reject);
       } );
     }
@@ -62,14 +63,14 @@ class SkyEpg {
       for ( let res of all_channels_sky ) {
         for( let CHL of res ) {
           const channel_data = {
-            id: CHL.id,
-            name: CHL.name,
-            number: CHL.number,
-            service: CHL.service,
-            logo: CHL.channelvisore || CHL.channellogonew
+            Id: CHL.id,
+            Name: CHL.name,
+            Number: CHL.number,
+            Service: CHL.service,
+            Logo: CHL.channelvisore || CHL.channellogonew
           };
 
-          const exists = this.checkExistingChannel( CHL.id );
+          const exists = this.checkExistingChannel( channel_data.Id );
 
           if ( !exists ) {
             this._channels.push( new Channel(channel_data) );
@@ -88,14 +89,16 @@ class SkyEpg {
     return !!(c && c.length);
   }
 
-  scrapeEpg(date, bulk) {
-    Log.info('Scraping...');
+  scrapeEpg(date, details, bulk) {
+    Log.info(`Scraping... ${date} ${details ? 'detailed' : ''}`);
 
     return new Promise( (resolve, reject) => {
 
+      Log.info(`Loading channels programs`);
       const all_channel_req = [];
       for( let chl of this._channels ) {
         all_channel_req.push( (res, rej) => {
+          Log.info(`Loading EPG for ${chl.Name}`);
           chl.loadEvents(date).then( res, rej );
         });
       }
@@ -103,15 +106,17 @@ class SkyEpg {
       Bulk( all_channel_req, bulk || 1).then( () => {
 
         let all_events_req = [];
-        for( let chl of this._channels ) {
-          // all_events_req.push( (res, rej) => {
-          //   chl.loadEventsDetail(date, bulk).then( res, rej );
-          // });
-          all_events_req =  all_events_req.concat( chl.loadEventsDetail(date, bulk) );
+        if ( details ) {
+          for( let chl of this._channels ) {
+            // all_events_req.push( (res, rej) => {
+            //   chl.loadEventsDetail(date, bulk).then( res, rej );
+            // });
+            Log.info(`Loading channels programs detailed for ${chl.Name}`);
+            all_events_req =  all_events_req.concat( chl.loadEventsDetail(date, bulk) );
+          }
         }
 
         Bulk( all_events_req, bulk || 1).then( resolve, reject );
-
       });
     });
   }
@@ -214,23 +219,23 @@ class Channel {
 
 
   get Id() {
-    return this.data.id;
+    return this.data.Id;
   }
 
   get IdEpg() {
     return this.Name.replace(/[^\w|\+]/g, '_');
   }
   get Name() {
-    return this.data.name;
+    return this.data.Name;
   }
   get Number() {
-    return this.data.number;
+    return this.data.Number;
   }
   get Service() {
-    return this.data.service;
+    return this.data.Service;
   }
   get Logo() {
-    return this.data.logo;
+    return this.data.Logo;
   }
   get Url() {
     let name = this.Name.replace(/ /g,"-").toLowerCase();
@@ -250,11 +255,11 @@ class Channel {
   loadEvents(date) {
     const date_str = Moment(date).format('YY_MM_DD');
 
-    const req = this.request( SINGLE_CHANNEL.replace('{date}', date_str).replace('{channel}', this.data.id) );
+    const req = this.request( SINGLE_CHANNEL.replace('{date}', date_str).replace('{channel}', this.Id) );
 
     const epg = this._epg[ date.getTime() ] = [];
 
-    Log.debug(`Loading events for ${this.data.name}`);
+    Log.debug(`Loading events for ${this.Name}`);
 
     return req.then( ( programs ) => {
 
@@ -274,16 +279,33 @@ class Channel {
         epg.push( evt );
       }
 
-      Log.debug(`Loaded event for ${this.data.name}`);
+      Log.debug(`Loaded event for ${this.Name}`);
 
     }).catch( (err) => {
-      Log.error(`Error loading channel ${this.data.name} ${date_str}`);
+      Log.error(`Error loading channel ${this.Name} ${date_str}`);
+      Log.error(`${err}`);
     });
+  }
+
+  toJSON(detailed) {
+    const data = {
+      Id: this.Id,
+      IdEpg: this.IdEpg,
+      Name: this.Name,
+      Number: this.Number,
+      Service: this.Service,
+      Logo: this.Logo,
+      Url: this.Url
+    };
+    if ( detailed ) {
+      data.Epg = this._epg;
+    }
+    return data;
   }
 
 
   loadEventsDetail(date, bulk) {
-    Log.debug(`Loading Channel event details ${this.data.name}`);
+    Log.debug(`Loading Channel event details ${this.Name}`);
     const epg = this._epg[ date.getTime() ] || [];
     const events_req = [];
     for( let event of epg ) {
@@ -372,7 +394,24 @@ class Event {
   }
 
   constructor(data) {
-    this.data = Object.assign({}, data);
+    const opts = {};
+
+    opts.dur = data.Duration || data.dur;
+    opts.id =  data.Id || data.id;
+    opts.pid =  data.Pid || data.pid;
+    opts.title =  data.Title || data.title;
+    opts.genre =  data.Genre || data.genre;
+    opts.subgenre =  data.Subgenre || data.subgenre;
+    opts.thumbnail_url =  data.Poster || data.thumbnail_url;
+    opts.description =  data.Description || data.description;
+    opts.desc =  data.Desc || data.desc;
+    opts.prima = data.Prima || data.prima;
+    opts.starttime = data.starttime;
+
+    this.data = Object.assign({}, opts);
+    if ( data.Start ) {
+      this._start = new Date(data.Start);
+    }
   }
 
   calculateStartTime(refdate) {
@@ -400,6 +439,24 @@ class Event {
       uri: url,
       json: true
     });
+  }
+
+  toJSON() {
+    return {
+      Start: this.Start,
+      Stop: this.Stop,
+      Id: this.Id,
+      Pid: this.Pid,
+      Title: this.Title,
+      Genre: this.Genre,
+      Subgenre: this.Subgenre,
+      Poster: this.Poster,
+      Desc: this.data.desc,
+      Description: this.Description,
+      Episode: this.Episode,
+      Prima: this.data.prima,
+      Duration: this.data.dur
+    }
   }
 
 }

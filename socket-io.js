@@ -7,9 +7,9 @@ module.exports = (SocketIO, loglevel) => {
   const SockLog = new SocketIoTransport({level: loglevel}, SocketIO);
   Log.add( SockLog );
 
-  SocketIO.on('connection', () => {
-    // Log.info('a user connected');
-  });
+  // SocketIO.on('connection', () => {
+  //   // Log.info('a user connected');
+  // });
 
 };
 
@@ -29,7 +29,6 @@ class SocketIoTransport extends LogTrasport {
 
     // Perform the writing to the remote service
     this.socket.emit('logmessage', info);
-
     callback();
   }
 

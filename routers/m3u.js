@@ -280,23 +280,43 @@ Router.get('/', (req, res, next) => {
   res.render('m3u/index', {M3UList});
 });
 
-Router.get('/search', (req, res, next) => {
+Router.get('/search.:format', (req, res, next) => {
 
+  const format = req.params.format || 'm3u'
   const query = req.query.q || '';
   const result = {};
   for ( let group of M3UList.groups ) {
     for( let chl of group.channels ) {
       if ( chl.Name.toLowerCase().indexOf( query.toLowerCase() ) > -1  ) {
         const chls = result[ group.Id ] || (result[ group.Id ] = []);
-        chls.push( chl.toJson() );
+        chls.push( chl );
       }
     }
   }
 
-  res.set('content-type', 'application/json');
-  res.status(200).end( JSON.stringify(result) );
+  let res_result = null;
+  const keys = Object.keys(result);
+  switch(format) {
+    case 'json':
+      res.set('content-type', 'application/json');
+      for( let k of keys ) {
+        result[ k ] = result[ k ].map( chl => chl.toJson() );
+      }
+      res_result = JSON.stringify(result);
+      break;
+    default:
+      let m3u_res = [];
+      res.set('content-type', 'application/x-mpegURL');
+      for( let k of keys ) {
+        m3u_res = m3u_res.concat( result[ k ].map( (chl) => {
+          return chl.toM3U()
+        }) );
+      }
+      res_result = ['#EXTM3U', m3u_res.join('\n')].join('\n');
+  }
 
-})
+  res.status(200).end( res_result );
+});
 
 
 function info(mountpath) {
