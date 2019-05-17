@@ -2,8 +2,9 @@
   const PATH = '/epg';
 
   const ChannelsList = $('#channels-list');
-  const Generate = $('#generate-epg');
+  const Download = $('#download-epg');
   const Update = $('#update-epg');
+  const Write = $('#write-epg');
 
   const DateEl = $('#date');
   const DaysEl = $('#days');
@@ -56,11 +57,24 @@
   });
 
 
-  Generate.on('click', (e) => {
+  Download.on('click', (e) => {
     // e.preventDefault();
     const shifts = ShiftEl.val().trim();
     Generate.attr('href', `${PATH}/show.xml?shift=${shifts}` );
   });
+
+  Write.on('click', (e) => {
+    e.preventDefault();
+    let shifts = ShiftEl.val().trim();
+    Write.prop('disabled', true);
+    $.get(`${PATH}/write?shift=${shifts}`).then( () => {
+      alert('file scritto correttamente');
+      Write.prop('disabled', false);
+    }, () => {
+      alert('Si è verificato un errore');
+      Write.prop('disabled', false);
+    });
+  })
 
   Update.on('click', (e) => {
     // e.preventDefault();
@@ -71,24 +85,32 @@
     let full = FullEl.is(':checked');
 
     const res = confirm(`
-      L'operazione potrebbe richiedere diversi minuti. Si *sconsiglia* di usare il log a debug!!\n
-      (il file verrà scritto anche nel 'sock' se specificato nelle impostazioni)
+      L'operazione potrebbe richiedere diversi minuti. Si *SCONSIGLIA* di usare il log a debug!!
+      Controllare il log per assicurarsi che il processo finisca
     `);
 
     if ( res ) {
-      alert('Una volta scaricato il file EPG è necessario ricaricare la pagina');
+      alert('Una volta terminato il processo è necessario ricaricare la pagina');
 
       const query = [];
-      query.push(`today=${moment(date).format('YYYYMMDD')}`)
+      query.push(`today=${moment(date).format('YYYYMMDD')}`);
       query.push(`days=${days}`);
       if ( yest ) query.push(`y=1`);
       if ( full ) query.push(`details=1`);
       query.push(`shift=${shift}`);
 
-      Update.attr('href', `${PATH}/update.xml?${query.join('&')}` );
-    } else {
-      e.preventDefault();
+      Update.prop('disabled', true);
+
+      $.get(`${PATH}/update.xml?${query.join('&')}`).then( () => {
+        alert('EPG generato correttamente e salvato nel file di cache');
+        Update.prop('disabled', false);
+      }, () => {
+        alert('Si ')
+        Update.prop('disabled', false);
+      });
     }
+
+    e.preventDefault();
 
   });
 

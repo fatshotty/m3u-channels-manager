@@ -235,14 +235,19 @@ function start() {
       Log.debug('loading module EPG...')
       Modules['/epg'] = require('./routers/epg');
       if ( !Argv.serve && !Argv.m3u ) {
-        Config.EPG.Sock = Argv.sock || Config.EPG.Sock;
         Modules['/epg'].parseCommand(Argv, (resp) => {
           if ( Argv.beauty ) {
             resp = Pretty.xml( resp )
           }
-          if ( !Argv.sock ) {
-            console.log( resp );
+          if ( Argv.sock || Config.EPG.Sock ) {
+            const Client = Net.connect( {path: Argv.sock || Config.EPG.Sock }, function () {
+              Client.write( resp );
+              Client.end();
+              Client.unref();
+            });
+            return;
           }
+          console.log( resp );
         });
       }
     }

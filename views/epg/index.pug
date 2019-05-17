@@ -34,8 +34,9 @@ block content
             |  Dettagliato?
 
 
-        a#generate-epg.btn.btn-secondary(title="Genera XMLTV dal file di cache" download="cached_epg.xml" href="#") Genera EPG
-        a#update-epg.btn.btn-primary(title="Calcola EPG e genera XMLTV" download="new_egp.xml" href="#") Calcola EPG
+        a#download-epg.btn.btn-secondary(title="Scarica XMLTV dal file di cache" download="cached_epg.xml" href="#") Scarica XMLTV
+        button#update-epg.btn.btn-primary(title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
+        button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
 
     #channels-list
       ul

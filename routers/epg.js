@@ -158,13 +158,6 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) 
       default:
         cb( Utils.createXMLTV(result, shifts).toString() );
     }
-    if ( Config.EPG.Sock ) {
-      const Client = Net.connect( {path: Config.EPG.Sock }, function () {
-        Client.write( Utils.createXMLTV(result, shifts).toString() );
-        Client.end();
-        Client.unref();
-      });
-    }
   });
 }
 
@@ -176,7 +169,6 @@ Router.get('/update.:format?', (req, res, next) => {
   let shift = req.query.shift || '0';
   let details = !!(req.query.details || false);
   const format = req.params.format
-
 
   try {
     updateAndReturnEPG( today, days, yesterday, shift, format, details, (result) => {
@@ -197,6 +189,32 @@ Router.get('/update.:format?', (req, res, next) => {
   }
 
 });
+
+Router.get('/write', (req, res, next) => {
+
+  let shift = req.query.shift || '0';
+  let shifts = Array.isArray(shift) ? shift : shift.split(',');
+  shifts = shifts.map( (s) => {
+    return parseInt(s, 10)
+  }).filter( (s) => {
+    return !isNaN( s );
+  });
+
+  if ( Config.EPG.Sock ) {
+    Log.info(`Writing XMLTV with Time-Shift ${shifts} to ${Config.EPG.Sock}`);
+    const resp = Utils.createXMLTV(returnCachedEPG(), shifts).toString();
+    const Client = Net.connect( {path: Config.EPG.Sock }, function () {
+      Client.write( resp );
+      Client.end();
+      Client.unref();
+      Log.info('XMLTV has been written');
+    });
+    res.status(204).end('');
+    return;
+  }
+  Log.error('No SOCK file specified');
+  res.status(422).end('No SOCK file specified');
+})
 
 
 function returnCachedEPG() {
