@@ -98,23 +98,22 @@ class SkyEpg {
       const all_channel_req = [];
       for( let chl of this._channels ) {
         all_channel_req.push( (res, rej) => {
-          Log.info(`Loading EPG for ${chl.Name}`);
           chl.loadEvents(date).then( res, rej );
         });
       }
 
       Bulk( all_channel_req, bulk || 1).then( () => {
-
         let all_events_req = [];
         if ( details ) {
           for( let chl of this._channels ) {
             // all_events_req.push( (res, rej) => {
             //   chl.loadEventsDetail(date, bulk).then( res, rej );
             // });
-            Log.info(`Loading channels programs detailed for ${chl.Name}`);
             all_events_req =  all_events_req.concat( chl.loadEventsDetail(date, bulk) );
           }
         }
+
+        Log.info(`FINISH LOADING EVENTS check details ${all_events_req.length}`);
 
         Bulk( all_events_req, bulk || 1).then( resolve, reject );
       });
@@ -255,6 +254,8 @@ class Channel {
   loadEvents(date) {
     const date_str = Moment(date).format('YY_MM_DD');
 
+    Log.info(`Loading EPG for ${this.Name} date ${date_str}`);
+
     const req = this.request( SINGLE_CHANNEL.replace('{date}', date_str).replace('{channel}', this.Id) );
 
     const epg = this._epg[ date.getTime() ] = [];
@@ -262,7 +263,7 @@ class Channel {
     Log.debug(`Loading events for ${this.Name}`);
 
     return req.then( ( programs ) => {
-
+      Log.info(`* loaded EPG for ${this.Name} date ${date_str}`);
       let usedate = new Date(date);
 
       const plans = programs.plan;
@@ -310,7 +311,7 @@ class Channel {
     const events_req = [];
     for( let event of epg ) {
       events_req.push( (res, rej) => {
-        event.loadDetails().then(res, rej);
+        event.loadDetails(this).then(res, rej);
       });
     }
     return events_req;
@@ -418,19 +419,20 @@ class Event {
     this._start = getEPGDate(refdate, this.data.starttime);
   }
 
-  loadDetails() {
+  loadDetails(chl) {
 
-    Log.debug(`Loading event details for ${this.data.id} ${this.data.desc}`);
+    Log.debug(`Loading event details for ${chl.Name} - ${this.data.id}: ${this.data.desc}`);
     const req = this.request( SINGLE_EVENT.replace('{event}', this.data.id) );
 
     return req.then( (event_detail) => {
-      Log.debug(`Loaded event details for ${this.data.id} ${this.data.desc} - ${JSON.stringify(event_detail)}`);
+      Log.debug(`Loaded event details for ${chl.Name} - ${this.data.id}: ${this.data.desc}`);
+      // Log.debug(JSON.stringify(event_detail));
       if ( !event_detail || !event_detail.description ) {
-        Log.warn(`no description for ${this.data.id} ${event_detail}`);
+        Log.warn(`no description for ${chl.Name} - ${this.data.id}: ${event_detail || this.data.desc}`);
       }
       Object.assign(this.data, event_detail || {});
-      Log.debug(`Details for ${this.data.id} - ${JSON.stringify(this.data)}`);
     });
+
   }
 
 
