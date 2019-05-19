@@ -35,7 +35,7 @@ function parseCommand(Argv, cb) {
 
     if ( Argv.refresh ) {
       refreshM3U( (err, body) => {
-        cb(err || "M3U Updated!");
+        cb(err || body);
       });
 
     } else if ( Argv.s ) {
@@ -78,8 +78,12 @@ function refreshM3U(cb) {
     Log.info(`Refreshing M3U list from local m3u file`);
     Log.debug(`local file: ${Config.M3U.Url}`);
     const filedata = FS.readFileSync(Config.M3U.Url, {encoding: 'utf-8'})
+    M3U_LIST_STRING = filedata;
+    M3UList.clear();
+    loadM3U();
+    FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
     process.nextTick( () => {
-      cb(filedata);
+      cb(false, filedata);
     })
   }
 }

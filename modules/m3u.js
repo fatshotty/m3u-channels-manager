@@ -102,7 +102,7 @@ class M3U {
 
       if ( row.indexOf('#') === 0 ) {
         // get data
-        const obj_channel = channels[ channel_index ] = {};
+        const obj_channel = channels[ channel_index ] ||  (channels[ channel_index ] = {});
 
         const parts = row.match( /([\w\-]+)+:(.*)/ );
 
@@ -165,8 +165,13 @@ class M3U {
 
     Log.debug(`splitting channels by groups`);
 
-    for ( let channel of channels ) {
+    for ( let [i, channel] of channels.entries() ) {
       const name = channel['name'];
+
+      if ( !name ) {
+        Log.warn(`No channel data at index ${i} - Data: '${Object.keys(channel)}'`);
+        continue;
+      }
 
       if ( name && (name.startsWith('---') || name.startsWith('===')) ) {
         continue;
@@ -316,7 +321,7 @@ class Channel {
   }
 
   constructor(data) {
-
+    Log.debug(`New Channel found ${data.name} - ${data['tvg-id']}`);
     this._name = data['name'];
     this._duration = data['duration'];
     this._tvgId = data['tvg-id'];
