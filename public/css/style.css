@@ -36,6 +36,13 @@ ul {
   overflow: auto;
   border-top: 2px solid #343c34;
 }
+
+#clear_log {
+  right: 20px;
+  position: fixed;
+  z-index: 999;
+}
+
 #log {
   padding: 1px 5px 5px 3px;
 }

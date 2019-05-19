@@ -3,7 +3,13 @@
 
   const ParentLogEl = document.getElementById('logger');
   const LogEl = document.getElementById('log');
+  const ClearLog = document.getElementById('clear_log');
   let should_scroll_log = true;
+
+  ClearLog.addEventListener('click', (e) => {
+    e.preventDefault();
+    LogEl.innerHTML = '';
+  })
 
   function logmessage({message, level}) {
 

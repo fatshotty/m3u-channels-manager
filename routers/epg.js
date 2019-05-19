@@ -161,6 +161,15 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) 
   });
 }
 
+Router.get('/channels/update', (req, res, next) => {
+  loadChannles();
+  ChlPromise.then( () => {
+    res.status(204).end();
+  }, () => {
+    res.status(500).end('Si è verificato un errore');
+  });
+});
+
 Router.get('/update.:format?', (req, res, next) => {
 
   let today = req.query.today;
@@ -180,7 +189,7 @@ Router.get('/update.:format?', (req, res, next) => {
           break;
         default:
           res.set('content-type', 'application/xml')
-          result = Pretty.xml( result );
+          //result = Pretty.xml( result );
       }
       res.end( result );
     });

@@ -357,7 +357,7 @@ function start() {
   function exitHandler(options, exitCode) {
     Log.warn('Application exiting...')
     // if (options.cleanup) Log.warn('Application exiting...');
-    if (exitCode || exitCode === 0) Log.warn(`** Error code ${exitCode}`);
+    if (exitCode || exitCode === 0) Log.error(`** Error code ${exitCode}`);
     if (options.exit) process.exit();
   }
 
@@ -372,6 +372,11 @@ function start() {
   process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
 
   //catches uncaught exceptions
-  process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+  process.on('uncaughtException', function(err) {
+    Log.error(`** Error: ${err}`);
+  });
+  process.on('unhandledRejection', function(reason, p) {
+    Log.error(`** Promise error: ${reason}`);
+  });
 
 }

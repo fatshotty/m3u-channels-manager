@@ -2,6 +2,7 @@
   const PATH = '/epg';
 
   const ChannelsList = $('#channels-list');
+  const UpdateChl = $('#update-chl');
   const Download = $('#download-epg');
   const Update = $('#update-epg');
   const Write = $('#write-epg');
@@ -56,28 +57,75 @@
     })
   });
 
+  let PERFORM = false;
+  const ALL_BUTTONS = $().add(UpdateChl).add(Download).add(Write).add(Update);
+
+  UpdateChl.on('click', (e) => {
+    e.preventDefault();
+    if ( PERFORM ) {
+      alert('Attendere la fine dell\'esecuzione corrente!');
+      return e.preventDefault();
+    }
+
+    const rs = confirm(`
+      Aggiornando la lista canali verranno perse tutte le informazioni sul palinsesto dei programmi.
+      Sarà necessario generare un nuovo EPG.
+      Continuare?
+    `);
+    if ( rs ) {
+      ALL_BUTTONS.prop('disabled', true);
+      PERFORM = true;
+      $.get(`${PATH}/channels/update`).then( () => {
+        alert('Lista canali aggiornata con successo');
+        window.location.reload();
+      }, () => {
+        alert('Si è verificato un errore');
+        ALL_BUTTONS.prop('disabled', false);
+        PERFORM = false;
+      })
+    }
+  })
+
+
 
   Download.on('click', (e) => {
     // e.preventDefault();
+    if ( PERFORM ) {
+      alert('Attendere la fine dell\'esecuzione corrente!');
+      return e.preventDefault();
+    }
     const shifts = ShiftEl.val().trim();
     Generate.attr('href', `${PATH}/show.xml?shift=${shifts}` );
   });
 
   Write.on('click', (e) => {
+    if ( PERFORM ) {
+      alert('Attendere la fine dell\'esecuzione corrente!');
+      return e.preventDefault();
+    }
     e.preventDefault();
     let shifts = ShiftEl.val().trim();
-    Write.prop('disabled', true);
+
+    ALL_BUTTONS.prop('disabled', true);
+    PERFORM = true;
+
     $.get(`${PATH}/write?shift=${shifts}`).then( () => {
       alert('file scritto correttamente');
-      Write.prop('disabled', false);
+      ALL_BUTTONS.prop('disabled', false);
+      PERFORM = false
     }, () => {
       alert('Si è verificato un errore');
-      Write.prop('disabled', false);
+      ALL_BUTTONS.prop('disabled', false);
+      PERFORM = false
     });
   })
 
   Update.on('click', (e) => {
-    // e.preventDefault();
+    if ( PERFORM ) {
+      alert('Attendere la fine dell\'esecuzione corrente!');
+      return e.preventDefault();
+    }
+    e.preventDefault();
     let date = DateEl.val();
     let days = DaysEl.val();
     let yest = YestEl.is(':checked');
@@ -99,19 +147,19 @@
       if ( full ) query.push(`details=1`);
       query.push(`shift=${shift}`);
 
-      Update.prop('disabled', true);
+      ALL_BUTTONS.prop('disabled', true);
+      PERFORM = true;
 
       $.get(`${PATH}/update.xml?${query.join('&')}`).then( () => {
         alert('EPG generato correttamente e salvato nel file di cache');
-        Update.prop('disabled', false);
+        ALL_BUTTONS.prop('disabled', false);
+        PERFORM = false;
       }, () => {
-        alert('Si ')
-        Update.prop('disabled', false);
+        alert('Si è verificato un error, ma potrebbe essere normale. Controllare il log!')
+        ALL_BUTTONS.prop('disabled', false);
+        PERFORM = false;
       });
     }
-
-    e.preventDefault();
-
   });
 
 })();

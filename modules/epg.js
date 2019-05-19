@@ -109,11 +109,15 @@ class SkyEpg {
             // all_events_req.push( (res, rej) => {
             //   chl.loadEventsDetail(date, bulk).then( res, rej );
             // });
-            all_events_req =  all_events_req.concat( chl.loadEventsDetail(date, bulk) );
+            const programs_to_load = chl.loadEventsDetail(date, bulk);
+            Log.info(`Preparing details for ${chl.Name} - total: ${programs_to_load.length}`);
+            all_events_req =  all_events_req.concat( programs_to_load );
           }
         }
 
-        Log.info(`FINISH LOADING EVENTS check details ${all_events_req.length}`);
+        // if ( all_events_req && all_events_req.length > 0 ) {
+        //   Log.info(`Loding details for ${all_events_req.length} programs`);
+        // }
 
         Bulk( all_events_req, bulk || 1).then( resolve, reject );
       });
@@ -263,7 +267,6 @@ class Channel {
     Log.debug(`Loading events for ${this.Name}`);
 
     return req.then( ( programs ) => {
-      Log.info(`* loaded EPG for ${this.Name} date ${date_str}`);
       let usedate = new Date(date);
 
       const plans = programs.plan;
@@ -279,8 +282,7 @@ class Channel {
 
         epg.push( evt );
       }
-
-      Log.debug(`Loaded event for ${this.Name}`);
+      Log.debug(`loaded EPG for ${this.Name} in date ${date_str}- Total: ${epg.length}`);
 
     }).catch( (err) => {
       Log.error(`Error loading channel ${this.Name} ${date_str}`);
@@ -308,12 +310,20 @@ class Channel {
   loadEventsDetail(date, bulk) {
     Log.debug(`Loading Channel event details ${this.Name}`);
     const epg = this._epg[ date.getTime() ] || [];
-    const events_req = [];
+    const events_req = [(res, rej) => {
+      Log.info(`Starting getting program details for ${this.Name}`);
+      res();
+    }];
     for( let event of epg ) {
       events_req.push( (res, rej) => {
+        Log.debug(`Loading events details ${this.Name} - ${event.Id} - ${event.data.desc}`);
         event.loadDetails(this).then(res, rej);
       });
     }
+    events_req.push( (res, rej) => {
+      Log.info(`Programs details correctly loaded for ${this.Name}`);
+      res();
+    });
     return events_req;
     // return Bulk( events_req, bulk || 1);
   }
