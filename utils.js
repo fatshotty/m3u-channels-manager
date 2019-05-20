@@ -1,4 +1,4 @@
-const URL = require('url');
+const Url = require('url');
 const HTTPS = require("https");
 const HTTP = require("http");
 const XMLWriter = require('xml-writer');
@@ -28,7 +28,7 @@ function cleanUpString( str ) {
 
 function request(url, headers, callback, streaming) {
 
-  const urlObj = URL.parse( url );
+  const urlObj = Url.parse( url );
 
   const opts = Object.assign(urlObj, {headers: headers});
 
@@ -69,6 +69,152 @@ function request(url, headers, callback, streaming) {
 }
 
 
+function _URL_(str, base) {
+  return new URL(str, base);
+}
+
+function urlShouldBeComputed(url, base) {
+  if ( typeof url === 'string' ) {
+    url = _URL_(url, base);
+  }
+
+  const pathname = url.pathname;
+  const ext = pathname.split('.').pop();
+
+  return ['htm', 'html', 'm3u', 'm3u8'].indexOf( ext.toLowerCase() ) > -1;
+}
+
+
+function responseToString(res) {
+  return new Promise( (resolve, reject) => {
+    const buff = [];
+    // res.setEncoding('utf8');
+    res.on('data', (chunk) => {
+      buff.push(chunk);
+    });
+    res.on('end', () => {
+      const b = Buffer.concat(buff);
+      const string = b.toString('utf8');
+      resolve(string);
+    });
+  });
+}
+
+function calculateNewUrlToCompute(url, base) {
+
+  let nurl = null;
+  try {
+    nurl = new URL(url, base);
+  } catch(e) {
+    Log.error(`Cannot resolve url '${url}' based on '${base}'`);
+    throw e;
+  }
+
+  return computeChannelStreamUrl({StreamUrl: nurl.href});
+}
+
+
+function computeChannelStreamUrl(channel) {
+
+  const chl_url = channel.StreamUrl;
+
+  const sc = urlShouldBeComputed( chl_url );
+
+  const urlObj = Url.parse( chl_url );
+  const protocol = urlObj.protocol.toLowerCase();
+
+  Log.debug(`Compute channel stream url for protocol: ${protocol}`);
+  return new Promise( (resolve, reject) => {
+
+    if ( !sc ) {
+      Log.debug('url doesn\'t need to be computed');
+      return resolve( chl_url );
+    }
+
+    if ( ['http:', 'https:'].indexOf(protocol) <= -1 ) {
+      Log.warn(`stream protocol cannot be computed. Use the original one: ${urlObj.protocol.toLowerCase()}`)
+      resolve(chl_url);
+      return;
+    }
+
+    const MODULE = protocol.indexOf('https') === 0 ? HTTPS : HTTP;
+    const chl_url_obj = Url.parse(chl_url);
+
+    const opts = Object.assign(chl_url_obj, {
+      method: 'GET',
+      headers: {
+        "user-agent": "VLC"
+      }
+    });
+
+    const Req = MODULE.request(opts, (res) => {
+
+      const contentType = res.headers['content-type'];
+      const location = res.headers['location'];
+
+      if ( res.statusCode >= 200 && res.statusCode < 300 ) {
+        // we have a direct response
+        if ( contentType.indexOf('mpegURL') > -1 ) {
+
+          responseToString(res).then( (data) => {
+            let schl = null;
+            try {
+              schl = parseM3U( data );
+            } catch(e) {
+              Log.error(`Cannot parse m3u while computing due to: ${e}`);
+              return resolve( chl_url );
+            }
+
+            let cnutc = null;
+            try {
+              cnutc = calculateNewUrlToCompute(schl.StreamUrl, chl_url);
+            } catch(e) {
+              return resolve(chl_url);
+            }
+            cnutc.then( (new_url) => {
+              resolve( new_url );
+            });
+
+          });
+        }
+
+      } else if ( res.statusCode >= 300 && res.statusCode < 400 ) {
+
+        let cnutc = null;
+        try {
+          cnutc = calculateNewUrlToCompute(location, chl_url);
+        } catch(e) {
+          return resolve(chl_url);
+        }
+        cnutc.then( (new_url) => {
+          resolve( new_url );
+        });
+
+      } else {
+        Log.error(`Error while computing stream-url: Status ${res.statusCode}`);
+        resolve( chl_url );
+      }
+    });
+
+    Req.on('error', (e) => {
+      Log.error(`An error occurred while computing channel stream-url: ${e}`);
+      resolve( chl_url );
+    });
+
+    Req.end();
+  });
+
+}
+
+
+function parseM3U(str) {
+  const M3UK = require('./modules/m3u').M3U;
+
+  const M3U = new M3UK();
+  M3U.load(str);
+
+  return M3U.groups[0].channels[0];
+}
 
 function createXMLTV(EPG, SHIFT) {
 
@@ -205,4 +351,4 @@ function createXMLTV(EPG, SHIFT) {
 }
 
 
-module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel};
+module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed};

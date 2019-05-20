@@ -48,6 +48,30 @@
     window.open(`${PATH}/groups.m3u`);
   });
 
+  $('#groups').on('click', 'span.counter', (e) => {
+    e.stopPropagation();
+    const li_g = $(e.target).closest('li.group-item');
+    const g_id = li_g.data('groupId');
+    const container = li_g.find('ul').empty();
+
+
+    $.get(`${PATH}/list/${g_id}.json?`).done( (channels) => {
+      for( let chl of channels ) {
+        const item = $(`
+          <li data-channel-id="${chl.Id}" class="channel-item">
+            <span class="logo">
+              <img src="${chl.TvgLogo}" />
+            </span>
+            <a href="${chl.Redirect}">${chl.Name}</a>
+            <small>(<a href="${chl.StreamUrl}">link originale</a>)</small>
+          </li>
+        `);
+        item.appendTo(container);
+      }
+    })
+
+  })
+
 
   function ReloadGroups() {
     UL_GROUPS.html('Loading...');
@@ -58,7 +82,8 @@
           <li class='group-item' data-group-id="${group.id}">
             <input type="checkbox" name="groups" id="${group.id}" />
             <span class="name">${group.name}</span>
-            <span class="counter"><small>${group.count} canali</small></span>
+            <span class="counter" title="espandi lista"><small>${group.count} canali</small></span>
+            <ul></ul>
           </li>
         `).appendTo(UL_GROUPS);
       }

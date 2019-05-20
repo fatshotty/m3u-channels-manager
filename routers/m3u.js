@@ -39,7 +39,9 @@ function parseCommand(Argv, cb) {
       });
 
     } else if ( Argv.s ) {
-      cb( respondStreamUrl(Argv.s) );
+      respondStreamUrl(Argv.s, (url) => {
+        cb(url);
+      });
 
     } else if ( Argv.g ) {
       cb( respondSingleGroup(Argv.g, Argv.format) )
@@ -103,23 +105,26 @@ Router.get('/update', (req, res, next) => {
 
 
 
-function respondStreamUrl(chlId) {
+function respondStreamUrl(chlId, cb) {
 
   Log.info(`Compute the channel stream-url for ${chlId}` )
 
   if ( !chlId ) {
     Log.error('No channel specified');
-    return null;
+    return cb(null);
   }
 
   const live_channel = M3UList.getChannelById( chlId );
   if ( live_channel ) {
     Log.info(`found stram url '${live_channel.StreamUrl.split('/').pop()}'` )
-    return live_channel.StreamUrl;
+    // Utils.computeChannelStreamUrl(live_channel).then( (surl) => {
+    //   cb(surl);
+    // });
+    cb( live_channel.StreamUrl );
 
   } else {
     Log.error(`No live streaming found for channel ${chlId}`);
-    return null;
+    return cb(null);
   }
 }
 
@@ -133,15 +138,17 @@ Router.get('/live/:channel', (req, res, next) => {
     return;
   }
 
-  const live_channel = respondStreamUrl( channel );
-  if ( live_channel ) {
-    Log.debug(`Found live streaming for channel ${channel}`);
-    Log.debug(`redirect to ${live_channel}`);
-    res.redirect(302, live_channel);
+  respondStreamUrl( channel, (live_channel) => {
+    if ( live_channel ) {
+      Log.debug(`Found live streaming for channel ${channel}`);
+      Log.debug(`redirect to ${live_channel}`);
+      res.redirect(302, live_channel);
 
-  } else {
-    res.status(404).end(`No channel link found under name ${channel}`);
-  }
+    } else {
+      res.status(404).end(`No channel link found under name ${channel}`);
+    }
+  });
+
 });
 
 

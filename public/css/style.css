@@ -15,7 +15,7 @@ a[href=""], a:not([href]) {
 }
 
 .btn-sm {
-  font-size: 40%;
+  /*font-size: 40%;*/
   margin-left: 10px;
 }
 
@@ -25,6 +25,14 @@ a[href=""], a:not([href]) {
 
 ul {
   list-style: none;
+}
+
+li.channel-item {
+  font-size: 80%;
+}
+
+li.group-item span.counter {
+  cursor: pointer;
 }
 
 #logger {
@@ -126,19 +134,19 @@ form fieldset {
 
 
 
-#channels-list .channel-item span {
+.channel-item span {
   margin-left: 5px;
 }
-#channels-list .channel-item .logo img {
+.channel-item .logo img {
   height: 20px;
 }
-#channels-list .channel-item .number{
+.channel-item .number {
 
 }
-#channels-list .channel-item .name{
+.channel-item .name {
 
 }
-#channels-list .channel-item .epg{
+.channel-item .epg {
   cursor: pointer;
 }
 

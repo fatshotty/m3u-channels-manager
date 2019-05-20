@@ -166,11 +166,18 @@ class M3U {
     Log.debug(`splitting channels by groups`);
 
     for ( let [i, channel] of channels.entries() ) {
-      const name = channel['name'];
+      let name = channel['name'];
+      let link = channel['link']
+
+      if ( !name && !link ) {
+        Log.warn(`No channel at index ${i} - Data: '${Object.keys(channel)}' - SKIP!`);
+        continue;
+      }
 
       if ( !name ) {
-        Log.warn(`No channel data at index ${i} - Data: '${Object.keys(channel)}'`);
-        continue;
+        const temp_name = `NO_NAME_${i}`;
+        Log.warn(`No channel name at index ${i}. Use a custom one ${temp_name}`);
+        name = channel['name'] = temp_name;
       }
 
       if ( name && (name.startsWith('---') || name.startsWith('===')) ) {
@@ -260,16 +267,21 @@ class Group {
     this.channels = [];
     this._name = name;
     this._id = this._name
+                .replace(/\|/gi, '')
                 .replace(/\s/gi, '__')
                 .replace(/\//gi, '__')
                 .replace(/\+/gi, '__');
   }
 
   createAddChannel(data) {
-    const c = new Channel( data );
-    c.Group = this;
-    this.channels.push( c );
-    return c;
+    try {
+      const c = new Channel( data );
+      c.Group = this;
+      this.channels.push( c );
+      return c;
+    } catch(e) {
+      Log.error(`Cannot add channel ${JSON.stringify(data)}`);
+    }
   }
 
   toJson() {
@@ -307,7 +319,7 @@ class Channel {
     return this._tvgLogo
   }
   get StreamUrl() {
-    return this._streamUrl.replace(/\r/, '');
+    return this._streamUrl;
   }
   get RedirectUrl() {
     return this._redirect ? [this._redirect, this.Id].join('/') : this.StreamUrl;
@@ -329,9 +341,12 @@ class Channel {
     this._tvgLogo = data['tvg-logo'];
     this._streamUrl = data['link'];
 
+    this._streamUrl = (this._streamUrl || '').replace(/\r/, '');
+
     this._redirect = data['redirect'];
 
     this._id = this._name
+                .replace(/\|/gi, '')
                 .replace(/\s/gi, '__')
                 .replace(/\//gi, '__')
                 .replace(/\+/gi, '__');

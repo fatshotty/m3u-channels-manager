@@ -150,12 +150,19 @@
       ALL_BUTTONS.prop('disabled', true);
       PERFORM = true;
 
-      $.get(`${PATH}/update.xml?${query.join('&')}`).then( () => {
+
+
+      $.get(`${PATH}/update.xml?${query.join('&')}`).done(function (data, textStatus, jqXHR) {
         alert('EPG generato correttamente e salvato nel file di cache');
         ALL_BUTTONS.prop('disabled', false);
         PERFORM = false;
-      }, () => {
-        alert('Si è verificato un error, ma potrebbe essere normale. Controllare il log!')
+      })
+      .fail(function (jqXHR, textStatus, errorThrown) {
+        if ( textStatus == 'timeout') {
+          alert('Il processo sta impiegando più tempo del previsto. Controllare il log per assicurarsi che vada tutto bene');
+        } else {
+          alert('Si è verificato un errore. Controllare il log');
+        }
         ALL_BUTTONS.prop('disabled', false);
         PERFORM = false;
       });
