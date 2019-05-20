@@ -10,6 +10,9 @@ html
   body
 
     .wrapper
+      if HAS_UPDATE
+        header.update
+          h5(title=`Lanciare il comando \`npm install ${NAME}\` per aggiornare`) Nuova versione disponibile!
       nav.sidebar
         .sidebar-content
           ul.sidebar-nav

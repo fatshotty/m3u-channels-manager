@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/fatshotty/m3u-channels-manager"
+  },
   "bin": "./tvchannelsmanager",
   "author": "fatshotty",
   "license": "ISC",
@@ -23,6 +27,7 @@
     "socket.io": "2.2.0",
     "winston": "3.2.1",
     "xml-writer": "1.7.0",
-    "yargs": "13.2.2"
+    "yargs": "13.2.2",
+    "semver": "6.0.0"
   }
 }

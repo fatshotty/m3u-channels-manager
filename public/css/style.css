@@ -10,6 +10,19 @@ body {
 
 }
 
+header.update {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  color: #7c7ce2a8;
+  background-color: rgb(206, 255, 197);
+}
+header.update h5 {
+  margin-left: 40%;
+}
+
 a[href=""], a:not([href]) {
   display: none;
 }

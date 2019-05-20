@@ -4,16 +4,37 @@ const Args = require('yargs');
 const Net = require('net');
 const Pretty = require('pretty-data').pd;
 const Path = require('path')
+const SemVer = require('semver');
+const Package = require('./package.json');
 
-process.chdir(__dirname);
+const Express = require("express");
+const App = Express();
 
 let Config = null;
+
+App.locals.HAS_UPDATE = false;
+
+require('child_process').exec(`npm view ${Package.name} versions --json`, function(err, stdout, stderr) {
+  try {
+    const LIST = JSON.parse(stdout);
+    const LATEST = LIST.pop();
+    App.locals.HAS_UPDATE = SemVer.lt(Package.version, LATEST);
+    if ( App.locals.HAS_UPDATE ) {
+      console.warn(`Update available, please run \`npm install ${Package.name}\` to upgrade`);
+    }
+  } catch( e ) {
+    if (err) {
+      console.warn('- cannot get list of packages -', err);
+    }
+  }
+});
+
 
 const Argv = Args
   .option('config', {
     alias: 'c',
     describe: 'set the configuration file path. It must be a json',
-    default: './config.json'
+    default: `${process.cwd()}/config.json`
   })
   .normalize('config')
 
@@ -180,9 +201,6 @@ function start() {
 
 
   const OS = require('os');
-
-  const Express = require("express");
-  const App = Express();
   const BodyParser = require('body-parser');
   const CORS = require('cors')
 
@@ -252,7 +270,7 @@ function start() {
       }
     }
 
-    Object.assign(App.locals, {Config}, {Modules: Object.keys( Modules )});
+    Object.assign(App.locals, {Config}, {NAME: Package.name}, {Modules: Object.keys( Modules )});
 
     App.get('/', (req, res, next) => {
       res.render('home');
