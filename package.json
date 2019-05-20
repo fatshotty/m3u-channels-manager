@@ -2,11 +2,11 @@
   "name": "tv-channels-manager",
   "version": "1.0.0",
   "description": "M3U channels list splitter and serves channel links",
-  "main": "index.js",
+  "main": "application.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "bin": "./executable",
+  "bin": "./tvchannelsmanager",
   "author": "fatshotty",
   "license": "ISC",
   "dependencies": {
