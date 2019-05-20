@@ -392,9 +392,11 @@ function start() {
   //catches uncaught exceptions
   process.on('uncaughtException', function(err) {
     Log.error(`** Error: ${err}`);
+    console.error('** Error occurred **', err);
   });
   process.on('unhandledRejection', function(reason, p) {
     Log.error(`** Promise error: ${reason}`);
+    console.error('** Promise error **', reason);
   });
 
 }
