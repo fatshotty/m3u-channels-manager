@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/fatshotty/m3u-channels-manager"
   },
-  "bin": "./tvchannelsmanager",
+  "bin": "./tvchannelsmanagerita",
   "author": "fatshotty",
   "license": "ISC",
   "dependencies": {

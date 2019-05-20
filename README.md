@@ -92,11 +92,11 @@ Tutti questi flag possono essere combinati tra loro
 # recupera l'EPG del giorno 10 maggio 2019
 m3u-channels-manager --epg --update --today 20190510
 
-# recupera le informazioni di "domani" e "dopo domani" (max: 3)
+# recupera le informazioni di "domani" e "dopo domani" con il flag `days` (max: 3)
 m3u-channels-manager --epg --update --days 2
 
-# recuper le informazioni di "ieri"
-m3u-channels-manager --epg --update --yest 2
+# recupera le informazioni di "ieri"
+m3u-channels-manager --epg --update --yest
 
 # costruisce l'EPG shiftando gli orari in base alle ore specificate. Usato ad esempio per i canali "Rai 1", "Rai 1 +1", "Rai 1 +2" e "Rai 1 +24"
 m3u-channels-manager --epg --update --shift 1 --shift 2 --shift 24
