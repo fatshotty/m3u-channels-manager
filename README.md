@@ -2,9 +2,10 @@ Manage M3U TV Channels list and XMLTV EPG
 #### This module is for Italian M3U channels list only
 #### Installazione
 ```bash
-mkdir m3u-channels-manager
-cd m3u-channels-manager
-npm install m3u-channels-manager
+mkdir tv-channels
+cd tv-channels
+npm install tv-channels
+tv-channels-manager-ita [args...]
 ```
 
 

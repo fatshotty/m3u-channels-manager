@@ -163,9 +163,22 @@ form fieldset {
   cursor: pointer;
 }
 
+.epg-container {
+  overflow-y: hidden;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 #channels-list ul.epg-list {
+  display: inline-block;
+  vertical-align: top;
   font-family: "Courier New";
   font-size: 80%;
+}
+
+#channels-list ul.epg-list li.date {
+  font-size: 150%;
+  font-weight: bold;
 }
 
 #epg-page ul.epg-list li.event-details:hover {

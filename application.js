@@ -24,7 +24,7 @@ require('child_process').exec(`npm view ${Package.name} versions --json`, functi
     }
   } catch( e ) {
     if (err) {
-      console.warn('- cannot get list of packages -', err);
+      console.warn('- cannot get list of available versions - ', err.message.split('\n').shift());
     }
   }
 });
