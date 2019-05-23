@@ -92,17 +92,28 @@ $0 --m3u --stream-url Rai__1__Full__HD
 
 
 ## Modulo EPG
+Ogni comando necessita di un format di output. Default `json`.
+```bash
+$0 --epg [comando...] --format [xml|json]
+```
 ##### Attivazione del module EPG
 Attivazione del modulo EPG
 ```bash
 $0 --epg
 ```
+
 ###### Aggiornamento del file XMLTV in cache
-Aggiornamento del file XMLTV in cache. Questo comando supporta le seguenti options:
+Aggiornamento del file XMLTV in cache
+```bash
+$0 --epg --update
+```
+Questo comando supporta le seguenti options:
+
 * today YYYYMMDD (default: data odierna)
 * days 2
 * shift 1 2 24
 * yest
+* full (indica se scaricare i dettagli di ogni programma. Default: `false`)
 
 Tutti questi flag possono essere combinati tra loro
 ```bash
@@ -140,6 +151,6 @@ $0 --serve --epg --m3u
 
 
 ## Known Issues
-Mancano il palinsesto di alcuni programmi Rai:
+- Manca il palinsesto di alcuni programmi Rai:
 `Rai Premium`, `Rai movie`, `Rai 4`, `Rai 5`
 
