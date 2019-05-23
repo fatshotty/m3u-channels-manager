@@ -118,20 +118,20 @@ Questo comando supporta le seguenti options:
 Tutti questi flag possono essere combinati tra loro
 ```bash
 # recupera l'EPG del giorno 10 maggio 2019
-$0 --epg --update --today 20190510
+$0 --epg --update --today 20190510 --format xml
 
 # recupera le informazioni di "domani" e "dopo domani" con il flag `days` (max: 3)
-$0 --epg --update --days 2
+$0 --epg --update --days 2 --format xml
 
-# recupera le informazioni di "ieri"
-$0 --epg --update --yest
+# recupera le informazioni di "oggi" e "ieri"
+$0 --epg --update --yest --format xml
 
 # costruisce l'EPG shiftando gli orari in base alle ore specificate. Usato ad esempio per i canali "Rai 1", "Rai 1 +1", "Rai 1 +2" e "Rai 1 +24"
-$0 --epg --update --shift 1 --shift 2 --shift 24
+$0 --epg --update --shift 1 --shift 2 --shift 24 --format xml
 ```
 ```bash
 # Recupera le inforazioni EPG dei giorni 9-10-11-12 maggio costruendo un XMLTV che comprende gli orari +1 e +24
-$0 --epg --update --today 20191005 --days 2 --shift 1 --shift 24 --yest
+$0 --epg --update --today 20190510 --days 2 --shift 1 --shift 24 --yest --format xml
 ```
 ###### Mostra il file XMLTV in cache
 Mostra il file XMLTV in cache
@@ -144,7 +144,9 @@ Carica il modulo HTTP
 ```bash
 $0 --serve
 ```
+
 È necessario abilitare almeno uno dei moduli precedentemente elencati
+
 ```bash
 $0 --serve --epg --m3u
 ```
