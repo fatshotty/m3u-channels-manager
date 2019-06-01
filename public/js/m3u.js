@@ -9,7 +9,8 @@
     $.get(`${PATH}/update`).then( () => {
       window.location.reload();
     }, (resp) => {
-      alert(resp.responseText);
+      alert(`Error:
+        ${resp.responseText}`);
       BtnUpdate.removeAttr('disabled');
     });
   })

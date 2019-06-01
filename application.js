@@ -12,6 +12,8 @@ const App = Express();
 
 let Config = null;
 
+global.CWD = Utils.calculatePath(__filename);
+
 App.locals.HAS_UPDATE = false;
 
 require('child_process').exec(`npm view ${Package.name} versions --json`, function(err, stdout, stderr) {
@@ -34,7 +36,7 @@ const Argv = Args
   .option('config', {
     alias: 'c',
     describe: 'set the configuration file path. It must be a json',
-    default: `${process.cwd()}/config.json`
+    default: `${global.CWD}/config.json`
   })
   .normalize('config')
 
@@ -187,11 +189,14 @@ function start() {
 
   Config = global.Config = require( Argv.config );
 
+  Config.Log = Path.resolve(global.CWD, Config.Log);
+
   Utils.setLogLevel(Argv.debug ? 'debug' : undefined);
 
   let Log = Utils.Log;
 
   Log.info('Starting application...');
+  Log.info(`Referred path  ${global.CWD}`);
 
 
   if ( ! FS.existsSync(Config.Path) ) {
@@ -209,7 +214,7 @@ function start() {
   App.set('view engine', 'pug');
   App.set('views', Path.join(__dirname, '/views') );
   App.use( Express.static( `${__dirname}/public`) );
-  App.use( Express.static( `${__dirname}/node_modules`) );
+  App.use( Express.static( `${global.CWD}/node_modules`) );
 
 
   App.use( CORS() );

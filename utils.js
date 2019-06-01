@@ -4,6 +4,7 @@ const HTTP = require("http");
 const XMLWriter = require('xml-writer');
 const Winston = require('winston');
 const Moment = require('moment');
+const Path = require('path');
 
 let WinstonTransportFile;
 let Log = Winston.createLogger({
@@ -62,8 +63,9 @@ function request(url, headers, callback, streaming) {
 
         callback( null, string );
       })
-    } else if ( res.statusCode >= 400 ) {
-      callback( true, null );
+    } else /* if ( res.statusCode >= 400 ) */ {
+      let error = res.statusCode >= 300 && res.statusCode < 400 ? `url redirects to ${res.headers && res.headers.location}` : res.statusCode;
+      callback( error, null );
     }
   });
 }
@@ -351,4 +353,14 @@ function createXMLTV(EPG, SHIFT) {
 }
 
 
-module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed};
+function calculatePath(filename) {
+  const dir = Path.dirname(filename);
+  let path = dir.split( Path.sep );
+  const index = path.indexOf('node_modules');
+  if ( index > -1 ) {
+    path = path.splice( 0, index );
+  }
+  return path.join(Path.sep);
+}
+
+module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath};

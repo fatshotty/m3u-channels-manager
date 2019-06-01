@@ -345,9 +345,8 @@ class Channel {
 
     this._redirect = data['redirect'];
 
-    this._id = this._name
+    this._id = (data.id || this._tvgId || this._name.replace(/\s/gi, '__'))
                 .replace(/\|/gi, '')
-                .replace(/\s/gi, '__')
                 .replace(/\//gi, '__')
                 .replace(/\+/gi, '__');
 

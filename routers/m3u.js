@@ -67,7 +67,7 @@ function refreshM3U(cb) {
   if ( (`${Config.M3U.Url}`).indexOf('http') == 0 ) {
     Log.info(`Refreshing M3U list from remote url`);
     Log.debug(`remote url: ${Config.M3U.Url}`);
-    Request(Config.M3U.Url, {'User-Agent': 'VLC'}, (err, body) => {
+    Request(Config.M3U.Url, {'User-Agent': 'kodi'}, (err, body) => {
       if ( !err ) {
         M3U_LIST_STRING = body;
         M3UList.clear();
@@ -75,7 +75,7 @@ function refreshM3U(cb) {
         FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
       }
       cb && cb(err, body)
-    });
+    })
   } else {
     Log.info(`Refreshing M3U list from local m3u file`);
     Log.debug(`local file: ${Config.M3U.Url}`);
@@ -85,7 +85,7 @@ function refreshM3U(cb) {
     loadM3U();
     FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
     process.nextTick( () => {
-      cb(false, filedata);
+      cb && cb(false, filedata);
     })
   }
 }
