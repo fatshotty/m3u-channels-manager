@@ -172,18 +172,20 @@ function start() {
   if ( ! FS.existsSync(Argv.config) ) {
     const def_conf = {
       "LogLevel": "info",
-      "Log": "./manager.log",
+      "Log": `${global.CWD}/manager.log`,
       "M3U": {
-        "Url": "",
-        "ExcludeGroups": []
+        "Url": "https://kodilive.eu/iptv/italian.m3u",
+        "ExcludeGroups": [],
+        "UserAgent": "Kodi"
       },
       "Port": 3000,
-      "Path": "./cache",
+      "Path": `${global.CWD}/cache`,
       "EPG": {
         "bulk": 2,
         "Sock": ""
       }
     };
+
     FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
   }
 
@@ -317,6 +319,7 @@ function start() {
       let port = req.body.port;
       let cache = req.body.cache;
       let url = req.body.url;
+      let userAgent = req.body.useragent;
       let groups = req.body.groups;
       let bulk = req.body.bulk;
       let loglevel = req.body.loglevel
@@ -341,7 +344,8 @@ function start() {
           "Url": url,
           "ExcludeGroups": groups.split(',').map( (g) => {
             return g.trim();
-          })
+          }),
+          "UserAgent": userAgent || 'Kodi'
         },
         "Port": Number(port),
         "Path": cache,

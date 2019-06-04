@@ -33,15 +33,20 @@ block content
             small.form-text.text-muted specificare la cartella usata come cache
 
         fieldset
-          h5 Channels
+          h5 Canali TV
           .form-group
             label(for='urlm3u') Percorso da cui recuperare la lista M3U
             input#urlm3u.form-control(type='text' placeholder='URL o percorso' name="url" value=Config.M3U.Url)
             small.form-text.text-muted puoi specificare un path in locale
           .form-group
+            label(for='useragent') User-Agent
+            input#useragent.form-control(type='text', placeholder='Kodi' name="useragent" value=Config.M3U.UserAgent || 'Kodi' )
+            small.form-text.text-muted specificare lo user-agent usato per recuperare la lista, ad esempio 'Kodi' o 'VLC'
+          .form-group
             label(for='excludegroups') Gruppi da escludere
             input#excludegroups.form-control(type='text', placeholder='' name="groups" value=(Config.M3U.ExcludeGroups||[]).join(',') )
             small.form-text.text-muted specificare i gruppi da escludere separati da virgola
+
 
         fieldset
           h5 EPG
