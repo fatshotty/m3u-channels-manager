@@ -165,8 +165,8 @@ Router.get('/channels/update', (req, res, next) => {
   loadChannles();
   ChlPromise.then( () => {
     res.status(204).end();
-  }, () => {
-    res.status(500).end('Si Ã¨ verificato un errore');
+  }, (err) => {
+    res.status(500).end(`Si è verificato un errore ${err}`);
   });
 });
 

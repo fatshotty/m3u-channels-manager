@@ -249,6 +249,8 @@ function createXMLKodiLive(groups, base_url) {
     Color.text('green')
     Color.endElement();
 
+    Item.endElement();
+
   }
 
   Type.endElement();

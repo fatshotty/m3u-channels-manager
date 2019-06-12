@@ -371,9 +371,9 @@ class Channel {
 
   toM3U(header) {
     const row = [`#EXTINF:${this.Duration || -1}`];
-    row.push( `tvg-id="${this.TvgId}"`);
-    row.push( `tvg-logo="${this.TvgLogo}"`);
-    row.push( `tvg-name="${this.TvgName}"`);
+    row.push( `tvg-id="${this.TvgId || ''}"`);
+    row.push( `tvg-logo="${this.TvgLogo || ''}"`);
+    row.push( `tvg-name="${this.TvgName || ''}"`);
     row.push( `group-title="${this.Group.Name}"`);
 
     const res = [`${row.join(' ')},${this.Name}`, this.RedirectUrl];

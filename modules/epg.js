@@ -61,6 +61,7 @@ class SkyEpg {
     return Bulk( ps, bulk || 1 ).then( (all_channels_sky) => {
       // const all_channels_sky = chls.concat( pf ).concat( dig );
       for ( let res of all_channels_sky ) {
+        if ( ! Array.isArray(res) ) continue;
         for( let CHL of res ) {
           const channel_data = {
             Id: CHL.id,
