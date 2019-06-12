@@ -257,6 +257,9 @@ function respondAllGroups(format) {
       });
       return JSON.stringify(resultjson);
       break;
+    case 'xml':
+       return Utils.createXMLKodiLive( M3UList.groups, `${BASE_URL}/list` ).toString();
+      break;
     default:
       const resultm3u = M3UList.groups.map( (g) => {
         return [`#EXTINF:0, ${g.Name}`, `${BASE_URL}/list/${g.Id}.m3u`].join('\n');
@@ -277,9 +280,11 @@ Router.get('/groups.:format?', (req, res, next) => {
     case 'json':
       res.set('content-type', 'application/json');
       break;
+    case 'xml':
+      res.set('content-type', 'application/xml');
+      break;
     default:
       res.set('content-type', 'application/x-mpegURL');
-
   }
 
   res.status(200).end( response );

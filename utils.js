@@ -218,6 +218,48 @@ function parseM3U(str) {
   return M3U.groups[0].channels[0];
 }
 
+
+
+function createXMLKodiLive(groups, base_url) {
+
+  const XW = new XMLWriter();
+  XW.startDocument('1.0', 'UTF-8');
+  const Data = XW.startElement('data');
+
+  const Type = Data.startElement('type');
+  Type.writeAttribute('name', 'list');
+
+  for( let group of groups ) {
+    const Item = Type.startElement('item');
+
+    const Name = Item.startElement('name');
+    Name.text( group.Name );
+    Name.endElement();
+
+    const Link = Item.startElement('link');
+    Link.text( `${[base_url, group.Id].join('/')}.m3u8` )
+    Link.endElement();
+
+
+    const Icon = Item.startElement('icon');
+    Icon.endElement();
+    const Fanart = Item.startElement('fanart');
+    Fanart.endElement();
+    const Color = Item.startElement('color');
+    Color.text('green')
+    Color.endElement();
+
+  }
+
+  Type.endElement();
+  Data.endElement();
+
+  XW.endDocument();
+
+  return XW;
+}
+
+
 function createXMLTV(EPG, SHIFT) {
 
   if ( ! Array.isArray(SHIFT) ) {
@@ -363,4 +405,4 @@ function calculatePath(filename) {
   return path.join(Path.sep);
 }
 
-module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath};
+module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive};
