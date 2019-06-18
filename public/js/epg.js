@@ -95,7 +95,7 @@
       return e.preventDefault();
     }
     const shifts = ShiftEl.val().trim();
-    Generate.attr('href', `${PATH}/show.xml?shift=${shifts}` );
+    Download.attr('href', `${PATH}/show.xml?shift=${shifts}` );
   });
 
   Write.on('click', (e) => {

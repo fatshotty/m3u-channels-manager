@@ -361,6 +361,12 @@ function start() {
 
       FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
 
+      const mod_keys = Object.keys( Modules );
+      for ( let mod_k of mod_keys ) {
+        const mod = Modules[ mod_k ];
+        mod.updateSettings && mod.updateSettings( Config );
+      }
+
       Log.info('updated!')
       setTimeout(() => {
         res.redirect(302, '/')

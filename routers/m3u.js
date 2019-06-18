@@ -351,4 +351,11 @@ function info(mountpath) {
 
 };
 
-module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info};
+
+function updateSettings(config) {
+  let burl = ['http:/', `${config.LocalIp}:${config.Port}`, 'tv'].join('/');
+  M3UList._baseUrl = [burl, 'live'].join('/');
+}
+
+
+module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info, updateSettings};

@@ -322,6 +322,9 @@ class Channel {
     return this._streamUrl;
   }
   get RedirectUrl() {
+    if ( this.StreamUrl.startsWith('plugin://') ) {
+      return this.StreamUrl;
+    }
     let id = encodeURIComponent(this.Id);
     return this._redirect ? [this._redirect, id].join('/') : this.StreamUrl;
   }
@@ -372,7 +375,10 @@ class Channel {
   toM3U(header) {
     const row = [`#EXTINF:${this.Duration || -1}`];
     row.push( `tvg-id="${this.TvgId || ''}"`);
-    row.push( `tvg-logo="${this.TvgLogo || ''}"`);
+
+    if ( ! `${this.TvgLogo}`.startsWith('data:image') ) {
+      row.push( `tvg-logo="${this.TvgLogo || ''}"`);
+    }
     row.push( `tvg-name="${this.TvgName || ''}"`);
     row.push( `group-title="${this.Group.Name}"`);
 
