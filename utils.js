@@ -262,7 +262,7 @@ function createXMLKodiLive(groups, base_url) {
 }
 
 
-function createXMLTV(EPG, SHIFT) {
+function createXMLTV(EPG, SHIFT, GROUPS) {
 
   if ( ! Array.isArray(SHIFT) ) {
     SHIFT = [SHIFT];
@@ -270,6 +270,10 @@ function createXMLTV(EPG, SHIFT) {
 
   if ( SHIFT[0] !== 0 ) {
     SHIFT.unshift( 0 );
+  }
+
+  if ( !GROUPS || GROUPS.length <= 0 ) {
+    GROUPS = null;
   }
 
   Log.info('creating XMLTV');
@@ -282,6 +286,13 @@ function createXMLTV(EPG, SHIFT) {
   TV.writeAttribute('generator-info-name', 'simple tv grab it');
   TV.writeAttribute('generator-info-url', '');
   for( let CHL of EPG ) {
+
+    if ( GROUPS ) {
+      if ( CHL.Group && GROUPS.indexOf( CHL.Group ) <= -1 ) {
+        continue;
+      }
+    }
+
     for ( let shift of SHIFT ) {
       const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;
 
@@ -315,6 +326,12 @@ function createXMLTV(EPG, SHIFT) {
 
 
   for( let CHL of EPG ) {
+
+    if ( GROUPS ) {
+      if ( CHL.Group && GROUPS.indexOf( CHL.Group ) <= -1 ) {
+        continue;
+      }
+    }
 
     for( let shift of SHIFT ) {
       const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;

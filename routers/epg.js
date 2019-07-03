@@ -32,7 +32,7 @@ function parseCommand(Argv, cb) {
     })
 
   } else if ( Argv.show ) {
-    returnCachedEPGFormatted(Argv.shift, Argv.format, cb);
+    returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, cb);
   }
 
 }
@@ -230,7 +230,7 @@ function returnCachedEPG() {
   return EPG.EPG;
 }
 
-function returnCachedEPGFormatted(shift, format, cb) {
+function returnCachedEPGFormatted(shift, format, groups, cb) {
   const json = returnCachedEPG();
 
   let shifts = Array.isArray(shift) ? shift : shift.split(',');
@@ -240,13 +240,20 @@ function returnCachedEPGFormatted(shift, format, cb) {
     return !isNaN( s );
   });
 
+  groups = Array.isArray(groups) ? groups : groups.split(',');
+  groups = groups.map( (g) => {
+    return g.trim();
+  }).filter( (g) => {
+    return !!g;
+  });
+
 
   switch( format ) {
     case 'json':
       cb(  JSON.stringify( json ) );
       break;
     default:
-      cb( Utils.createXMLTV(json, shifts).toString() );
+      cb( Utils.createXMLTV(json, shifts, groups).toString() );
   }
 }
 
@@ -254,10 +261,11 @@ Router.get('/show.:format?', (req, res, next) => {
 
   let shift = req.query.shift || '0';
   const format = req.params.format
+  const groups = req.query.g;
 
   res.status(200);
 
-  returnCachedEPGFormatted(shift, format, (result) => {
+  returnCachedEPGFormatted(shift, format, groups, (result) => {
     switch( format ) {
       case 'json':
         res.set('content-type', 'application/json')

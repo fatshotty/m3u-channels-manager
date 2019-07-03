@@ -67,7 +67,7 @@ function refreshM3U(cb) {
   if ( (`${Config.M3U.Url}`).indexOf('http') == 0 ) {
     Log.info(`Refreshing M3U list from remote url`);
     Log.debug(`remote url: ${Config.M3U.Url}`);
-    Request(Config.M3U.Url, {'User-Agent': 'kodi'}, (err, body) => {
+    Request(Config.M3U.Url, {'User-Agent': Config.M3U.UserAgent || 'kodi'}, (err, body) => {
       if ( !err ) {
         M3U_LIST_STRING = body;
         M3UList.clear();

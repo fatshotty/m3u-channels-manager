@@ -54,21 +54,30 @@ class SkyEpg {
     for ( let link of SCRAP_LINK ) {
       ps.push( (resolve, reject) => {
         Log.info(`Loading channels from ${link}`);
-        this.request(link).then(resolve, reject);
-      } );
+        this.request(link).then( (rsp) => {
+          const last = link.split('/').pop();
+          const groups = last.match(/_(.*)_/i)
+          if ( groups ) {
+            rsp.GROUP = groups[1];
+          }
+          resolve(rsp)
+        }, reject);
+      });
     }
 
     return Bulk( ps, bulk || 1 ).then( (all_channels_sky) => {
       // const all_channels_sky = chls.concat( pf ).concat( dig );
       for ( let res of all_channels_sky ) {
         if ( ! Array.isArray(res) ) continue;
+        const g = res.GROUP;
         for( let CHL of res ) {
           const channel_data = {
             Id: CHL.id,
             Name: CHL.name,
             Number: CHL.number,
             Service: CHL.service,
-            Logo: CHL.channelvisore || CHL.channellogonew
+            Logo: CHL.channelvisore || CHL.channellogonew,
+            Group: g
           };
 
           const exists = this.checkExistingChannel( channel_data.Id );
@@ -227,7 +236,7 @@ class Channel {
   }
 
   get IdEpg() {
-    return this.Name.replace(/[^\w|\+]/g, '_');
+    return this.Name.trim(); // .replace(/[^\w|\+]/g, '_');
   }
   get Name() {
     return this.data.Name;
@@ -240,6 +249,9 @@ class Channel {
   }
   get Logo() {
     return this.data.Logo;
+  }
+  get Group() {
+    return this.data.Group
   }
   get Url() {
     let name = this.Name.replace(/ /g,"-").toLowerCase();
@@ -299,6 +311,7 @@ class Channel {
       Number: this.Number,
       Service: this.Service,
       Logo: this.Logo,
+      Group: this.Group,
       Url: this.Url
     };
     if ( detailed ) {

@@ -117,11 +117,7 @@ const Argv = Args
         default: false,
         describe: 'specifies if load \'yesterday\' or not'
       })
-      .option('shift', {
-        type: 'array',
-        default: ['0'],
-        describe: 'specifies the time-shift expressed in hours'
-      })
+
       .option('full', {
         type: 'boolean',
         default: false,
@@ -134,9 +130,20 @@ const Argv = Args
       type: 'boolean',
       describe: 'show last saved epg. you can specify \'shift\' option'
     })
+      .option('shift', {
+        type: 'array',
+        default: ['0'],
+        describe: 'specifies the time-shift expressed in hours'
+      })
+      .option('cgs', {
+        type: 'array',
+        alias: 'channel-groups',
+        default: [''],
+        describe: 'specifies channels groups to use in XMLTV (musica, bambini, news, mondi, cinema, sport, intrattenimento, digitale, primafila, meglio)'
+      })
 
 
-  .group(['epg', 'channels', 'update', 'show', 'today', 'days', 'yest', 'shift'], 'EPG module')
+  .group(['epg', 'channels', 'update', 'show', 'cgs', 'today', 'days', 'yest', 'shift'], 'EPG module')
 
   .option('serve', {
     type: 'boolean',
