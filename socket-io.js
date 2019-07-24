@@ -23,9 +23,9 @@ class SocketIoTransport extends LogTrasport {
 
 
   log(info, callback) {
-    setImmediate(() => {
-      this.emit('logged', info);
-    });
+    // setImmediate(() => {
+    //   this.emit('logged', info);
+    // });
 
     // Perform the writing to the remote service
     this.socket.emit('logmessage', info);

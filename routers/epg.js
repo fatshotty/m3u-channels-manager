@@ -6,18 +6,17 @@ const Utils = require('../utils');
 const Moment = require('moment');
 const EpgModule = require('../modules/epg');
 const Net = require('net');
-const Pretty = require('pretty-data').pd;
 
 
 const Log = Utils.Log;
 
-const SkyEpg = EpgModule.SkyEpg;
-const SkyChannel = EpgModule.Channel;
-const SkyEvent = EpgModule.Event;
+const EPG = EpgModule;
+// const SkyChannel = EpgModule.Channel;
+// const SkyEvent = EpgModule.Event;
 
 const EPG_CACHE_FILE = Path.join( Config.Path , 'epg_cache.json' );
 
-const EPG = new SkyEpg()
+// const EPG = new SkyEpg()
 
 let LoadingChannels = false;
 let ChlPromise = null;
@@ -81,7 +80,7 @@ function loadFromCache() {
     Log.info('No EPG cache file found...');
   }
 }
-loadFromCache();
+// loadFromCache();
 
 
 
@@ -127,16 +126,20 @@ function updateEPG(today, days, yesterday, details, cb) {
     if ( date ) {
       ChlPromise.then( () => {
         const onFinally = () => {
+          Log.info(`Loading new date...`);
           loadByDate(index);
         };
         EPG.scrapeEpg(date, !!details, Config.EPG.bulk).then( onFinally, onFinally );
       });
     } else {
       // write file cache
-      FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(EPG.EPG), {encoding: 'utf-8'});
-      cb(EPG.EPG);
+      Log.info(`No more dates, completed in ${Date.now() - starttime}ms`);
+      let _epg_ = EPG.EPG;
+      FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(_epg_), {encoding: 'utf-8'});
+      cb(_epg_);
     }
   };
+  let starttime = Date.now()
   loadByDate(0);
 }
 

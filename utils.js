@@ -6,19 +6,16 @@ const Winston = require('winston');
 const Moment = require('moment');
 const Path = require('path');
 
-let WinstonTransportFile;
+let WinstonTransportFile = new Winston.transports.File({ filename: `manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
 let Log = Winston.createLogger({
   level: 'info',
   // format: winston.format.json(),
   // defaultMeta: { service: 'user-service' },
   transports: []
 });
+Log.add(WinstonTransportFile)
 
 function setLogLevel(level) {
-  if ( ! WinstonTransportFile ) {
-    WinstonTransportFile = new Winston.transports.File({ filename: Config.Log , level: 'info', format: Winston.format.simple() })
-    Log.add(WinstonTransportFile)
-  }
   WinstonTransportFile.level = level || Config.LogLevel || 'info';
 }
 
@@ -309,7 +306,7 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
         .text(chl_name)
         .endElement();
 
-      if ( !shift ) {
+      if ( !shift && CHL.Number ) {
         chl_el.startElement('display-name')
           .writeAttribute('lang', 'it')
           .text(CHL.Number)
@@ -355,12 +352,18 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
 
           prg_el.writeAttribute('channel', chl_id);
 
-          const id_el = prg_el.startElement('id')
-                  .text(PRG.Id)
-                  .endElement();
-          const pid_el = prg_el.startElement('pid')
-                  .text(PRG.Pid)
-                  .endElement();
+          const id_el = prg_el.startElement('id');
+          if ( PRG.Id ) {
+            id_el.text(PRG.Id);
+          }
+          id_el.endElement();
+          const pid_el = prg_el.startElement('pid');
+
+          if ( PRG.Pid ) {
+            pid_el.text(PRG.Pid);
+          }
+          pid_el.endElement();
+
           const prg_title = PRG.Title;
           if ( PRG.prima ) {
             prg_title += ' 1^TV';
@@ -369,7 +372,7 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
                   .text(prg_title)
                   .endElement();
           const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Genre)
+                  .text(PRG.Genre || PRG.Subgenre)
                   .endElement();
           const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
                   .text(PRG.Subgenre)
@@ -380,16 +383,42 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
                     .endElement();
           }
           const description_el = prg_el.startElement('desc').writeAttribute('lang', 'it')
-                  .text(PRG.Description)
-                  .endElement();
+          if ( PRG.Description) {
+            description_el.text(PRG.Description);
+          }
+          description_el.endElement();
           const country_el = prg_el.startElement('country')
                   .text('IT')
                   .endElement();
+
+
           const subtitles_el = prg_el.startElement('sub-title').writeAttribute('lang', 'it')
-                  .text( PRG.data.desc )
+          if ( PRG.data.desc ) {
+            subtitles_el.text( PRG.data.desc );
+          }
+          subtitles_el.endElement();
+
+          if ( PRG.Date ) {
+            const date_el = prg_el.startElement('date')
+                  .text( PRG.Date )
                   .endElement();
+          }
+
           const credits_el = prg_el.startElement('credits')
-                  .endElement();
+          if ( PRG.Director ) {
+            credits_el.startElement('director')
+              .text( PRG.Director )
+              .endElement();
+          }
+          if ( PRG.Actors && PRG.Actors.length > 0) {
+            for ( let act of PRG.Actors ){
+              if ( !act ) continue;
+              credits_el.startElement('actor')
+                .text( act )
+                .endElement();
+            }
+          }
+          credits_el.endElement();
 
 
           if ( PRG.Episode ) {
