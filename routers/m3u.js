@@ -128,28 +128,61 @@ function respondStreamUrl(chlId, cb) {
   }
 }
 
-Router.get('/live/:channel', (req, res, next) => {
-  const channel = req.params.channel;
-  Log.info(`Live streaming requested for ${channel}`);
 
-  if ( !channel ) {
-    Log.error('No channel specified');
-    res.status(404).end('No channel specified');
-    return;
-  }
+Router.get('/live', (req, res, next) => {
 
-  respondStreamUrl( channel, (live_channel) => {
-    if ( live_channel ) {
-      Log.debug(`Found live streaming for channel ${channel}`);
-      Log.debug(`redirect to ${live_channel}`);
-      res.redirect(302, live_channel);
+  let channel = req.query.channel;
 
-    } else {
-      res.status(404).end(`No channel link found under name ${channel}`);
-    }
+  getStreamUrlOfChannel(channel).then( (live_channel) => {
+
+    res.redirect(302, live_channel);
+
+  }, (reason) => {
+    res.status(404).end(reason);
   });
 
 });
+
+Router.get('/live/:channel', (req, res, next) => {
+
+  const channel = req.params.channel;
+
+  Log.warn(`you are using a deprecated api. Use '/live?channel=${channel}' instead`);
+
+  getStreamUrlOfChannel(channel).then( (live_channel) => {
+
+    res.redirect(302, live_channel);
+
+  }, (reason) => {
+    res.status(404).end(reason);
+  });
+
+});
+
+
+function getStreamUrlOfChannel(channel) {
+  Log.info(`Live streaming requested for ${channel}`);
+
+  return new Promise( (resolve, reject) => {
+    if ( !channel ) {
+      Log.error('No channel specified');
+      reject('No channel specified');
+      return;
+    }
+
+    respondStreamUrl( channel, (live_channel) => {
+      if ( live_channel ) {
+        Log.debug(`Found live streaming for channel ${channel}`);
+        Log.debug(`redirect to ${live_channel}`);
+        resolve(live_channel);
+
+      } else {
+        reject(`No channel link found under name ${channel}`);
+      }
+    });
+  });
+
+}
 
 
 

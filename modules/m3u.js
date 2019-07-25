@@ -326,7 +326,7 @@ class Channel {
       return this.StreamUrl;
     }
     let id = encodeURIComponent(this.Id);
-    return this._redirect ? [this._redirect, id].join('/') : this.StreamUrl;
+    return this._redirect ? `${this._redirect}?channel=${id}` : this.StreamUrl;
   }
 
   get Group() {
