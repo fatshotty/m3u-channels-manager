@@ -37,6 +37,30 @@ class Rytech {
     this._channels = [];
   }
 
+  reloadFromCache(chls) {
+    this.clear();
+
+    for( let chl_data of chls ) {
+      const chl_epg = chl_data.Epg;
+      const epg_keys = Object.keys( chl_epg );
+      const Chl = new Channel( chl_data );
+      for ( let epgK of epg_keys ) {
+        const events = chl_epg[ epgK ];
+        const arr_events = Chl._epg[ epgK ] = [];
+        for( let evt of events ) {
+          const event = new Event(evt);
+          if ( evt._start ) {
+            event._start = new Date( evt._start );
+          }
+          arr_events.push( event );
+        }
+      }
+      this._channels.push(Chl);
+    }
+
+  }
+
+
   loadChannels(date, bulk) {
 
     return new Promise( (resolve, reject) => {
@@ -342,7 +366,19 @@ class Event {
     return this.data.actors;
   }
 
-  constructor(opts) {
+  constructor(data) {
+
+    let opts = {};
+    opts.desc = data.desc || data.Desc;
+    opts.description = data.description || data.Description;
+    opts.dur = data.dur || data.Duration;
+    opts.episode = data.episode || data.Episode;
+    opts.genre = data.genre || data.Genre;
+    opts.thumbnail_url = data.thumbnail_url || data.Poster;
+    opts.Start = data.Start || data.Start;
+    // "Stop": "2019-07-27T22:00:00.000Z",
+    opts.subgenre = data.subgenre || data.Subgenre;
+    opts.title = data.title || data.Title;
 
     // opts.dur = data.Duration || data.dur;
     // opts.id =  data.Id || data.id;
@@ -360,7 +396,6 @@ class Event {
     if ( opts.Start ) {
       this._start = new Date(opts.Start);
     }
-    this.data.desc = '';
 
     this._normalized = false
   }
@@ -373,6 +408,8 @@ class Event {
   normalize() {
 
     Log.debug(`${LOG_NAME} normalizing: ${this.Title}`);
+
+    this.data.desc = '';
 
     let descr = this.data.genre || '';
     // if ( descr.toLowerCase().indexOf('(s') > -1 ) {
@@ -406,6 +443,25 @@ class Event {
 
     this._normalized = true;
 
+  }
+
+
+  toJSON() {
+    return {
+      Start: this.Start,
+      Stop: this.Stop,
+      Id: this.Id,
+      Pid: this.Pid,
+      Title: this.Title,
+      Genre: this.Genre,
+      Subgenre: this.Subgenre,
+      Poster: this.Poster,
+      Desc: this.data.desc,
+      Description: this.Description,
+      Episode: this.Episode,
+      Prima: this.data.prima,
+      Duration: this.data.dur
+    }
   }
 
 }

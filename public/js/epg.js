@@ -18,10 +18,11 @@
     const chl_id = li.id;
     const $li = $(li);
     const epgcontainer = $li.find('.epg-container');
-    epgcontainer[0].innerHTML = '';
     const epgbtn = $li.find('span.epg');
     epgbtn.on('click', (e) => {
       e.stopPropagation();
+
+      epgcontainer[0].innerHTML = '';
 
       for( let chl of Channels){
         if ( chl.Id == chl_id ) {

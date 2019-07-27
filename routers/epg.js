@@ -50,37 +50,38 @@ function loadFromCache() {
 
     EPG.clear();
 
-    for( let chl_data of data ) {
+    // for( let chl_data of data ) {
 
-      const chl_epg = chl_data.Epg;
-      const epg_keys = Object.keys( chl_epg );
+    //   const chl_epg = chl_data.Epg;
+    //   const epg_keys = Object.keys( chl_epg );
 
-      const Chl = new SkyChannel( chl_data );
+    //   const Chl = new SkyChannel( chl_data );
 
-      for ( let epgK of epg_keys ) {
-        const events = chl_epg[ epgK ];
-        const arr_events = Chl._epg[ epgK ] = [];
-        for( let evt of events ) {
-          const Event = new SkyEvent(evt);
-          if ( evt._start ) {
-            Event._start = new Date( evt._start );
-          }
-          arr_events.push( Event );
-        }
+    //   for ( let epgK of epg_keys ) {
+    //     const events = chl_epg[ epgK ];
+    //     const arr_events = Chl._epg[ epgK ] = [];
+    //     for( let evt of events ) {
+    //       const Event = new SkyEvent(evt);
+    //       if ( evt._start ) {
+    //         Event._start = new Date( evt._start );
+    //       }
+    //       arr_events.push( Event );
+    //     }
 
-      }
+    //   }
 
-      EPG._channels.push( Chl );
-    }
+    //   EPG._channels.push( Chl );
+    // }
+    EPG.reloadFromCache(data);
 
-    Log.info(`EPG file correctly loaded`);
-    Log.debug(`Found ${EPG._channels.length} channels`);
+    Log.info(`EPG file correctly reloaded from cache`);
+    // Log.debug(`Found ${EPG._channels.length} channels`);
 
   } else {
     Log.info('No EPG cache file found...');
   }
 }
-// loadFromCache();
+loadFromCache();
 
 
 
@@ -136,7 +137,7 @@ function updateEPG(today, days, yesterday, details, cb) {
       Log.info(`No more dates, completed in ${Date.now() - starttime}ms`);
       let _epg_ = EPG.EPG;
       FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(_epg_), {encoding: 'utf-8'});
-      cb(_epg_);
+      cb(EPG.XMLTV);
     }
   };
   let starttime = Date.now()
@@ -230,7 +231,7 @@ Router.get('/write', (req, res, next) => {
 
 
 function returnCachedEPG() {
-  return EPG.EPG;
+  return EPG.XMLTV;
 }
 
 function returnCachedEPGFormatted(shift, format, groups, cb) {

@@ -32,6 +32,24 @@ class EPG {
   get EPG() {
 
     // TODO: process epg and get channels
+    let json = {};
+    for ( let module of this.modules ) {
+      let channels = module.EPG;
+      let epg = [];
+      for ( let channel of channels ) {
+        epg.push( channel );
+      }
+      json[ module.NAME ] = epg;
+    }
+
+    return json;
+
+  }
+
+
+  get XMLTV() {
+
+    // TODO: process epg and get channels
     let ids = {};
     let epg = [];
     for ( let module of this.modules ) {
@@ -45,6 +63,27 @@ class EPG {
     }
 
     return epg;
+  }
+
+
+  reloadFromCache(json) {
+
+    let module_names = Object.keys(json);
+    for ( let name of module_names ) {
+
+      let epgModule = this.modules.filter( (m) => m.NAME == name );
+      epgModule = epgModule && epgModule[0];
+      if ( epgModule ) {
+
+        let channels = json[ name ];
+        epgModule.reloadFromCache(channels);
+
+      } else {
+        Log.warn(`Cannot found '${name}' as epg module`);
+      }
+
+    }
+
 
   }
 

@@ -47,6 +47,31 @@ class TvSorrisiEpg {
     this._channels = [];
   }
 
+
+  reloadFromCache(chls) {
+    this.clear();
+
+    for( let chl_data of chls ) {
+      const chl_epg = chl_data.Epg;
+      const epg_keys = Object.keys( chl_epg );
+      const Chl = new Channel( chl_data );
+      for ( let epgK of epg_keys ) {
+        const events = chl_epg[ epgK ];
+        const arr_events = Chl._epg[ epgK ] = [];
+        for( let evt of events ) {
+          const event = new Event(evt);
+          if ( evt._start ) {
+            event._start = new Date( evt._start );
+          }
+          arr_events.push( event );
+        }
+      }
+      this._channels.push(Chl);
+    }
+
+  }
+
+
   loadChannels(date, bulk) {
 
     const ps = [];
@@ -87,7 +112,7 @@ class TvSorrisiEpg {
           const exists = this.checkExistingChannel( CHL.Id );
 
           if ( !exists ) {
-            this._channels.push( new TvSorrisiChannel(CHL) );
+            this._channels.push( new Channel(CHL) );
           }
         }
       }
@@ -208,7 +233,7 @@ class TvSorrisiEpg {
 }
 
 
-class TvSorrisiChannel {
+class Channel {
 
 
   get Id() {
@@ -312,7 +337,7 @@ class TvSorrisiChannel {
         let str_url = a_url && a_url.attributes ? a_url.attributes.href : '';
         let str_episode = episode ? episode.structuredText : '';
 
-        let evt = new TvSorrisiEvent({
+        let evt = new Event({
           id: `prog-${i + 1}`,
           pid: `prog-${i + 1}`,
           dur: (endtime - starttime) / 1000 / 60,
@@ -465,7 +490,7 @@ function getEPGDate(date, starttime) {
 }
 
 
-class TvSorrisiEvent {
+class Event {
 
   get Start() {
     return this._start
@@ -644,4 +669,4 @@ function parseHtmlEvent(html) {
   return result;
 }
 
-module.exports = {TvSorrisiEpg, TvSorrisiChannel, TvSorrisiEvent};
+module.exports = {TvSorrisiEpg, Channel, Event};

@@ -6,7 +6,7 @@ block content
       button#update-chl.btn.btn-primary.btn-sm(title="Aggiorna la lista canali") Aggiorna lista canali
     small Qui puoi visualizzare la lista canali del palinsesto tv
 
-    p= `Canali attuali: ${EPG.EPG.length}`
+    p= `Canali attuali: ${EPG.XMLTV.length}`
 
     #actions
       form.form-inline(method="post" action="/settings")
@@ -40,7 +40,7 @@ block content
 
     #channels-list
       ul
-        each chl in EPG.EPG
+        each chl in EPG.XMLTV
           li.channel-item(id=chl.Id)
             span.logo
               img(src=chl.Logo)
@@ -64,5 +64,5 @@ block content
 
 block extrajs
   script.
-    window.Channels = !{JSON.stringify(EPG.EPG)};
+    window.Channels = !{JSON.stringify(EPG.XMLTV)};
   script(src="/js/epg.js")

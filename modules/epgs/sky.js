@@ -50,6 +50,30 @@ class SkyEpg {
     this._channels = [];
   }
 
+
+  reloadFromCache(chls) {
+    this.clear();
+
+    for( let chl_data of chls ) {
+      const chl_epg = chl_data.Epg;
+      const epg_keys = Object.keys( chl_epg );
+      const Chl = new Channel( chl_data );
+      for ( let epgK of epg_keys ) {
+        const events = chl_epg[ epgK ];
+        const arr_events = Chl._epg[ epgK ] = [];
+        for( let evt of events ) {
+          const event = new Event(evt);
+          if ( evt._start ) {
+            event._start = new Date( evt._start );
+          }
+          arr_events.push( event );
+        }
+      }
+      this._channels.push(Chl);
+    }
+
+  }
+
   loadChannels(date, bulk) {
 
     return new Promise( (resolve, reject) => {
@@ -298,6 +322,8 @@ class Channel {
         const Utils = require('./utils');
         const LOG_NAME = "Sky - "
         const Log = Utils.Log;
+
+        Log.info('*********** sad sad das  *********');
 
         Log.debug(`${LOG_NAME} Loading event details for ${params.chl.Name} - ${params.data.id}  - ${params.data.desc}`);
 
