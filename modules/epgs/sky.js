@@ -323,8 +323,6 @@ class Channel {
         const LOG_NAME = "Sky - "
         const Log = Utils.Log;
 
-        Log.info('*********** sad sad das  *********');
-
         Log.debug(`${LOG_NAME} Loading event details for ${params.chl.Name} - ${params.data.id}  - ${params.data.desc}`);
 
         let _str_URL = params.URL.replace('{event}', params.data.id);
