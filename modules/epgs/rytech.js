@@ -246,6 +246,10 @@ class Channel {
       let title = prog.title;
       let subTitle = prog['sub-title'];
 
+      if ( title ) {
+        title = title[0]._;
+      }
+
       if ( date > stop ) {
         // do not load previous days
         Log.debug(`${LOG_NAME} skip event because it starts and stops on previous days: ${title}`);
@@ -260,10 +264,6 @@ class Channel {
 
       if ( desc ) {
         desc = desc[0]._;
-      }
-
-      if ( title ) {
-        title = title[0]._;
       }
 
       if ( subTitle ) {

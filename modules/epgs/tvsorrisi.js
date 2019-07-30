@@ -26,6 +26,7 @@ const CATEGORY = [
   ""
 ];
 
+
 const SCRAP_LINK = [];
 for ( let cat of CATEGORY ) {
   SCRAP_LINK.push( URL_CHANNELS.replace('{category}', cat) );
@@ -403,7 +404,10 @@ class Channel {
 
       threadPool.add( data, (params) => {
 
-        const Utils = require('./utils');
+        const Path = require('path');
+        const utils_path = Path.join( __dirname, '..', '..', 'utils');
+        const Utils = require( utils_path );
+
         const LOG_NAME = "TvSorrisi - "
         const Log = Utils.Log;
 

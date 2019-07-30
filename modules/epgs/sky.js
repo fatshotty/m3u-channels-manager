@@ -84,8 +84,9 @@ class SkyEpg {
 
       for ( let link of SCRAP_LINK ) {
         tp.add({link}, (params) => {
-
-          const Utils = require('./utils');
+          const Path = require('path');
+          const utils_path = Path.join( __dirname, '..', '..', 'utils');
+          const Utils = require( utils_path );
           const LOG_NAME = "Sky - "
           const Log = Utils.Log;
           Log.debug(`${LOG_NAME} get channels from ${params.link}`);
@@ -319,7 +320,9 @@ class Channel {
       };
 
       threadPool.add( data, (params) => {
-        const Utils = require('./utils');
+        const Path = require('path');
+        const utils_path = Path.join( __dirname, '..', '..', 'utils');
+        const Utils = require( utils_path );
         const LOG_NAME = "Sky - "
         const Log = Utils.Log;
 

@@ -269,7 +269,6 @@ function returnCachedEPGFormatted(shift, format, groups, associations, cb) {
   }
 }
 
-// /epg/show.xml?shift=&channels=Sky TG24=;Sky TG 24 Meteo=;Class-Cnbc=;Rai News=;TGCOM24=;TG Norba24=;BFC=
 Router.get('/show.:format?', (req, res, next) => {
 
   let shift = req.query.shift || '0';
