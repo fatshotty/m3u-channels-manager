@@ -298,7 +298,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
           Log.info(`${IdEpg} has not been requested`);
           continue;
         } else {
-          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ]}'`);
+          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
           IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
         }
       }
@@ -351,7 +351,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
           Log.info(`${IdEpg} has not been requested`);
           continue;
         } else {
-          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ]}'`);
+          Log.info(`${IdEpg} programs will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
           IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
 
         }
