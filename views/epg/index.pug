@@ -3,61 +3,75 @@ extend ../layout
 block content
   #epg-page
     h3 Electronic Program Guide
-      button#update-chl.btn.btn-primary.btn-sm(title="Aggiorna la lista canali") Aggiorna lista canali
+      if !RO
+        button#update-chl.btn.btn-primary.btn-sm(title="Aggiorna la lista canali") Aggiorna lista canali
     small Qui puoi visualizzare la lista canali del palinsesto tv
 
     p= `Canali attuali: ${EPG.XMLTV.length}`
 
     #actions
       form.form-inline(method="post" action="/settings")
-        .form-group.mx-sm-3.mb-2
-          label(for="date") Data
-          input#date.form-control.form-control-sm(type='date', title="Selezionare il giorno desiderato" value=currentDate min=currentDate max=maxDate)
-        .form-group.mx-sm-3.mb-2
-          label(for="days") Numero giorni
-          select#days.form-control.form-control-sm(title="Selezionare il numero di giorni seguenti" value="0" )
-            option(value="0") 0
-            option(value="1") 1
-            option(value="2") 2
-        .form-group.mx-sm-3.mb-2
-          label(for="yest")
-            input#yest.form-control.form-control-sm(type="checkbox" value="1" title="Includere il giorno prima?" )
-            |  Ieri?
+        if !RO
+          .form-group.mx-sm-3.mb-2
+            label(for="date") Data
+            input#date.form-control.form-control-sm(type='date', title="Selezionare il giorno desiderato" value=currentDate min=currentDate max=maxDate)
+          .form-group.mx-sm-3.mb-2
+            label(for="days") Numero giorni
+            select#days.form-control.form-control-sm(title="Selezionare il numero di giorni seguenti" value="0" )
+              option(value="0") 0
+              option(value="1") 1
+              option(value="2") 2
+          .form-group.mx-sm-3.mb-2
+            label(for="yest")
+              input#yest.form-control.form-control-sm(type="checkbox" value="1" title="Includere il giorno prima?" )
+              |  Ieri?
 
         .form-group.mx-sm-3.mb-2
           label(for="shift") Time-Shift?
-          input#shift.form-control.form-control-sm(type="text" placeholder="Indicare il time-shift separato da virgola" title="Indicare il timeshift di ogni canale (in ore) ex. Fox e Fox+1 Fox+2 ..." )
+          input#shift.form-control.form-control-sm(type="text" placeholder="Indicare il time-shift separato da virgola" title="Indicare il time-shift separato da virgola per ogni canale (in ore) ex. Fox+1 e Fox+2 => 1,2" )
 
-        .form-group.mx-sm-3.mb-2
-          label(for="full")
-            input#full.form-control.form-control-sm(type="checkbox" value="1" title="Indicare se caricare il dettaglio di ogni programma" )
-            |  Dettagliato?
+        if !RO
+          .form-group.mx-sm-3.mb-2
+            label(for="full")
+              input#full.form-control.form-control-sm(type="checkbox" value="1" title="Indicare se caricare il dettaglio di ogni programma" )
+              |  Dettagliato?
 
+          button#update-epg.btn.btn-primary(title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
 
-        a#download-epg.btn.btn-secondary(title="Scarica XMLTV dal file di cache" download="cached_epg.xml" href="#") Scarica XMLTV
-        button#update-epg.btn.btn-primary(title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
-        button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
-
-    #channels-list
-      ul
-        each chl in EPG.XMLTV
-          li.channel-item(id=chl.Id)
-            span.logo
-              img(src=chl.Logo)
-            span.number
-              small= chl.Number
-            if ( chl.Url)
-              span.name
-                a(href=chl.Url target="_blank")= chl.Name
-            else
-              span.name= chl.Name
-            span
-              small(style="font-style: italic")= `(${chl.IdEpg})`
-            if ( chl._epg && Object.keys(chl._epg).length > 0 )
-              span.epg EPG
-            .epg-container
-
-
+      table(style="width: 100%")
+        thead
+          tr
+            th.enable-disable
+              input(type="checkbox" checked id="enable-all")
+            th.logo
+            th.number
+            th.name
+            th.association
+            th.actions
+              a#download-epg.btn.btn-secondary(title="Scarica XMLTV dal file di cache" href="#" target="_blank") Scarica XMLTV
+              if !RO
+                button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
+        tbody#channels-list
+          each chl in EPG.XMLTV
+            tr.channel-item(id=chl.Id)
+              td.enable-disable
+                input(type="checkbox" checked)
+              td.logo
+                img(src=chl.Logo)
+              td.number= chl.Number
+              td.name
+                if (chl.Url)
+                    a(href=chl.Url target="_blank")= chl.Name
+                else
+                  =chl.Name
+                span
+                  small(style="font-style: italic")= `(${chl.IdEpg})`
+              td.association
+                input(type="text" name=chl.IdEpg value="" placeholder=chl.IdEpg)
+              td.actions
+                button.btn.btn-info.btn-sm.epg vedi l'attuale EPG
+            tr
+              td.channel-item.epg-container(colspan=6)
 
 
 

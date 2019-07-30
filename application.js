@@ -32,7 +32,11 @@ require('child_process').exec(`npm view ${Package.name} versions --json`, functi
 });
 
 
-const Argv = Args
+global.Argv = Args
+  .option('ro', {
+    boolean: true,
+    describe: 'enable read-only state'
+  })
   .option('config', {
     alias: 'c',
     describe: 'set the configuration file path. It must be a json',
@@ -287,7 +291,7 @@ function start() {
     Object.assign(App.locals, {Config}, {NAME: Package.name}, {Modules: Object.keys( Modules )});
 
     App.get('/', (req, res, next) => {
-      res.render('home');
+      res.render('home', {RO: Argv.ro});
     });
 
     // Load routers
@@ -318,73 +322,74 @@ function start() {
 
   function serveHTTP() {
 
-    App.post('/settings', (req, res, next) => {
+    if ( !Argv.ro ) {
+      App.post('/settings', (req, res, next) => {
 
-      Log.info('updating settings')
+        Log.info('updating settings')
 
-      let ip = req.body.ip;
-      let port = req.body.port;
-      let cache = req.body.cache;
-      let url = req.body.url;
-      let userAgent = req.body.useragent;
-      let groups = req.body.groups;
-      let bulk = req.body.bulk;
-      let loglevel = req.body.loglevel
-      let sock = req.body.sock;
+        let ip = req.body.ip;
+        let port = req.body.port;
+        let cache = req.body.cache;
+        let url = req.body.url;
+        let userAgent = req.body.useragent;
+        let groups = req.body.groups;
+        let bulk = req.body.bulk;
+        let loglevel = req.body.loglevel
+        let sock = req.body.sock;
 
-      port = parseInt(port);
-      bulk = parseInt(bulk);
+        port = parseInt(port);
+        bulk = parseInt(bulk);
 
-      if ( isNaN(port) ) {
-        port = Config.Port;
-      }
-
-      if ( isNaN(bulk) ) {
-        bulk = Config.EPG.bulk;
-      }
-
-      Config = global.Config = {
-        "LogLevel": loglevel || Config.LogLevel,
-        "LocalIp": ip,
-        "Log": Config.Log,
-        "M3U": {
-          "Url": url,
-          "ExcludeGroups": groups.split(',').map( (g) => {
-            return g.trim();
-          }),
-          "UserAgent": userAgent || 'Kodi'
-        },
-        "Port": Number(port),
-        "Path": cache,
-        "EPG": {
-          "bulk": Number(bulk),
-          "Sock": sock
+        if ( isNaN(port) ) {
+          port = Config.Port;
         }
-      };
 
-      Object.assign(App.locals, {Config});
+        if ( isNaN(bulk) ) {
+          bulk = Config.EPG.bulk;
+        }
 
-      Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
+        Config = global.Config = {
+          "LogLevel": loglevel || Config.LogLevel,
+          "LocalIp": ip,
+          "Log": Config.Log,
+          "M3U": {
+            "Url": url,
+            "ExcludeGroups": groups.split(',').map( (g) => {
+              return g.trim();
+            }),
+            "UserAgent": userAgent || 'Kodi'
+          },
+          "Port": Number(port),
+          "Path": cache,
+          "EPG": {
+            "bulk": Number(bulk),
+            "Sock": sock
+          }
+        };
 
-      FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
+        Object.assign(App.locals, {Config});
 
-      const mod_keys = Object.keys( Modules );
-      for ( let mod_k of mod_keys ) {
-        const mod = Modules[ mod_k ];
-        mod.updateSettings && mod.updateSettings( Config );
-      }
+        Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
 
-      Log.info('updated!')
-      setTimeout(() => {
-        res.redirect(302, '/')
-      }, 1000)
-    });
+        FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
 
+        const mod_keys = Object.keys( Modules );
+        for ( let mod_k of mod_keys ) {
+          const mod = Modules[ mod_k ];
+          mod.updateSettings && mod.updateSettings( Config );
+        }
+
+        Log.info('updated!')
+        setTimeout(() => {
+          res.redirect(302, '/')
+        }, 1000)
+      });
+    }
 
 
     Server.listen(Config.Port, () => {
       Log.info(`Server listing on port ${Config.Port}`);
-      console.log(`Server listing on port ${Config.Port}`)
+      console.log(`Server listing on port ${Config.Port}`);
     });
   }
 

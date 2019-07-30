@@ -7,20 +7,22 @@ html
     script(src="/moment/min/moment.min.js")
     script(src="/bootstrap/dist/js/bootstrap.min.js")
     script(src="/socket.io/socket.io.js")
-  body
+  body(class= RO ? 'read-only' : '')
+
 
     .wrapper
-      if HAS_UPDATE
-        header.update
-          h5(title=`Lanciare il comando \`npm install ${NAME}\` per aggiornare`) Nuova versione disponibile!
-      nav.sidebar
-        .sidebar-content
-          ul.sidebar-nav
-            li.sidebar-header
-              a.sidebar-link(href="/") Home
-            each module in Modules
-              li.sidebar-item.active
-                a.sidebar-link(href=`${module}/`)= module.substring(1).toUpperCase()
+      if !RO
+        if HAS_UPDATE
+          header.update
+            h5(title=`Lanciare il comando \`npm install ${NAME}\` per aggiornare`) Nuova versione disponibile!
+        nav.sidebar
+          .sidebar-content
+            ul.sidebar-nav
+              li.sidebar-header
+                a.sidebar-link(href="/") Home
+              each module in Modules
+                li.sidebar-item.active
+                  a.sidebar-link(href=`${module}/`)= module.substring(1).toUpperCase()
 
 
 
@@ -31,11 +33,12 @@ html
 
 
 
+    if !RO
+      .container-fluid(id="logger")
+        button.btn.btn-outline-info.btn-sm#clear_log(title="Pulisci il log") Pulisci Log
+        .row
+          div.col-md.logger(id="log")
 
-    .container-fluid(id="logger")
-      button.btn.btn-outline-info.btn-sm#clear_log(title="Pulisci il log") Pulisci Log
-      .row
-        div.col-md.logger(id="log")
-
-    script(src="/js/app.js")
+    if !RO
+      script(src="/js/app.js")
     block extrajs

@@ -259,7 +259,7 @@ function createXMLKodiLive(groups, base_url) {
 }
 
 
-function createXMLTV(EPG, SHIFT, GROUPS) {
+function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
   if ( ! Array.isArray(SHIFT) ) {
     SHIFT = [SHIFT];
@@ -291,7 +291,19 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
     }
 
     for ( let shift of SHIFT ) {
-      const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;
+      let IdEpg = CHL.IdEpg;
+
+      if ( ASSOCIATIONS ) {
+        if ( ! (IdEpg in ASSOCIATIONS) ) {
+          Log.info(`${IdEpg} has not been requested`);
+          continue;
+        } else {
+          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ]}'`);
+          IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
+        }
+      }
+
+      const chl_id = shift ? `${IdEpg}-${shift}` : IdEpg;
 
       const chl_name = shift ? `${CHL.Name} +${shift}` : CHL.Name;
       const chl_el = TV.startElement('channel');
@@ -331,7 +343,22 @@ function createXMLTV(EPG, SHIFT, GROUPS) {
     }
 
     for( let shift of SHIFT ) {
-      const chl_id = shift ? `${CHL.IdEpg}-${shift}` : CHL.IdEpg;
+
+      let IdEpg = CHL.IdEpg;
+
+      if ( ASSOCIATIONS ) {
+        if ( ! (IdEpg in ASSOCIATIONS) ) {
+          Log.info(`${IdEpg} has not been requested`);
+          continue;
+        } else {
+          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ]}'`);
+          IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
+
+        }
+      }
+
+
+      const chl_id = shift ? `${IdEpg}-${shift}` : IdEpg;
 
       const dates = Object.keys( CHL.Epg );
 

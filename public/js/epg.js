@@ -6,6 +6,7 @@
   const Download = $('#download-epg');
   const Update = $('#update-epg');
   const Write = $('#write-epg');
+  const EnableAll = $('#enable-all');
 
   const DateEl = $('#date');
   const DaysEl = $('#days');
@@ -14,13 +15,24 @@
   const FullEl = $('#full');
 
 
-  ChannelsList.find('ul li.channel-item').each( (i, li) => {
+  EnableAll.click( function(e) {
+    ChannelsList.find('.enable-disable input[type=checkbox]').prop('checked', $(this).prop('checked') );
+  });
+
+
+  ChannelsList.find('tr.channel-item').each( (i, li) => {
     const chl_id = li.id;
     const $li = $(li);
-    const epgcontainer = $li.find('.epg-container');
-    const epgbtn = $li.find('span.epg');
+    const epgcontainer = $li.next().find('.epg-container');
+    const epgbtn = $li.find('button.epg');
     epgbtn.on('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
+
+      if ( epgcontainer.children().length > 0 ) {
+        epgcontainer[0].innerHTML = '';
+        return;
+      }
 
       epgcontainer[0].innerHTML = '';
 
@@ -96,7 +108,20 @@
       return e.preventDefault();
     }
     const shifts = ShiftEl.val().trim();
-    Download.attr('href', `${PATH}/show.xml?shift=${shifts}` );
+    let channels = [];
+    ChannelsList.find( '.enable-disable input[type=checkbox]:checked' ).each( (i, el) => {
+      let tr = $(el).closest('tr.channel-item');
+      let text = tr.find('.association input[type=text]');
+      channels.push( `${text.attr('name')}=${text.val()}` );
+    });
+    let complete_path = `${document.location.origin}${PATH}/show.xml?shift=${shifts}&channels=${channels.join(';')}`;
+    let copy = $(`<input type="text" value="${complete_path}" />` ).appendTo(document.body);
+    copy[0].focus();
+    copy[0].select();
+    document.execCommand('copy');
+    copy.remove();
+    alert('Path has been copied to clipboard');
+    Download.attr('href', `${complete_path}` );
   });
 
   Write.on('click', (e) => {

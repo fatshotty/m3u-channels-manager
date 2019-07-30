@@ -22,7 +22,6 @@ let LoadingChannels = false;
 let ChlPromise = null;
 
 
-
 function parseCommand(Argv, cb) {
 
   if ( Argv.update ) {
@@ -31,7 +30,7 @@ function parseCommand(Argv, cb) {
     })
 
   } else if ( Argv.show ) {
-    returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, cb);
+    returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, null, cb);
   }
 
 }
@@ -50,28 +49,6 @@ function loadFromCache() {
 
     EPG.clear();
 
-    // for( let chl_data of data ) {
-
-    //   const chl_epg = chl_data.Epg;
-    //   const epg_keys = Object.keys( chl_epg );
-
-    //   const Chl = new SkyChannel( chl_data );
-
-    //   for ( let epgK of epg_keys ) {
-    //     const events = chl_epg[ epgK ];
-    //     const arr_events = Chl._epg[ epgK ] = [];
-    //     for( let evt of events ) {
-    //       const Event = new SkyEvent(evt);
-    //       if ( evt._start ) {
-    //         Event._start = new Date( evt._start );
-    //       }
-    //       arr_events.push( Event );
-    //     }
-
-    //   }
-
-    //   EPG._channels.push( Chl );
-    // }
     EPG.reloadFromCache(data);
 
     Log.info(`EPG file correctly reloaded from cache`);
@@ -85,7 +62,7 @@ loadFromCache();
 
 
 
-function loadChannles() {
+function loadChannels() {
   if ( LoadingChannels ) {
     Log.error('Channels are still in loading');
     return;
@@ -120,7 +97,7 @@ function updateEPG(today, days, yesterday, details, cb) {
     dates.unshift( Moment(today).subtract(1, 'days').toDate() );
   }
 
-  loadChannles();
+  loadChannels();
 
   const loadByDate = (index) => {
     const date = dates[ index++ ];
@@ -166,7 +143,11 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) 
 }
 
 Router.get('/channels/update', (req, res, next) => {
-  loadChannles();
+  if ( Argv.ro ) {
+    res.status(412).end('Operation not permitted');
+    return;
+  }
+  loadChannels();
   ChlPromise.then( () => {
     res.status(204).end();
   }, (err) => {
@@ -175,6 +156,11 @@ Router.get('/channels/update', (req, res, next) => {
 });
 
 Router.get('/update.:format?', (req, res, next) => {
+
+  if ( Argv.ro ) {
+    res.status(412).end('Operation not permitted');
+    return;
+  }
 
   let today = req.query.today;
   let days = parseInt(req.query.days || 0, 10);
@@ -205,6 +191,11 @@ Router.get('/update.:format?', (req, res, next) => {
 
 Router.get('/write', (req, res, next) => {
 
+  if ( Argv.ro ) {
+    res.status(412).end('Operation not permitted');
+    return;
+  }
+
   let shift = req.query.shift || '0';
   let shifts = Array.isArray(shift) ? shift : shift.split(',');
   shifts = shifts.map( (s) => {
@@ -231,20 +222,22 @@ Router.get('/write', (req, res, next) => {
 
 
 function returnCachedEPG() {
+  // reload from cache because other process can update the epg
+  loadFromCache();
   return EPG.XMLTV;
 }
 
-function returnCachedEPGFormatted(shift, format, groups, cb) {
+function returnCachedEPGFormatted(shift, format, groups, associations, cb) {
   const json = returnCachedEPG();
 
-  let shifts = Array.isArray(shift) ? shift : shift.split(',');
+  let shifts = Array.isArray(shift) ? shift : (shift || '').split(',');
   shifts = shifts.map( (s) => {
     return parseInt(s, 10)
   }).filter( (s) => {
     return !isNaN( s );
   });
 
-  groups = Array.isArray(groups) ? groups : groups.split(',');
+  groups = Array.isArray(groups) ? groups : (groups || '').split(',');
   groups = groups.map( (g) => {
     return g.trim();
   }).filter( (g) => {
@@ -252,29 +245,48 @@ function returnCachedEPGFormatted(shift, format, groups, cb) {
   });
 
 
+  if ( associations ) {
+    if ( typeof associations == 'string' ) {
+      associations = associations.trim().split(';');
+    }
+    let _associations = {};
+    for( let ass of associations ) {
+      let matches = ass.match( /^(.*)=(.*)$/i );
+      if ( matches ) {
+        _associations[ matches[1].trim() ] = matches[2].trim();
+      }
+    }
+    associations = _associations
+  }
+
+
   switch( format ) {
     case 'json':
       cb(  JSON.stringify( json ) );
       break;
     default:
-      cb( Utils.createXMLTV(json, shifts, groups).toString() );
+      cb( Utils.createXMLTV(json, shifts, groups, associations).toString() );
   }
 }
 
+// /epg/show.xml?shift=&channels=Sky TG24=;Sky TG 24 Meteo=;Class-Cnbc=;Rai News=;TGCOM24=;TG Norba24=;BFC=
 Router.get('/show.:format?', (req, res, next) => {
 
   let shift = req.query.shift || '0';
-  const format = req.params.format
-  const groups = req.query.g;
+  let format = req.params.format
+  let groups = req.query.g;
+
+  let channels = req.query.channels;
 
   res.status(200);
 
-  returnCachedEPGFormatted(shift, format, groups, (result) => {
+  returnCachedEPGFormatted(shift, format, groups, channels, (result) => {
     switch( format ) {
       case 'json':
         res.set('content-type', 'application/json')
         break;
       default:
+        res.set('content-disposition', `attachment; filename=\"epg-${Moment().format('DD-MM-YYYY')}.xml\"`)
         res.set('content-type', 'application/xml')
     }
     res.end( result );
@@ -282,8 +294,12 @@ Router.get('/show.:format?', (req, res, next) => {
 
 });
 
+
+
+
 Router.get('/', (req, res, next) => {
   res.render('epg/index', {
+    RO: Argv.ro,
     EPG,
     currentDate: Moment().format('YYYY-MM-DD'),
     maxDate: Moment().add(2, 'days').format('YYYY-MM-DD')
@@ -308,4 +324,4 @@ function info(mountpath) {
 
 }
 
-module.exports = {Router, EPG, loadChannles, returnCachedEPG, parseCommand, info};
+module.exports = {Router, EPG, loadChannels, returnCachedEPG, parseCommand, info};
