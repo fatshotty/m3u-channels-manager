@@ -6,3 +6,6 @@ config.json
 node_modules/
 yarn.lock
 package-lock.json
+
+guide_*.xm*
+test.js
