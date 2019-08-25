@@ -5,7 +5,6 @@
   "main": "application.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "cd node_modules/node-threadpool && npm install && npm run build:lib"
   },
   "repository": {
     "type": "git",
