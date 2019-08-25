@@ -31,7 +31,6 @@
     "yargs": "13.2.2",
     "semver": "6.0.0",
     "node-html-parser": "1.1.16",
-    "node-threadpool": "1.5.5",
     "xml2js": "0.4.19",
     "node-gzip": "1.1.2"
   }
