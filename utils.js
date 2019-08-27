@@ -6,7 +6,7 @@ const Winston = require('winston');
 const Moment = require('moment');
 const Path = require('path');
 
-let WinstonTransportFile = new Winston.transports.File({ filename: `manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
+let WinstonTransportFile = new Winston.transports.File({ filename: `${calculatePath(__filename)}/manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
 let Log = Winston.createLogger({
   level: 'info',
   // format: winston.format.json(),

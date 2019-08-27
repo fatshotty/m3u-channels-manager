@@ -1,5 +1,7 @@
 const Utils = require('../utils');
 const OS = require('os');
+const Bulk = require('batch-promise');
+
 const LOG_NAME = "- TP - "
 const Log = Utils.Log;
 
@@ -19,7 +21,9 @@ try {
 
 class ThreadPool {
 
-  constructor(limit) {
+  constructor(limit, bulk) {
+
+    this._bulk = parseInt(bulk, 10) || 1;
 
     this._limit = Math.min( parseInt( limit || 1, 10), NUMBER_CPU );
 
@@ -67,11 +71,18 @@ class ThreadPool {
     }
   }
 
-  _submit(fn, params) {
-    return new Promise( (resolve, reject) => {
+  _submit(fn, params, cb) {
+    let __fn = (resolve, reject) => {
       Log.debug(`${LOG_NAME} single thread started`);
-      fn( params ).then(resolve, reject);
-    });
+      return fn( params ).then( (data) => {
+        cb(data);
+        resolve(data);
+      }, reject);
+    };
+    // orrible workaround, i know
+    let _ = () => {};
+    _.then = () => {return __fn};
+    return _;
   }
 
 
@@ -123,13 +134,20 @@ class ThreadPool {
 
     for ( let thr of next_pool ) {
 
-      promises.push( this._pool.submit( thr.action, thr.params ).then(thr.callback) );
+      promises.push( this._pool.submit( thr.action, thr.params, thr.callback).then(thr.callback) );
 
     }
 
-    Log.info(`Queued ${promises.length} job`);
+    Log.info(`Queued ${promises.length} job with bulk ${Executors ? this._limit : this._bulk} per time`);
 
-    Promise.all( promises ).then( (responses) => {
+    let PS = null;
+    if ( ! Executors ) {
+      PS = Bulk( promises, this._bulk );
+    } else {
+      PS = Promise.all( promises );
+    }
+
+    PS.then( (responses) => {
       Log.info(`${LOG_NAME} temporary pool completed, remaining ${this._threads.length}`);
       this._start();
     }, (err) => {

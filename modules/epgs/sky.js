@@ -3,6 +3,8 @@ const Request = require('request-promise');
 const Bulk = require('batch-promise');
 const ThreadPool = require('../thread_pool');
 
+const Path = require('path');
+
 const Utils = require('../../utils');
 const LOG_NAME = "Sky - "
 const Log = Utils.Log;
@@ -83,10 +85,12 @@ class SkyEpg {
       let tp = new ThreadPool(SCRAP_LINK.length);
 
       for ( let link of SCRAP_LINK ) {
-        tp.add({link}, (params) => {
-          const Path = require('path');
-          const utils_path = Path.join( __dirname, '..', '..', 'utils');
-          const Utils = require( utils_path );
+        let _d = {
+          link,
+          utils_path: Path.join( __dirname, '..', '..', 'utils')
+        };
+        tp.add(_d, (params) => {
+          const Utils = require( params.utils_path );
           const LOG_NAME = "Sky - "
           const Log = Utils.Log;
           Log.debug(`${LOG_NAME} get channels from ${params.link}`);
@@ -308,6 +312,7 @@ class Channel {
     for( let event of epg ) {
 
       let data = {
+        utils_path: Path.join( __dirname, '..', '..', 'utils'),
         URL: SINGLE_EVENT,
         chl: {
           Name: this.Name
@@ -320,9 +325,7 @@ class Channel {
       };
 
       threadPool.add( data, (params) => {
-        const Path = require('path');
-        const utils_path = Path.join( __dirname, '..', '..', 'utils');
-        const Utils = require( utils_path );
+        const Utils = require( params.utils_path );
         const LOG_NAME = "Sky - "
         const Log = Utils.Log;
 

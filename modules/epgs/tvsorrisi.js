@@ -4,6 +4,9 @@ const Bulk = require('batch-promise');
 const ThreadPool = require('../thread_pool');
 const Utils = require('../../utils');
 const HTMLParser = require('node-html-parser');
+const FS = require('fs');
+
+const Path = require('path');
 
 const LOG_NAME = "TvSorrisi - "
 const Log = Utils.Log;
@@ -173,7 +176,7 @@ class TvSorrisiEpg {
 
       Bulk( all_channel_req, bulk || 1).then( () => {
 
-        let tp = new ThreadPool(10);
+        let tp = new ThreadPool(10, bulk);
 
         let all_events_req = [];
         if ( details ) {
@@ -191,7 +194,7 @@ class TvSorrisiEpg {
           Log.info(`${LOG_NAME} Loding details for ${all_events_req.length} programs`);
         }
 
-
+        Log.info('Starting ThreadPool');
         tp.start( () => {
           Log.info(`${LOG_NAME} No more request channels and programs - finish`);
           tp.terminate( () => {
@@ -389,6 +392,7 @@ class Channel {
     for( let event of epg ) {
 
       let data = {
+        utils_path: Path.join( __dirname, '..', '..', 'utils'),
         URL: event.Url,
         chl: {
           Name: this.Name
@@ -404,9 +408,7 @@ class Channel {
 
       threadPool.add( data, (params) => {
 
-        const Path = require('path');
-        const utils_path = Path.join( __dirname, '..', '..', 'utils');
-        const Utils = require( utils_path );
+        const Utils = require( params.utils_path );
 
         const LOG_NAME = "TvSorrisi - "
         const Log = Utils.Log;
@@ -418,6 +420,7 @@ class Channel {
         }
 
         const _Req = require('request-promise');
+        Log.info(`${LOG_NAME} Try get information from: ${params.URL}`);
         const req = _Req( {
           uri: params.URL
         });
@@ -473,7 +476,8 @@ class Channel {
   request(url) {
     return Request({
       uri: url,
-      json: true
+      json: true,
+      timeout: 0
     });
   }
 
