@@ -377,7 +377,7 @@ function info(mountpath) {
   console.log(`Redirects to the url of the channel by its ID`);
   console.log(`- ${mountpath}/list/:group_id.:format?`);
   console.log(`Responds all channels by given group_id. format can be one of 'm3u', 'json'`);
-  console.log(`- ${Router.mountpath}/list.:format?`);
+  console.log(`- ${mountpath}/list.:format?`);
   console.log(`Responds entire list of channels. format can be one of 'm3u', 'json'. You can specify groups passing '?groups=group_id,group_id' as query string`);
   console.log(`- ${mountpath}/groups.:format?`);
   console.log(`Responds all groups details. format can be one of 'm3u', 'json'`);
