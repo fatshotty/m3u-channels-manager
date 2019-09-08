@@ -396,22 +396,30 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
             prg_title += ' 1^TV';
           }
           const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')
-                  .text(prg_title)
+                  .text(prg_title || '')
                   .endElement();
           const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Genre || PRG.Subgenre)
+                  .text(PRG.Genre || PRG.Subgenre || '')
                   .endElement();
           const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Subgenre)
+                  .text(PRG.Subgenre || '')
                   .endElement();
+
+          let category = extractCategoryByGenre(PRG.Genre || PRG.Subgenre || '');
+          if ( category ) {
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                    .text( category )
+                    .endElement();
+          }
+
           if ( PRG.Poster ) {
             const thumbnail_url_el = prg_el.startElement('icon')
-                    .text(PRG.Poster)
+                    .text(PRG.Poster || '')
                     .endElement();
           }
           const description_el = prg_el.startElement('desc').writeAttribute('lang', 'it')
           if ( PRG.Description) {
-            description_el.text(PRG.Description);
+            description_el.text(PRG.Description || '');
           }
           description_el.endElement();
           const country_el = prg_el.startElement('country')
@@ -421,7 +429,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
           const subtitles_el = prg_el.startElement('sub-title').writeAttribute('lang', 'it')
           if ( PRG.data.desc ) {
-            subtitles_el.text( PRG.data.desc );
+            subtitles_el.text( PRG.data.desc.substring(0, 50) );
           }
           subtitles_el.endElement();
 
@@ -467,6 +475,38 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
   XW.endDocument();
 
   return XW;
+}
+
+
+
+function extractCategoryByGenre(genre) {
+  // Arts / Culture (without music)
+  // Children's / Youth programs
+  // Education / Science / Factual topics
+  // Leisure hobbies
+  // Movie / Drama
+  // Music / Ballet / Dance
+  // News / Current affairs
+  // Show / Game show
+  // Social / Political issues / Economics
+  // Sports
+
+  genre = ` ${genre} `.toLowerCase();
+
+  if ( genre.indexOf(` musica ` ) > -1 ) {
+    return 'Music / Ballet / Dance';
+  } else if (  genre.indexOf( ' informazione ' ) > -1  || genre.indexOf( ' notiziario ' ) > -1  ) {
+    return 'News / Current affairs';
+  } else if (  genre.indexOf( ' mondo ' ) > -1  || genre.indexOf( ' tendenze ' ) > -1  ) {
+    return 'Education / Science / Factual topics';
+  } else if ( genre.indexOf(` educational ` ) > -1 ) {
+    return 'Education / Science / Factual topics'
+  } else if ( genre.indexOf(` cartoni animati ` ) > -1 ) {
+    return 'Children\'s / Youth programs';
+  } else {
+    return null
+  }
+
 }
 
 
