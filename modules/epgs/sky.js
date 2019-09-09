@@ -20,8 +20,8 @@ const PROGRAM_POSTER = `${SKY_DOMAIN}/app/guidatv/images{icon}`;
 const REG_EXP_SEASON_EPISODE = /^((S(\w+)?(\d+))?)(\s?)((E(\w+)?(\d+))?)/i;
 
 const CATEGORY = [
-  "musica",
-  "bambini",
+  // "musica",
+  // "bambini",
   "news",
   "mondi",
   "cinema",

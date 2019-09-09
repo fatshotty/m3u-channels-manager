@@ -1,0 +1,86 @@
+{
+  "Categories": {
+    "informazione": {
+      "notiziario":          "News and current affairs",
+      "economia":            "Current affairs",
+      "news":                "News and current affairs",
+      "meteo":               "Factual",
+      "sport":               "Sport",
+      "regioni":             "News and current affairs"
+    },
+
+    "mondo e tendenze": {
+      "politica":            "Current affairs",
+      "magazine cultura":    "News and current affairs",
+      "cucina":              "Cookery",
+      "societa":             "Arts and culture",
+      "arte e cultura":      "Arts and culture",
+      "mondi e culture":     "Arts and culture",
+      "tecnologia":          "Science",
+      "economia":            "Current affairs",
+      "documentario":        "Documentary",
+      "moda":                "Factual",
+      "natura":              "Nature",
+      "scienza":             "Science",
+      "lifestyle":           "Entertainment",
+      "musica":              "Music",
+      "storia":              "Interests",
+      "sport":               "Sport",
+      "avventura":           "Interests",
+      "pesca":               "Interests",
+      "attualita":           "Interests",
+      "reportage":           "Interests",
+      "popoli":              "Interests",
+      "viaggi":              "Travel",
+      "magazine scienza":    "Science",
+      "magazine cinema":     "Interests",
+      "cinema":              "Interests",
+      "caccia":              "Entertainment",
+      "magazine":            "Discussion/Debate",
+      "religione":           "Religion",
+      "magazine natura":     "Nature"
+    },
+
+
+
+    "sport": {
+      "Default": "Sport"
+    },
+
+
+    "intrattenimento": {
+      "talk show":           "Talk show",
+      "telefilm":            "Soap",
+      "fiction":             "Soap",
+      "sit com":             "Sitcom",
+      "reality show":        "Reality",
+      "spettacolo":          "Interests",
+      "show":                "Reality",
+      "intrattenimento":     "Entertainment",
+      "quiz":                "Game show",
+      "soap opera":          "Soap",
+      "telenovela":          "Soap",
+      "miniserie":           "Comedy",
+      "animazione":          "Animation"
+    },
+
+
+    "altri programmi": {
+      "shopping":            "Consumer",
+      "educational":         "Education",
+      "film per adulti":     "Film"
+    },
+
+
+    "ragazzi e musica": {
+      "Default":             "Children",
+      "musica":              "Music",
+      "educational":         "Education",
+      "film animazione":     "Animation"
+    },
+
+    "film": {
+      "Default": "Film"
+    }
+  }
+}

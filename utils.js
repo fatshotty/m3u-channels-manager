@@ -5,6 +5,7 @@ const XMLWriter = require('xml-writer');
 const Winston = require('winston');
 const Moment = require('moment');
 const Path = require('path');
+const Constant = require('./constants.json');
 
 let WinstonTransportFile = new Winston.transports.File({ filename: `${calculatePath(__filename)}/manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
 let Log = Winston.createLogger({
@@ -398,6 +399,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
           const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')
                   .text(prg_title || '')
                   .endElement();
+
           const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
                   .text(PRG.Genre || PRG.Subgenre || '')
                   .endElement();
@@ -405,12 +407,24 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                   .text(PRG.Subgenre || '')
                   .endElement();
 
-          let category = extractCategoryByGenre(PRG.Genre || PRG.Subgenre || '');
+          let category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre);
+          Log.debug(`extracted category: ${category}`);
           if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
                     .text( category )
                     .endElement();
           }
+
+          category = extractCategoryByGenreTVHeadEnd(PRG.Genre, PRG.Subgenre);
+          Log.debug(`extracted category tvheadend: ${category}`);
+          if ( category ) {
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
+                    .text( category )
+                    .endElement();
+          }
+
+
+
 
           if ( PRG.Poster ) {
             const thumbnail_url_el = prg_el.startElement('icon')
@@ -479,7 +493,11 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
 
 
-function extractCategoryByGenre(genre) {
+function extractCategoryByGenre(genre, subgenre) {
+
+  genre = `${genre || ''}`.toLowerCase();
+  subgenre = `${subgenre || ''}`.toLowerCase();
+
   // Arts / Culture (without music)
   // Children's / Youth programs
   // Education / Science / Factual topics
@@ -491,22 +509,59 @@ function extractCategoryByGenre(genre) {
   // Social / Political issues / Economics
   // Sports
 
-  genre = ` ${genre} `.toLowerCase();
 
-  if ( genre.indexOf(` musica ` ) > -1 ) {
-    return 'Music / Ballet / Dance';
-  } else if (  genre.indexOf( ' informazione ' ) > -1  || genre.indexOf( ' notiziario ' ) > -1  ) {
-    return 'News / Current affairs';
-  } else if (  genre.indexOf( ' mondo ' ) > -1  || genre.indexOf( ' tendenze ' ) > -1  ) {
-    return 'Education / Science / Factual topics';
-  } else if ( genre.indexOf(` educational ` ) > -1 ) {
-    return 'Education / Science / Factual topics'
-  } else if ( genre.indexOf(` cartoni animati ` ) > -1 ) {
-    return 'Children\'s / Youth programs';
-  } else {
-    return null
+  // TV HEAD END
+
+  // genre = ` ${genre} `.toLowerCase();
+
+  // Log.debug(`extracting cateogry from ${genre}`);
+
+  // if ( genre.indexOf(` musica ` ) > -1 ) {
+  //   return 'Music / Ballet / Dance';
+  // } else if (  genre.indexOf( ' informazione ' ) > -1  || genre.indexOf( ' notiziario ' ) > -1  ) {
+  //   return 'News / Current affairs';
+  // } else if (  genre.indexOf( ' mondo ' ) > -1  || genre.indexOf( ' tendenze ' ) > -1  ) {
+  //   return 'Education / Science / Factual topics';
+  // } else if ( genre.indexOf(` educational ` ) > -1 ) {
+  //   return 'Education / Science / Factual topics'
+  // } else if ( genre.indexOf(` cartoni animati ` ) > -1 ) {
+  //   return 'Children\'s / Youth programs';
+  // } else if ( genre.indexOf(` notizie ` ) > -1 ) {
+  //   return 'News / Current affairs';
+  // } else if ( genre.indexOf(` storia ` ) > -1 ) {
+  //   return 'Arts / Culture'
+  // } else if ( genre.indexOf(`sport` ) > -1 ) {
+  //   return 'Sports';
+  // } else {
+  //   return null
+  // }
+
+
+  // any KODI PVR
+
+  Log.debug(`extracting category from ${genre}`);
+
+  let Categories = Constant.Categories;
+
+  if ( genre in Categories ) {
+    Log.debug(`found category ${genre}`);
+    let subCategories = Categories[ genre ];
+    let def = subCategories.Default;
+    if ( subgenre in subCategories ) {
+      Log.debug(`found sub-category ${subgenre}`);
+      return subCategories[ subgenre ];
+    }
+    Log.debug(`using default sub-category`);
+    return def
   }
 
+  return null
+
+}
+
+
+function extractCategoryByGenreTVHeadEnd(genre, subgenre) {
+  return null;
 }
 
 

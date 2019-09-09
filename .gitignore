@@ -9,3 +9,5 @@ package-lock.json
 
 guide_*.xm*
 test.js
+
+genres.txt
