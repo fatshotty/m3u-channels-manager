@@ -400,15 +400,9 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                   .text(prg_title || '')
                   .endElement();
 
-          const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Genre || PRG.Subgenre || '')
-                  .endElement();
-          const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Subgenre || '')
-                  .endElement();
 
           let category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre);
-          Log.debug(`extracted category: ${category}`);
+          Log.debug(`extracted PVR category: ${category}`);
           if ( category ) {
             const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
                     .text( category )
@@ -416,14 +410,19 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
           }
 
           category = extractCategoryByGenreTVHeadEnd(PRG.Genre, PRG.Subgenre);
-          Log.debug(`extracted category tvheadend: ${category}`);
+          Log.debug(`extracted TvHeadEnd category : ${category}`);
           if ( category ) {
             const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
                     .text( category )
                     .endElement();
           }
 
-
+          const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                  .text(PRG.Genre || PRG.Subgenre || '')
+                  .endElement();
+          const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                  .text(PRG.Subgenre || '')
+                  .endElement();
 
 
           if ( PRG.Poster ) {
