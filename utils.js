@@ -556,7 +556,7 @@ function extractCategoryByGenre(genre, subgenre, index) {
       return subCategories[ subgenre ][ index ];
     }
     Log.debug(`using default sub-category`);
-    return def
+    return def ? def[ index ] : null;
   }
 
   return null
