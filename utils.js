@@ -7,6 +7,11 @@ const Moment = require('moment');
 const Path = require('path');
 const Constant = require('./constants.json');
 
+
+const PVR_GENRE_INDEX = 0;
+const TV_HEAD_PVR_GENRE_INDEX = 1;
+
+
 let WinstonTransportFile = new Winston.transports.File({ filename: `${calculatePath(__filename)}/manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
 let Log = Winston.createLogger({
   level: 'info',
@@ -401,18 +406,18 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                   .endElement();
 
 
-          let category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre);
+          let category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, PVR_GENRE_INDEX);
           Log.debug(`extracted PVR category: ${category}`);
           if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
                     .text( category )
                     .endElement();
           }
 
-          category = extractCategoryByGenreTVHeadEnd(PRG.Genre, PRG.Subgenre);
+          category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, TV_HEAD_PVR_GENRE_INDEX);
           Log.debug(`extracted TvHeadEnd category : ${category}`);
           if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'en')
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
                     .text( category )
                     .endElement();
           }
@@ -492,7 +497,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
 
 
-function extractCategoryByGenre(genre, subgenre) {
+function extractCategoryByGenre(genre, subgenre, index) {
 
   genre = `${genre || ''}`.toLowerCase();
   subgenre = `${subgenre || ''}`.toLowerCase();
@@ -548,7 +553,7 @@ function extractCategoryByGenre(genre, subgenre) {
     let def = subCategories.Default;
     if ( subgenre in subCategories ) {
       Log.debug(`found sub-category ${subgenre}`);
-      return subCategories[ subgenre ];
+      return subCategories[ subgenre ][ index ];
     }
     Log.debug(`using default sub-category`);
     return def
@@ -556,11 +561,6 @@ function extractCategoryByGenre(genre, subgenre) {
 
   return null
 
-}
-
-
-function extractCategoryByGenreTVHeadEnd(genre, subgenre) {
-  return null;
 }
 
 
