@@ -405,14 +405,7 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                   .text(prg_title || '')
                   .endElement();
 
-
-          let category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, PVR_GENRE_INDEX);
-          Log.debug(`extracted PVR category: ${category}`);
-          if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                    .text( category )
-                    .endElement();
-          }
+          let category;
 
           category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, TV_HEAD_PVR_GENRE_INDEX);
           Log.debug(`extracted TvHeadEnd category : ${category}`);
@@ -421,6 +414,15 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                     .text( category )
                     .endElement();
           }
+
+          category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, PVR_GENRE_INDEX);
+          Log.debug(`extracted PVR category: ${category}`);
+          if ( category ) {
+            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                    .text( category )
+                    .endElement();
+          }
+
 
           const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
                   .text(PRG.Genre || PRG.Subgenre || '')
