@@ -5,11 +5,16 @@ const Router = Express.Router();
 const Request = require('../utils').request;
 const M3UK = require('../modules/m3u').M3U;
 
+const EPG = require('../modules/epg');
+
 const Utils = require('../utils');
 const Log = Utils.Log;
 
 const M3U_CACHE_FILE = Path.join( Config.Path , 'm3u_cache.txt' );
+const PERSONAL_FILE = Path.join( Config.Path , 'm3u_personal.json' );
+
 let M3U_LIST_STRING = '';
+let M3U_PERSONAL = null;
 
 const BASE_URL = ['http:/', `${Config.LocalIp}:${Config.Port}`, 'tv'].join('/');
 
@@ -23,6 +28,16 @@ if ( FS.existsSync(M3U_CACHE_FILE) ) {
 } else {
   refreshM3U();
 }
+
+if ( FS.existsSync(PERSONAL_FILE) ) {
+  M3U_PERSONAL = FS.readFileSync(PERSONAL_FILE, {encoding: 'utf-8'});
+  try {
+    M3U_PERSONAL = JSON.parse(M3U_PERSONAL);
+  } catch(e) {
+    Log.error(`Cannot parse 'personal' list`, e);
+  }
+}
+
 
 function loadM3U() {
   M3UList.load(M3U_LIST_STRING);
@@ -160,6 +175,27 @@ Router.get('/live/:channel', (req, res, next) => {
 });
 
 
+Router.get('/personal/live', (req, res, next) => {
+
+  let channel = req.query.channel;
+  let pipe = !!req.query.p;
+
+  getMappedStreamUrlOfChannel(channel).then( (live_channel) => {
+
+    if ( ! pipe ) {
+      res.redirect(302, live_channel);
+    } else {
+      // TODO: piping
+      res.status(503).end(`Piping is not implemented yet`);
+    }
+
+  }, (reason) => {
+    res.status(404).end(reason);
+  });
+
+});
+
+
 function getStreamUrlOfChannel(channel) {
   Log.info(`Live streaming requested for ${channel}`);
 
@@ -182,6 +218,32 @@ function getStreamUrlOfChannel(channel) {
     });
   });
 
+}
+
+
+function getMappedStreamUrlOfChannel(req_chl_id) {
+  Log.info(`MappedLive streaming requested for ${req_chl_id}`);
+  if ( ! M3U_PERSONAL ) {
+    Log.error(`No map found, it must be set from /tv/personal`);
+    return Promise.reject(`No mapped channels have been set`);
+  }
+
+  Log.debug(`Searching map for ${req_chl_id}`);
+  let groups_keys = Object.keys(M3U_PERSONAL);
+  for ( let grp_key of groups_keys ) {
+    Log.debug(`Searcing in group: ${grp_key}`);
+    let chls = M3U_PERSONAL[ grp_key ];
+    let chls_keys = Object.keys(chls);
+    for ( let chl_key of chls_keys ) {
+      let chl = chls[ chl_key ];
+      if ( chl == req_chl_id ) {
+        Log.info(`found channels ${chl_key} by ${req_chl_id}`);
+        return getStreamUrlOfChannel(chl_key);
+      }
+    }
+  }
+
+  Promise.reject(`No channel found searching for ${req_chl_id}`);
 }
 
 
@@ -327,6 +389,105 @@ Router.get('/groups.:format?', (req, res, next) => {
 
 Router.get('/', (req, res, next) => {
   res.render('m3u/index', {M3UList});
+});
+
+
+
+
+function respondPersonalM3U(format) {
+  let resultm3u = [];
+  if ( M3U_PERSONAL ) {
+    let group_keys = Object.keys(M3U_PERSONAL);
+
+    for ( let grp_key of group_keys ) {
+      let personalGroup = M3U_PERSONAL[ grp_key ];
+      let group = M3UList.getGroupById( grp_key );
+      if ( group ) {
+        for ( let channel of group.channels ) {
+
+          if ( channel.Id in personalGroup ) {
+            let personalChannel = personalGroup[ channel.Id ];
+
+            let temp_id = channel._id;
+            let temp_tvgid = channel.TvgId;
+            let temp_tvgname = channel.TvgName;
+            let temp_name = channel.Name;
+            let temp_redirect = channel._redirect;
+
+            channel._id = personalChannel;
+            channel._tvgId = personalChannel;
+            channel._tvgName = personalChannel;
+            channel._name = personalChannel;
+
+            if ( temp_redirect ) {
+              let url = new URL( temp_redirect );
+              url.pathname = '/tv/personal/live';
+              // TODO: add piping
+              channel._redirect = url.toString();
+            }
+
+            resultm3u.push( channel.toM3U() );
+
+            channel._id = temp_id;
+            channel._tvgId = temp_tvgid;
+            channel._tvgName = temp_tvgname;
+            channel._name = temp_name;
+            channel._redirect = temp_redirect;
+
+          }
+
+        }
+      }
+    }
+
+  }
+
+  resultm3u.unshift('#EXTM3U');
+  return resultm3u.join('\n')
+}
+
+
+Router.get('/personal.:format?', (req, res, next) => {
+  let format = req.params.format || 'html';
+
+  if ( format === 'json' ) {
+
+    res.set('content-type', 'application/json');
+    res.status(200).end(  JSON.stringify( M3U_PERSONAL )  );
+
+  } else if ( format.indexOf('m3u') === 0 ) {
+
+    let resp = respondPersonalM3U();
+    res.set('content-type', 'application/x-mpegURL');
+    res.status(200).end( resp );
+
+  } else {
+    // html or other format
+    res.render('m3u/manager', {M3UList, Channels: EPG.GroupedChannels});
+  }
+
+
+});
+
+
+
+
+function saveM3uPersonal(data) {
+  M3U_PERSONAL = data;
+  FS.writeFileSync(PERSONAL_FILE, JSON.stringify(data, null, 2), {encoding: 'utf-8'} );
+}
+
+
+Router.post('/personal', (req, res, next) => {
+  saveM3uPersonal( req.body );
+
+  res.status(201).end();
+});
+
+Router.delete('/personal', (req, res, next) => {
+  M3U_PERSONAL = {};
+  saveM3uPersonal( M3U_PERSONAL )
+  res.status(201).end();
 });
 
 Router.get('/search.:format', (req, res, next) => {

@@ -4,7 +4,7 @@
   "description": "M3U channels list splitter and serves channel links",
   "main": "application.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "webpack --config webpack-config.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +31,19 @@
     "semver": "6.0.0",
     "node-html-parser": "1.1.16",
     "xml2js": "0.4.19",
-    "node-gzip": "1.1.2"
+    "node-gzip": "1.1.2",
+    "vue": "2.6.10",
+    "jquery": "3.4.1",
+    "socket.io-client": "2.3.0",
+    "popper.js": "1.15.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "webpack": "^3.10.0",
+    "css-loader": "3.1.0",
+    "pug-loader": "2.4.0"
   }
 }

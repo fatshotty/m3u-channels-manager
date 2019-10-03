@@ -4,7 +4,10 @@ block content
   #m3u-page
     h3 Canali TV
       button#update.btn.btn-primary.btn-sm(title="Aggiorna la lista") Aggiorna
+      a.right.btn.btn-outline-info(href="/tv/personal" style="float: right") Gestore
+      a.right.btn.btn-outline-info(href="/tv/personal.m3u8" style="float: right") Ottieni lista personale
     small Qui puoi spulciare la tua lista
+
 
     p= `Lista attuale: ${M3UList.groups.length} gruppi e ${(()=>{let count=0; M3UList.groups.map( g => count += g.channels.length ); return count})()} canali`
 
@@ -35,4 +38,4 @@ block content
 
 
 block extrajs
-  script(src="/js/m3u.js")
+  script(src="/m3u.bundled.js")

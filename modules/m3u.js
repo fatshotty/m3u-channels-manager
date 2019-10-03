@@ -28,6 +28,17 @@ class M3U {
   }
 
   getGroupById(id) {
+
+    for( let g of this.groups ) {
+      if ( g.Id == name ) {
+        return g;
+      }
+    }
+
+    return null;
+  }
+
+  getGroupById(id) {
     for( let g of this.groups ) {
       if ( g.Id == id ) {
         return g;
@@ -57,6 +68,27 @@ class M3U {
     return null;
   }
 
+  getChannelByGroupId(chlId, grpId) {
+    let groups = this.groups;
+
+    if ( group ) {
+      const g = this.getGroupById(grpId);
+      if ( g ) {
+        groups = [ g ];
+      }
+    }
+
+    for( let g of groups ) {
+      for ( let c of g.channels ) {
+        if ( c.Id == id ) {
+          return c;
+        }
+      }
+    }
+
+    return null;
+  }
+
   load(string) {
 
     Log.debug('Parsing m3u list');
@@ -70,6 +102,7 @@ class M3U {
 
     while( row = data.shift() ) {
       row = row.replace(/\r/, '');
+      if ( !row ) continue;
       if ( row.indexOf('#EXTM3U') === 0 ) {
         // skip header
         continue;
@@ -95,6 +128,8 @@ class M3U {
 
     for( let i = 0; row = data[ i ]; i++ ) {
       row = row.replace(/\r/, '');
+
+      if ( row.length <= 0) continue;
 
       if ( i % 100 === 0 ) {
         Log.debug( `parsing channel ${i}`);
@@ -271,6 +306,11 @@ class Group {
                 .replace(/\s/gi, '__')
                 .replace(/\//gi, '__')
                 .replace(/\+/gi, '__');
+  }
+
+
+  getChannelById(id) {
+    return this.channels.filter( c => c.Id == id )[0]
   }
 
   createAddChannel(data) {

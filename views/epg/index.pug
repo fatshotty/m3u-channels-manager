@@ -52,26 +52,29 @@ block content
               if !RO
                 button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
         tbody#channels-list
-          each chl in EPG.XMLTV
-            tr.channel-item(id=chl.Id)
-              td.enable-disable
-                input(type="checkbox" checked)
-              td.logo
-                img(src=chl.Logo)
-              td.number= chl.Number
-              td.name
-                if (chl.Url)
-                    a(href=chl.Url target="_blank")= chl.Name
-                else
-                  =chl.Name
-                span
-                  small(style="font-style: italic")= `(${chl.IdEpg})`
-              td.association
-                input(type="text" name=chl.IdEpg value="" placeholder=chl.IdEpg)
-              td.actions
-                button.btn.btn-info.btn-sm.epg vedi l'attuale EPG
-            tr
-              td.channel-item.epg-container(colspan=6)
+          each chls,key in EPG.EPG
+            tr.group-item
+              td.name= key
+            each chl in chls
+              tr.channel-item(id=chl.Id)
+                td.enable-disable
+                  input(type="checkbox" checked)
+                td.logo
+                  img(src=chl.Logo)
+                td.number= chl.Number
+                td.name
+                  if (chl.Url)
+                      a(href=chl.Url target="_blank")= chl.Name
+                  else
+                    =chl.Name
+                  span
+                    small(style="font-style: italic")= `(${chl.IdEpg})`
+                td.association
+                  input(type="text" name=chl.IdEpg value="" placeholder=chl.IdEpg)
+                td.actions
+                  button.btn.btn-info.btn-sm.epg vedi l'attuale EPG
+              tr
+                td.channel-item.epg-container(colspan=6)
 
 
 
@@ -79,4 +82,4 @@ block content
 block extrajs
   script.
     window.Channels = !{JSON.stringify(EPG.XMLTV)};
-  script(src="/js/epg.js")
+  script(src="/epg.bundled.js")

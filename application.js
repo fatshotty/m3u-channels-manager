@@ -145,6 +145,11 @@ global.Argv = Args
         default: [''],
         describe: 'specifies channels groups to use in XMLTV (musica, bambini, news, mondi, cinema, sport, intrattenimento, digitale, primafila, meglio)'
       })
+      .option('kltv', {
+        type: 'boolean',
+        default: false,
+        describe: 'write xml following KLTV specifications'
+      })
 
 
   .group(['epg', 'channels', 'update', 'show', 'cgs', 'today', 'days', 'yest', 'shift'], 'EPG module')
@@ -227,7 +232,7 @@ function start() {
   App.set('view engine', 'pug');
   App.set('views', Path.join(__dirname, '/views') );
   App.use( Express.static( `${__dirname}/public`) );
-  App.use( Express.static( `${global.CWD}/node_modules`) );
+  App.use( Express.static('node_modules/bootstrap/dist/css/') );
 
 
   App.use( CORS() );

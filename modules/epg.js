@@ -65,6 +65,21 @@ class EPG {
     return epg;
   }
 
+  get GroupedChannels() {
+    // TODO: process epg and get channels
+    let json = {};
+    for ( let module of this.modules ) {
+      let channels = module.EPG;
+      let epg = [];
+      for ( let channel of channels ) {
+        epg.push( channel.toJSON(false) );
+      }
+      json[ module.NAME ] = epg;
+    }
+
+    return json;
+  }
+
 
   reloadFromCache(json) {
 

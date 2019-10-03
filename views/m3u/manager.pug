@@ -1,0 +1,31 @@
+extend ../layout
+
+block content
+  #m3u-manager-page
+    h3 Gestore Canali TV
+    small
+      | Qui puoi creare la tua lista personale
+      br
+      | che sar&agrave; raggiungibile &nbsp;&nbsp;
+      a(href="/tv/personal.m3u8") a questo indirizzo
+
+    p= `Lista attuale: ${M3UList.groups.length} gruppi e ${(()=>{let count=0; M3UList.groups.map( g => count += g.channels.length ); return count})()} canali`
+
+    .row
+      .col-md-12
+        h5 Gruppi
+          button.btn.btn-secondary.btn-sm(@click="unselectAll()") Deseleziona tutto
+          button.btn.btn-primary.btn-sm(@click="saveAll()" style="float: right") Salva tutto
+
+        ul.groups-container
+          Group(v-for="group in groups" :group="group" :key="group.id" )
+
+
+
+
+
+
+block extrajs
+  script.
+    window.Channels = !{JSON.stringify(Channels)};
+  script(src="/m3u-manager.bundled.js")

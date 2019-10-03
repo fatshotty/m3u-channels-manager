@@ -1,0 +1,21 @@
+li.channel-item(:data-channel-id="channel.Id" :class="{'disabled': !isEnabled}")
+  .row
+    .col-6
+      input(type="checkbox" v-model="isEnabled")
+      span.logo
+        img(:src="channel.TvgLogo")
+      a(:href="channel.Redirect") {{channel.Name}}
+      small
+        | (
+        a(:href="channel.StreamUrl") link originale
+        | )
+    .col-6(v-if="isEnabled")
+      input(type="text" v-model="channel_ref" v-if="!isEdit")
+      button(v-if="!isEdit" @click="edit()") Modifica
+
+      select(v-if="isEdit" v-model="selected_epg")
+        option(value="")
+        optgroup(v-for="chls, grp in EPG" :label="grp")
+          option(v-for="chl in chls" :value="chl.IdEpg") {{chl.IdEpg}} - {{chl.Name}}
+      button.btn.btn-info.btn-sm(v-if="isEdit" @click="saveEdit()") Salva
+      button.btn.btn-outline-info.btn-sm(v-if="isEdit" @click="cancelEdit()") Annulla

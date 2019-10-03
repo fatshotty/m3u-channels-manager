@@ -1,0 +1,6 @@
+li.group-item(:data-group-id="group.id")
+  span.name {{group.name}}
+  span.counter(title="espandi lista")
+    small(@click="showChannels()") {{group.count}} canali
+  ul.channels-container(:class="{'hidden': !chlShown}")
+    Channel(v-for="channel, index in channels" :channel="channel" :key="channel.Id + index" :selectedId="selectedChannelIds[ channel.Id ]")

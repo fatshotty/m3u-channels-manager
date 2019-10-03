@@ -1,14 +1,9 @@
 html
   head
-    link(href="/bootstrap/dist/css/bootstrap.css" rel="stylesheet" type="text/css")
+    link(href="/bootstrap.min.css" rel="stylesheet" type="text/css")
 
     link(rel="stylesheet", href="/css/style.css")
-    script(src="https://code.jquery.com/jquery-3.4.1.min.js")
-    script(src="/moment/min/moment.min.js")
-    script(src="/bootstrap/dist/js/bootstrap.min.js")
-    script(src="/socket.io/socket.io.js")
   body(class= RO ? 'read-only' : '')
-
 
     .wrapper
       if !RO
@@ -39,6 +34,4 @@ html
         .row
           div.col-md.logger(id="log")
 
-    if !RO
-      script(src="/js/app.js")
     block extrajs
