@@ -233,7 +233,7 @@ function start() {
   App.set('view engine', 'pug');
   App.set('views', Path.join(__dirname, '/views') );
   App.use( Express.static( `${__dirname}/public`) );
-  App.use( Express.static('node_modules/bootstrap/dist/css/') );
+  App.use( Express.static(  Path.resolve( global.CWD, 'node_modules/bootstrap/dist/css/') ) );
 
 
   App.use( CORS() );
