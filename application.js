@@ -192,7 +192,8 @@ function start() {
       "M3U": {
         "Url": "https://kodilive.eu/iptv/italian.m3u",
         "ExcludeGroups": [],
-        "UserAgent": "Kodi"
+        "UserAgent": "Kodi",
+        "UseForStream": false
       },
       "Port": 3000,
       "Path": `${global.CWD}/cache`,
@@ -332,6 +333,7 @@ function start() {
         let cache = req.body.cache;
         let url = req.body.url;
         let userAgent = req.body.useragent;
+        let useforstream = req.body.useforstream;
         let groups = req.body.groups;
         let bulk = req.body.bulk;
         let loglevel = req.body.loglevel
@@ -357,7 +359,8 @@ function start() {
             "ExcludeGroups": groups.split(',').map( (g) => {
               return g.trim();
             }),
-            "UserAgent": userAgent || 'Kodi'
+            "UserAgent": userAgent || 'Kodi',
+            "UseForStream": !!useforstream
           },
           "Port": Number(port),
           "Path": cache,

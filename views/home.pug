@@ -43,6 +43,9 @@ block content
               small.form-text.text-muted puoi specificare un path in locale
             .form-group
               label(for='useragent') User-Agent
+              label(for='useforstream' style="float: right")
+                | Includi nello stream url
+                input#useforstream(type="checkbox" name="useforstream" value=Config.M3U.UseForStream checked=Config.M3U.UseForStream===true)
               input#useragent.form-control(type='text', placeholder='Kodi' name="useragent" value=Config.M3U.UserAgent || 'Kodi' )
               small.form-text.text-muted specificare lo user-agent usato per recuperare la lista, ad esempio 'Kodi' o 'VLC'
             .form-group

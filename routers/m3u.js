@@ -150,8 +150,6 @@ Router.get('/live', (req, res, next) => {
 
   getStreamUrlOfChannel(channel).then( (live_channel) => {
 
-    live_channel = `${live_channel}`; // |User-Agent="VLC"`;
-
     res.redirect(302, live_channel);
 
   }, (reason) => {
@@ -164,7 +162,9 @@ Router.get('/live/:channel', (req, res, next) => {
 
   const channel = req.params.channel;
 
-  Log.warn(`you are using a deprecated api. Use '/live?channel=${channel}' instead`);
+  Log.warn(`****
+    you are using a deprecated api. Use '/live?channel=${channel}' instead
+    ****`);
 
   getStreamUrlOfChannel(channel).then( (live_channel) => {
 
@@ -212,6 +212,12 @@ function getStreamUrlOfChannel(channel) {
       if ( live_channel ) {
         Log.debug(`Found live streaming for channel ${channel}`);
         Log.debug(`redirect to ${live_channel}`);
+
+        if ( Config.M3U.UseForStream === true ) {
+          Log.info(`adding user-agent to stream url "${Config.M3U.UserAgent}"`);
+          live_channel = `${live_channel}|User-Agent=${Config.M3U.UserAgent}`;
+        }
+
         resolve(live_channel);
 
       } else {
