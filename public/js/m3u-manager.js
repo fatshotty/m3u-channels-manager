@@ -156,7 +156,7 @@ Vue.component('Channel', {
 
   template: channel_template(),
 
-  props: ['channel', 'selectedId'],
+  props: ['channel', 'selectedId', 'hasBeenSelected'],
 
   data: function() {
     return {
@@ -171,8 +171,9 @@ Vue.component('Channel', {
     if ( this.selectedId ) {
       this.channel_ref = `${this.selectedId}`;
       this.selected_epg = `${this.selectedId}`;
-      this.isEnabled = true;
     }
+
+    this.isEnabled = this.hasBeenSelected;
 
     VM.$on('unselect-all', ()=> {
       this.isEnabled = false;
