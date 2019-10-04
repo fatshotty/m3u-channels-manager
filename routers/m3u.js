@@ -150,6 +150,8 @@ Router.get('/live', (req, res, next) => {
 
   getStreamUrlOfChannel(channel).then( (live_channel) => {
 
+    live_channel = `${live_channel}`; // |User-Agent="VLC"`;
+
     res.redirect(302, live_channel);
 
   }, (reason) => {
@@ -466,22 +468,21 @@ Router.get('/personal.:format?', (req, res, next) => {
     res.render('m3u/manager', {M3UList, Channels: EPG.GroupedChannels});
   }
 
-
 });
 
 
-
-
 function saveM3uPersonal(data) {
+  Log.info('Saving new personal M3U data');
   M3U_PERSONAL = data;
   FS.writeFileSync(PERSONAL_FILE, JSON.stringify(data, null, 2), {encoding: 'utf-8'} );
+  Log.info('Correctly saved!');
 }
 
 
 Router.post('/personal', (req, res, next) => {
   saveM3uPersonal( req.body );
 
-  res.status(201).end();
+  res.status(201).end('Salvataggio effettuato');
 });
 
 Router.delete('/personal', (req, res, next) => {

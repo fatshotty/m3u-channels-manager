@@ -240,11 +240,6 @@ function start() {
   App.use( BodyParser.json({ extended: false }) );
   App.use( Express.urlencoded({ extended: false }) );
 
-  App.use( (req, res, next) => {
-    Log.debug(`incoming request: ${req.originalUrl}`)
-    next();
-  })
-
   App.use( (err, req, res, next) => {
     Log.error(`Error got in request: ${req.originalUrl} ${err}`);
     Log.error( JSON.stringify(err.stack, null, 2) );
@@ -258,7 +253,7 @@ function start() {
 
     if ( Argv.serve ) {
       Server = require('http').createServer(App);
-      const IO = require('socket.io')(Server);
+      const IO = require('socket.io')(14432);
       require('./socket-io')(IO, Argv.debug ? 'debug' : undefined);
     }
 

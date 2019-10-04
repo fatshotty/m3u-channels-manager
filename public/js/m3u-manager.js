@@ -70,11 +70,11 @@ const VM = new Vue({
           alert('Salvataggio eseguito correttamente');
           window.location.reload();
         },
-        error: () => {
+        error: function() {
+          console.info(arguments);
           alert( `Qualcosa è andato storto, controlla il log` );
         },
-        contentType: "application/json",
-        dataType: 'json'
+        contentType: "application/json"
       });
 
     }

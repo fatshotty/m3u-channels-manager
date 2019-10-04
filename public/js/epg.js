@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import './app'
-
+import moment from 'moment'
 
 const PATH = '/epg';
 
@@ -117,7 +117,7 @@ Download.on('click', (e) => {
     let text = tr.find('.association input[type=text]');
     channels.push( `${text.attr('name')}=${text.val()}` );
   });
-  let complete_path = `${document.location.origin}${PATH}/show.xml?shift=${shifts}&channels=${channels.join(';')}`;
+  let complete_path = `${document.location.origin}${PATH}/show.xml?shift=${shifts}&channels=${encodeURIComponent(channels.join(';'))}`;
   let copy = $(`<input type="text" value="${complete_path}" />` ).appendTo(document.body);
   copy[0].focus();
   copy[0].select();
