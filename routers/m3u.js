@@ -4,6 +4,7 @@ const Express = require('express');
 const Router = Express.Router();
 const Request = require('../utils').request;
 const M3UK = require('../modules/m3u').M3U;
+const URL = require('URL');
 
 const EPG = require('../modules/epg');
 
