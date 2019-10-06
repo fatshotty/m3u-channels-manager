@@ -201,6 +201,10 @@ class M3U {
     Log.debug(`splitting channels by groups`);
 
     for ( let [i, channel] of channels.entries() ) {
+      if ( !channel ) {
+        Log.warn(`${i} invalid channel`);
+        continue;
+      }
       let name = channel['name'];
       let link = channel['link']
 
