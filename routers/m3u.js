@@ -54,7 +54,7 @@ function parseCommand(Argv, cb) {
       });
 
     } else if ( Argv.s ) {
-      respondStreamUrl(Argv.s, (url) => {
+      respondStreamUrl(Argv.s, Argv.g, (url) => {
         cb(url);
       });
 
@@ -120,7 +120,7 @@ Router.get('/update', (req, res, next) => {
 
 
 
-function respondStreamUrl(chlId, cb) {
+function respondStreamUrl(chlId, group, cb) {
 
   Log.info(`Compute the channel stream-url for ${chlId}` )
 
@@ -129,7 +129,8 @@ function respondStreamUrl(chlId, cb) {
     return cb(null);
   }
 
-  const live_channel = M3UList.getChannelById( chlId );
+
+  const live_channel = M3UList.getChannelById( chlId, group );
   if ( live_channel ) {
     Log.info(`found stram url '${live_channel.StreamUrl.split('/').pop()}'` )
     // Utils.computeChannelStreamUrl(live_channel).then( (surl) => {
@@ -147,8 +148,9 @@ function respondStreamUrl(chlId, cb) {
 Router.get('/live', (req, res, next) => {
 
   let channel = req.query.channel;
+  let group = req.query.group;
 
-  getStreamUrlOfChannel(channel).then( (live_channel) => {
+  getStreamUrlOfChannel(channel, group).then( (live_channel) => {
 
     res.redirect(302, live_channel);
 
@@ -180,9 +182,10 @@ Router.get('/live/:channel', (req, res, next) => {
 Router.get('/personal/live', (req, res, next) => {
 
   let channel = req.query.channel;
+  let group = req.query.group;
   let pipe = !!req.query.p;
 
-  getMappedStreamUrlOfChannel(channel).then( (live_channel) => {
+  getMappedStreamUrlOfChannel(channel, group).then( (live_channel) => {
 
     if ( ! pipe ) {
       res.redirect(302, live_channel);
@@ -198,7 +201,7 @@ Router.get('/personal/live', (req, res, next) => {
 });
 
 
-function getStreamUrlOfChannel(channel) {
+function getStreamUrlOfChannel(channel, group) {
   Log.info(`Live streaming requested for ${channel}`);
 
   return new Promise( (resolve, reject) => {
@@ -208,7 +211,7 @@ function getStreamUrlOfChannel(channel) {
       return;
     }
 
-    respondStreamUrl( channel, (live_channel) => {
+    respondStreamUrl( channel, group, (live_channel) => {
       if ( live_channel ) {
         Log.debug(`Found live streaming for channel ${channel}`);
         Log.debug(`redirect to ${live_channel}`);
@@ -229,29 +232,31 @@ function getStreamUrlOfChannel(channel) {
 }
 
 
-function getMappedStreamUrlOfChannel(req_chl_id) {
-  Log.info(`MappedLive streaming requested for ${req_chl_id}`);
+function getMappedStreamUrlOfChannel(req_chl_id, group) {
+  Log.info(`MappedLive streaming requested for '${req_chl_id}' of '${group}'`);
   if ( ! M3U_PERSONAL ) {
     Log.error(`No map found, it must be set from /tv/personal`);
     return Promise.reject(`No mapped channels have been set`);
   }
 
-  Log.debug(`Searching map for ${req_chl_id}`);
+  Log.debug(`Searching map for '${req_chl_id}' in '${group}'`);
   let groups_keys = Object.keys(M3U_PERSONAL);
   for ( let grp_key of groups_keys ) {
-    Log.debug(`Searcing in group: ${grp_key}`);
+    if ( group && group != grp_key) {
+      continue;
+    }
+    Log.debug(`Searcing in group: '${grp_key}'`);
     let chls = M3U_PERSONAL[ grp_key ];
-    let chls_keys = Object.keys(chls);
-    for ( let chl_key of chls_keys ) {
-      let chl = chls[ chl_key ];
-      if ( chl == req_chl_id ) {
-        Log.info(`found channels ${chl_key} by ${req_chl_id}`);
-        return getStreamUrlOfChannel(chl_key);
+
+    for ( let chl of chls ) {
+      if ( chl.MapTo == req_chl_id ) {
+        Log.info(`found channels '${chl.ID}' by '${req_chl_id}' of '${grp_key}'`);
+        return getStreamUrlOfChannel(chl.ID, grp_key);
       }
     }
   }
 
-  Promise.reject(`No channel found searching for ${req_chl_id}`);
+  Promise.reject(`No channel found searching for '${req_chl_id}' in '${group}'`);
 }
 
 
@@ -403,52 +408,55 @@ Router.get('/', (req, res, next) => {
 
 
 function respondPersonalM3U(format) {
-  let resultm3u = [];
+  let result_channels = [];
   if ( M3U_PERSONAL ) {
     let group_keys = Object.keys(M3U_PERSONAL);
 
     for ( let grp_key of group_keys ) {
-      let personalGroup = M3U_PERSONAL[ grp_key ];
+      let personalChannels = M3U_PERSONAL[ grp_key ];
       let group = M3UList.getGroupById( grp_key );
       if ( group ) {
-        for ( let channel of group.channels ) {
-
-          if ( channel.Id in personalGroup ) {
-            let personalChannel = personalGroup[ channel.Id ];
-
-            let temp_id = channel._id;
-            let temp_tvgid = channel.TvgId;
-            let temp_tvgname = channel.TvgName;
-            let temp_name = channel.Name;
-            let temp_redirect = channel._redirect;
-
-            channel._id = personalChannel;
-            channel._tvgId = personalChannel;
-            channel._tvgName = personalChannel;
-            channel._name = personalChannel;
-
-            if ( temp_redirect ) {
-              let url = new URL( temp_redirect );
-              url.pathname = '/tv/personal/live';
-              // TODO: add piping
-              channel._redirect = url.toString();
-            }
-
-            resultm3u.push( channel.toM3U() );
-
-            channel._id = temp_id;
-            channel._tvgId = temp_tvgid;
-            channel._tvgName = temp_tvgname;
-            channel._name = temp_name;
-            channel._redirect = temp_redirect;
-
+        for ( let personalChannel of personalChannels) {
+          let personalId = personalChannel.ID;
+          let channel = group.getChannelById(personalId);
+          if ( ! channel ) {
+            Log.warn(`no channel '${personalId}' found in '${grp_key}'`);
+            continue;
           }
+
+          let temp_ch = channel.clone();
+
+          temp_ch.TvgId = personalChannel.MapTo;
+          temp_ch.TvgName = personalChannel.MapTo;
+          temp_ch.Name = personalChannel.MapTo;
+          temp_ch.Number = personalChannel.Number;
+
+          let temp_redirect = temp_ch.Redirect;
+
+          if ( temp_redirect ) {
+            let url = new URL( temp_redirect );
+            url.pathname = '/tv/personal/live';
+            url.searchParams.set('channel', personalChannel.MapTo);
+            // TODO: add piping
+            temp_ch.Redirect = url.toString();
+          }
+
+          result_channels.push( temp_ch );
 
         }
       }
     }
 
   }
+
+
+  result_channels.sort( (a, b) => {
+    let n_a = parseInt(a.Number || 0, 10);
+    let n_b = parseInt(b.Number || 0, 10);
+    return n_a > n_b ? 1 : -1;
+  });
+
+  let resultm3u = result_channels.map( c => c.toM3U() );
 
   resultm3u.unshift('#EXTM3U');
   return resultm3u.join('\n')
@@ -540,7 +548,7 @@ function info(mountpath) {
 
   console.log('## M3U router mounted');
   console.log(`- GET ${mountpath}/update`);
-  console.log(`Updates M3U list from Config.M3U.Url`);
+  console.log(`Updates M3U list from ${Config.M3U.Url}`);
   console.log(`- GET ${mountpath}/live/:channel_id`);
   console.log(`Redirects to the url of the channel by its ID`);
   console.log(`- ${mountpath}/list/:group_id.:format?`);

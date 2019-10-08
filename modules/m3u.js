@@ -131,6 +131,12 @@ class M3U {
 
       if ( row.length <= 0) continue;
 
+      if ( row.indexOf('#EXTM3U') === 0 ) {
+        // skip header
+        Log.error('** DUPLICATE LIST ** CANNOT CONTINUE READING CHANNELS list');
+        break;
+      }
+
       if ( i % 100 === 0 ) {
         Log.debug( `parsing channel ${i}`);
       }
@@ -148,7 +154,7 @@ class M3U {
               if ( parts[2] ) {
                 let infos = parts[ 2 ];
                 infos = infos.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g);
-                let details = infos[0], name = infos[1];
+                let details = infos.shift(), name = infos.join(',');
                 obj_channel.name = cleanUpString(name);
                 if ( details ) {
                   details = details.split( /\s(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
@@ -320,6 +326,20 @@ class Group {
   createAddChannel(data) {
     try {
       const c = new Channel( data );
+
+      let already_existing_channel = this.channels.filter( chl => chl.Id == c.Id );
+      if ( already_existing_channel.length > 0 ) {
+        let _name = c.Name;
+
+        c.calculateNewId();
+        already_existing_channel = this.channels.filter( chl => chl.Id == c.Id );
+        if ( already_existing_channel.length > 0 ) {
+          Log.info( `channel '${_name}' of '${this.Id}' already exists: it is duplicated and can cause ambigous stream` );
+        } else {
+          Log.debug( `channel '${_name}' of '${this.Id}' already exists; it has been remapped in '${c.Id}'` )
+        }
+      }
+
       c.Group = this;
       this.channels.push( c );
       return c;
@@ -362,6 +382,9 @@ class Channel {
   get TvgLogo() {
     return this._tvgLogo
   }
+  get Number() {
+    return this._number;
+  }
   get StreamUrl() {
     return this._streamUrl;
   }
@@ -370,7 +393,8 @@ class Channel {
       return this.StreamUrl;
     }
     let id = encodeURIComponent(this.Id);
-    return this._redirect ? `${this._redirect}?channel=${id}` : this.StreamUrl;
+    let group = encodeURIComponent(this._group.Id);
+    return this._redirect ? `${this._redirect}?channel=${id}&group=${group}` : this.StreamUrl;
   }
 
   get Group() {
@@ -389,6 +413,8 @@ class Channel {
     this._tvgLogo = data['tvg-logo'];
     this._streamUrl = data['link'];
 
+    this._number = data['tvg-chno'];
+
     this._streamUrl = (this._streamUrl || '').replace(/\r/, '');
 
     this._redirect = data['redirect'];
@@ -401,6 +427,14 @@ class Channel {
     this.Group = null;
   }
 
+  calculateNewId() {
+    this._id = (this._name || this._tvgName).replace(/[^\w]/gi, '__');
+  }
+
+  clone() {
+    return new TempCh( this.toJson(), this._redirect );
+  }
+
   toJson() {
     return {
       Id: this.Id,
@@ -409,11 +443,102 @@ class Channel {
       TvgId: this.TvgId,
       TvgName: this.TvgName,
       TvgLogo: this.TvgLogo,
+      Number: this.Number,
       StreamUrl: this.StreamUrl,
       Redirect: this.RedirectUrl,
       GroupId: this.Group.Id,
       GroupName: this.Group.Name
     };
+  }
+
+  toM3U(header) {
+    return this.clone().toM3U(header);
+  }
+}
+
+
+class TempCh {
+  get Id() {
+    return this.data.Id;
+  }
+  set Id(v) {
+    this.data.Id = v;
+  }
+
+  get Name() {
+    return this.data.Name;
+  }
+  set Name(v) {
+    this.data.Name = v;
+  }
+
+  get Duration() {
+    return this.data.Duration
+  }
+  set Duration(v) {
+    this.data.Duration = v;
+  }
+
+  get TvgId() {
+    return this.data.TvgId
+  }
+  set TvgId(v) {
+    this.data.TvgId = v;
+  }
+
+  get TvgName() {
+    return this.data.TvgName
+  }
+  set TvgName(v) {
+    this.data.TvgName = v;
+  }
+
+
+  get TvgLogo() {
+    return this.data.TvgLogo
+  }
+  set TvgLogo(v) {
+    this.data.TvgLogo = v;
+  }
+
+  get Number() {
+    return this.data.Number;
+  }
+  set Number(v) {
+    this.data.Number = v;
+  }
+
+  get StreamUrl() {
+    return this.data.StreamUrl;
+  }
+  set StreamUrl(v) {
+    this.data.StreamUrl = v;
+  }
+
+  get Redirect() {
+    return this.data.Redirect;
+  }
+  set Redirect(v) {
+    this.data.Redirect = v;
+  }
+
+  get GroupId() {
+    return this.data.GroupId;
+  }
+  set GroupId(v) {
+    this.data.GroupId = v;
+  }
+
+  get GroupName() {
+    return this.data.GroupName;
+  }
+  set GroupName(v) {
+    this.data.GroupName = v;
+  }
+
+
+  constructor(data, basepath) {
+    this.data = data;
   }
 
   toM3U(header) {
@@ -424,15 +549,19 @@ class Channel {
       row.push( `tvg-logo="${this.TvgLogo || ''}"`);
     }
     row.push( `tvg-name="${this.TvgName || ''}"`);
-    row.push( `group-title="${this.Group.Name}"`);
 
-    const res = [`${row.join(' ')},${this.Name}`, this.RedirectUrl];
+    row.push( `tvg-chno="${this.Number || ''}"`);
+
+    row.push( `group-title="${this.GroupName}"`);
+
+    const res = [`${row.join(' ')},${this.Name}`, this.Redirect];
     if ( header ) {
       res.unshift('#EXTM3U');
     }
 
     return res.join('\n');
   }
+
 }
 
 

@@ -109,13 +109,24 @@ Vue.component('Group', {
 
 
   computed: {
-    selectedChannelIds() {
-      return (PERSONAL && (PERSONAL[ this.group.id ] || {})) || {};
+    selectedChannels() {
+      return (PERSONAL && (PERSONAL[ this.group.id ] || [])) || [];
     }
   },
 
 
   methods: {
+
+    channelSelectedData(chl_id) {
+      let arr = this.selectedChannels;
+      for ( let chl of arr ) {
+        if ( chl.ID == chl_id ) {
+          return chl;
+        }
+      }
+      return null;
+    },
+
     showChannels() {
       let p = Promise.resolve();
       if ( this.channels.length <= 0 ) {
@@ -136,12 +147,16 @@ Vue.component('Group', {
 
 
     getSelectedChannels() {
-      let result = {};
+      let result = [];
       for ( let comp_ch of this.$children ) {
         let ch_componentTag = comp_ch.$options._componentTag.toLowerCase();
         if ( ch_componentTag == 'channel' ) {
           if ( comp_ch.isEnabled ) {
-            result[ comp_ch.channel.Id ] = comp_ch.channel_ref;
+            result.push({
+              "ID": comp_ch.channel.Id,
+              "MapTo": comp_ch.channel_ref || comp_ch.channel.Id,
+              "Number": comp_ch.channel_num || 0
+            });
           }
         }
       }
@@ -156,26 +171,29 @@ Vue.component('Channel', {
 
   template: channel_template(),
 
-  props: ['channel', 'selectedId', 'hasBeenSelected'],
+  props: ['channel', 'selectedId'],
 
   data: function() {
     return {
       isEnabled: false,
       isEdit: false,
       channel_ref: '',
-      selected_epg: '',
+      channel_num: '',
+      selected_epg_str: '',
+      selectedEPG: null
     }
   },
 
   created() {
-    if ( this.selectedId ) {
-      this.channel_ref = `${this.selectedId}`;
-      this.selected_epg = `${this.selectedId}`;
+    if ( this.selectedId && this.selectedId.MapTo ) {
+      this.channel_ref = `${this.selectedId.MapTo}`;
+      this.channel_num = `${this.selectedId.Number}`;
+      this.selected_epg_str = `${this.selectedId.MapTo}`;
     }
 
-    this.isEnabled = this.hasBeenSelected;
+    this.isEnabled = !!this.selectedId;
 
-    VM.$on('unselect-all', ()=> {
+    VM.$on('unselect-all', () => {
       this.isEnabled = false;
     })
   },
@@ -186,6 +204,21 @@ Vue.component('Channel', {
 
 
   watch: {
+
+    selected_epg_str: function(nvalue) {
+      let groups_keys = Object.keys(Channels);
+      for (let group of groups_keys ) {
+        let chls = Channels[ group ];
+        for ( let chl of chls ) {
+          if ( chl.IdEpg === nvalue ) {
+            this.selectedEPG = chl;
+            return;
+          }
+        }
+      }
+      this.selectedEPG = null;
+    }
+
   },
 
 
@@ -201,7 +234,14 @@ Vue.component('Channel', {
       this.isEdit = true;
     },
     saveEdit() {
-      this.channel_ref = this.selected_epg;
+      if ( ! this.selectedEPG ) {
+        this.channel_ref = '';
+        this.channel_nul = '';
+      } else {
+        this.channel_ref = this.selectedEPG.IdEpg;
+        this.channel_num = this.selectedEPG.Number;
+      }
+
       this.cancelEdit();
     },
     cancelEdit() {
