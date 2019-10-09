@@ -25,6 +25,7 @@ M3UList = new M3UK([BASE_URL, 'live'].join('/'));
 if ( FS.existsSync(M3U_CACHE_FILE) ) {
   M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
   loadM3U();
+  fileWatcher();
 } else {
   refreshM3U();
 }
@@ -44,6 +45,20 @@ function loadM3U() {
   M3UList.removeGroups( Config.M3U.ExcludeGroups );
 }
 
+
+function fileWatcher() {
+  Log.debug('M3U make file watchable');
+  FS.unwatchFile(M3U_CACHE_FILE);
+  FS.watch(M3U_CACHE_FILE, 'utf-8', (eventType, filename) => {
+    Log.debug('M3U file watcher triggered');
+    if ( eventType == 'change' ) {
+      Log.info('M3U file has been changed - reloading!')
+      M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
+      M3UList.clear();
+      loadM3U();
+    }
+  });
+}
 
 
 function parseCommand(Argv, cb) {
@@ -88,6 +103,8 @@ function refreshM3U(cb) {
         M3UList.clear();
         loadM3U();
         FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
+        Log.info('M3U file correctly cached');
+        fileWatcher();
       }
       cb && cb(err, body)
     })

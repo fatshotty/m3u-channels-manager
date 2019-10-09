@@ -10,6 +10,8 @@ const Net = require('net');
 
 const Log = Utils.Log;
 
+let Watcher = null;
+
 const EPG = EpgModule;
 // const SkyChannel = EpgModule.Channel;
 // const SkyEvent = EpgModule.Event;
@@ -25,9 +27,7 @@ let ChlPromise = null;
 function parseCommand(Argv, cb) {
 
   if ( Argv.update ) {
-    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, (resp) => {
-      cb(resp);
-    })
+    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, cb);
 
   } else if ( Argv.show ) {
     returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, null, cb);
@@ -53,6 +53,7 @@ function loadFromCache() {
 
     Log.info(`EPG file correctly reloaded from cache`);
     // Log.debug(`Found ${EPG._channels.length} channels`);
+    fileWatcher();
 
   } else {
     Log.info('No EPG cache file found...');
@@ -60,6 +61,20 @@ function loadFromCache() {
 }
 loadFromCache();
 
+
+
+
+function fileWatcher() {
+  Log.debug('EPG make file watchable');
+  FS.unwatchFile(EPG_CACHE_FILE);
+  FS.watch(EPG_CACHE_FILE, 'utf-8', (eventType, filename) => {
+  Log.debug('EPG file watcher triggered');
+  if ( eventType == 'change' ) {
+    Log.info('epg file has been changed - reloading!')
+    loadFromCache();
+  }
+});
+}
 
 
 function loadChannels() {
@@ -114,6 +129,7 @@ function updateEPG(today, days, yesterday, details, cb) {
       Log.info(`No more dates, completed in ${Date.now() - starttime}ms`);
       let _epg_ = EPG.EPG;
       FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(_epg_), {encoding: 'utf-8'});
+      fileWatcher();
       cb(EPG.XMLTV);
     }
   };

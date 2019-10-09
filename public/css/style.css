@@ -154,7 +154,9 @@ form fieldset {
 
 
 
-
+.channel-item a.channel-name {
+  color: #000;
+}
 .channel-item span {
   margin-left: 5px;
 }
@@ -173,7 +175,7 @@ form fieldset {
 }
 
 .channel-item.disabled {
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 .epg-container {

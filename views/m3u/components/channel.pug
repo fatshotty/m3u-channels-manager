@@ -1,10 +1,10 @@
 li.channel-item(:data-channel-id="channel.Id" :class="{'disabled': !isEnabled}")
   .row
-    .col-6
+    .col-6.channel-item
       input(type="checkbox" v-model="isEnabled")
       span.logo
         img(:src="channel.TvgLogo")
-      a(:href="channel.Redirect") {{channel.Name}}
+      a.channel-name(:href="channel.Redirect") {{channel.Name}}
       small
         | (
         a(:href="channel.StreamUrl") link originale
