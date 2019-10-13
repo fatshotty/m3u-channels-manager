@@ -88,12 +88,15 @@ class RaiEpg {
 
 
   loadChannels() {
+    Log.info(`${LOG_NAME} Loading channels from ${GUIDA_TV_URL}`);
 
     return this.request(GUIDA_TV_URL).then( (html) => {
 
       let results = this.parseHtml(html);
 
       this._channels = results.map( c => new Channel(c) );
+
+      Log.info(`${LOG_NAME} found ${this._channels.length} channels`);
 
     }, (e) => {
       Log.error(`${LOG_NAME} cannot load channels - ${e}`);
@@ -113,6 +116,8 @@ class RaiEpg {
         Log.error(`${LOG_NAME} channel '${name || chl_path}' has not a valid name`);
         continue;
       }
+
+      Log.debug(`${LOG_NAME} found channel: ${name}`);
 
       let id = name.replace(/\s/gi, '-').toLowerCase();
       result.push({
@@ -235,9 +240,13 @@ class Channel {
 
     let url = ENVETS_SINGLE_CHANNEL.replace('{channel}', this.Id).replace('{date}', date_str).replace('{ts}', Date.now());
 
+    Log.info(`${LOG_NAME} loading events for ${this.Id}`);
+
     return this.request( url ).then( (html) => {
 
       this.parseHtml( html, epg );
+
+      Log.info(`${LOG_NAME} GOT events for ${this.Id}`);
 
       epg.map( e => e.calculateStartTime(date) );
 
@@ -333,10 +342,7 @@ class Channel {
   request(url) {
     return Request({
       uri: url,
-      timeout: 0,
-      headers: {
-        'x-requested-with': 'XMLHttpRequest'
-      }
+      timeout: 0
     });
   }
 
