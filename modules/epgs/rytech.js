@@ -12,7 +12,7 @@ const Log = Utils.Log;
 
 const REGEXP_YEAR = /(\(\d{4}\))/i;
 const REGEXP_GENRE = /^\[([^\]]+)\]/i;
-const REGEXP_EPISODE = /\((([SE]\d+)?E\d+)?\)/;
+const REGEXP_EPISODE = /S(tagione)?\s?(\d+)[\s-]*(E(p)?(isodio)?\s?(\d+))?/i
 
 const FIELDS = {
   'genre': REGEXP_GENRE,
@@ -426,6 +426,13 @@ class Event {
           let values = value.split(',');
           value = values[0];
           this.data.subgenre = cleanString(values[1] || '');
+        } else if ( field == 'episode' ) {
+          if ( matches && matches.length && matches[2]) {
+            let s = parseInt(match[2], 10);
+            let e = parseInt(match[6], 10);
+
+            value = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
+          }
         }
 
         this.data[field] = cleanString(value);

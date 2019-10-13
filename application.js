@@ -265,8 +265,6 @@ function start() {
       if ( !Argv.serve && !Argv.epg ) {
         Modules['/tv'].parseCommand(Argv, (resp) => {
           console.log( resp );
-          // successfully exiting
-          process.exit(0);
         });
       }
     }
@@ -284,13 +282,9 @@ function start() {
               Client.end();
               Client.unref();
             });
-            // successfully exiting
-            process.exit(0);
             return;
           }
           console.log( resp );
-          // successfully exiting
-          process.exit(0);
         });
       }
     }
@@ -308,6 +302,9 @@ function start() {
       for( let path of r ) {
         App.use( path,  Modules[path].Router  );
         Modules[path].info(path);
+
+        Modules[path].fileWatcher();
+
         console.log('');
       }
     }

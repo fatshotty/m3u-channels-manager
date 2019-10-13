@@ -17,7 +17,8 @@ const SINGLE_EVENT = `${SKY_DOMAIN}/EpgBackend/event_description.do?eid={event}`
 const URL_CHANNELS = `${SKY_DOMAIN}/app/guidatv/contenuti/data/grid/grid_{category}_channels.js`
 
 const PROGRAM_POSTER = `${SKY_DOMAIN}/app/guidatv/images{icon}`;
-const REG_EXP_SEASON_EPISODE = /^((S(\w+)?(\d+))?)(\s?)((E(\w+)?(\d+))?)/i;
+// const REG_EXP_SEASON_EPISODE = /^((S(\w+)?(\d+))?)(\s?)((E(\w+)?(\d+))?)/i;
+const REG_EXP_SEASON_EPISODE = /S(tagione)?\s?(\d+)[\s-]*(E(p)?(isodio)?\s?(\d+))?/i
 
 const CATEGORY = [
   // "musica",
@@ -462,9 +463,11 @@ class Event {
   }
   get Episode() {
     const match = this.Description.match( REG_EXP_SEASON_EPISODE );
-    if ( match && match.length && match[0]) {
-      const episode = match[0];
-      return String.prototype.trim.call(episode);
+    if ( match && match.length && match[2]) {
+      let s = parseInt(match[2], 10);
+      let e = parseInt(match[6], 10);
+
+      return `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
     }
     return ''
   }

@@ -385,17 +385,17 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
           prg_el.writeAttribute('channel', chl_id);
 
-          const id_el = prg_el.startElement('id');
-          if ( PRG.Id ) {
-            id_el.text(PRG.Id);
-          }
-          id_el.endElement();
-          const pid_el = prg_el.startElement('pid');
+          // const id_el = prg_el.startElement('id');
+          // if ( PRG.Id ) {
+          //   id_el.text(PRG.Id);
+          // }
+          // id_el.endElement();
+          // const pid_el = prg_el.startElement('pid');
 
-          if ( PRG.Pid ) {
-            pid_el.text(PRG.Pid);
-          }
-          pid_el.endElement();
+          // if ( PRG.Pid ) {
+          //   pid_el.text(PRG.Pid);
+          // }
+          // pid_el.endElement();
 
           const prg_title = PRG.Title;
           if ( PRG.prima ) {
@@ -459,28 +459,46 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
                   .endElement();
           }
 
-          const credits_el = prg_el.startElement('credits')
-          if ( PRG.Director ) {
-            credits_el.startElement('director')
-              .text( PRG.Director )
-              .endElement();
-          }
-          if ( PRG.Actors && PRG.Actors.length > 0) {
-            for ( let act of PRG.Actors ){
-              if ( !act ) continue;
-              credits_el.startElement('actor')
-                .text( act )
+          if ( PRG.Director || (PRG.Actors && PRG.Actors.length > 0) ) {
+            const credits_el = prg_el.startElement('credits')
+            if ( PRG.Director ) {
+              credits_el.startElement('director')
+                .text( PRG.Director )
                 .endElement();
             }
+            if ( PRG.Actors && PRG.Actors.length > 0) {
+              for ( let act of PRG.Actors ){
+                if ( !act ) continue;
+                credits_el.startElement('actor')
+                  .text( act )
+                  .endElement();
+              }
+            }
+            credits_el.endElement();
           }
-          credits_el.endElement();
 
 
           if ( PRG.Episode ) {
+            let _epidose_str = PRG.Episode;
+
             prg_el.startElement('episode-num')
-                  .writeAttribute('system', 'onscreen')
-                  .text( PRG.Episode )
+                  .writeAttribute('system', 'xmltv_ns')
+                  .text( _epidose_str )
                   .endElement();
+
+            let _eps = _epidose_str.split('.');
+            let s = parseInt(_eps[0], 10 );
+            let e = parseInt(_eps[1], 10 );
+            s = s || s == '0' ? `S${s + 1}` : false;
+            if ( s ) {
+              e = e || e == '0' ? `E${e + 1}` : '';
+              prg_el.startElement('episode-num')
+                  .writeAttribute('system', 'onscreen')
+                  .text( `${s}${e}` )
+                  .endElement();
+            }
+
+
           }
 
           prg_el.endElement();

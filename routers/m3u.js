@@ -10,6 +10,9 @@ const EPG = require('../modules/epg');
 const Utils = require('../utils');
 const Log = Utils.Log;
 
+let Watcher = null;
+let WatchTimer = null;
+
 const M3U_CACHE_FILE = Path.join( Config.Path , 'm3u_cache.txt' );
 const PERSONAL_FILE = Path.join( Config.Path , 'm3u_personal.json' );
 
@@ -25,7 +28,6 @@ M3UList = new M3UK([BASE_URL, 'live'].join('/'));
 if ( FS.existsSync(M3U_CACHE_FILE) ) {
   M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
   loadM3U();
-  fileWatcher();
 } else {
   refreshM3U();
 }
@@ -47,18 +49,28 @@ function loadM3U() {
 
 
 function fileWatcher() {
-  Log.debug('M3U make file watchable');
-  FS.unwatchFile(M3U_CACHE_FILE);
-  FS.watch(M3U_CACHE_FILE, 'utf-8', (eventType, filename) => {
+  Log.debug('M3U making file watchable');
+  if ( Watcher ) Watcher.close();
+  Watcher = FS.watch(M3U_CACHE_FILE, 'utf-8', (eventType, filename) => {
     Log.debug('M3U file watcher triggered');
     if ( eventType == 'change' ) {
-      Log.info('M3U file has been changed - reloading!')
-      M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
-      M3UList.clear();
-      loadM3U();
+      clearTimeout(WatchTimer);
+      WatchTimer = setTimeout( () => {
+        Log.info('--- M3U file has been changed - reloading!')
+        M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
+        M3UList.clear();
+        loadM3U();
+      }, 1000);
     }
   });
 }
+
+
+process.on('exit', () => {
+  if ( Watcher ) {
+    Watcher.close();
+  }
+})
 
 
 function parseCommand(Argv, cb) {
@@ -104,7 +116,6 @@ function refreshM3U(cb) {
         loadM3U();
         FS.writeFileSync(M3U_CACHE_FILE, M3U_LIST_STRING, {encoding: 'utf-8'});
         Log.info('M3U file correctly cached');
-        fileWatcher();
       }
       cb && cb(err, body)
     })
@@ -256,12 +267,15 @@ function getMappedStreamUrlOfChannel(req_chl_id, group) {
     return Promise.reject(`No mapped channels have been set`);
   }
 
-  Log.debug(`Searching map for '${req_chl_id}' in '${group}'`);
   let groups_keys = Object.keys(M3U_PERSONAL);
+
+  if ( group && (group in M3U_PERSONAL) ) {
+    Log.debug(`Searching map for '${req_chl_id}' in '${group}'`);
+    groups_keys = [ group ];
+  }
+
+
   for ( let grp_key of groups_keys ) {
-    if ( group && group != grp_key) {
-      continue;
-    }
     Log.debug(`Searcing in group: '${grp_key}'`);
     let chls = M3U_PERSONAL[ grp_key ];
 
@@ -454,6 +468,7 @@ function respondPersonalM3U(format) {
             let url = new URL( temp_redirect );
             url.pathname = '/tv/personal/live';
             url.searchParams.set('channel', personalChannel.MapTo);
+            url.searchParams.delete('group');
             // TODO: add piping
             temp_ch.Redirect = url.toString();
           }
@@ -584,4 +599,4 @@ function updateSettings(config) {
 }
 
 
-module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info, updateSettings};
+module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info, updateSettings, fileWatcher};

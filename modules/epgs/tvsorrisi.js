@@ -15,7 +15,9 @@ const BASE_URL = `https://www.sorrisi.com/guidatv`
 const URL_CHANNELS = `${BASE_URL}/canali-tv/{category}`
 const SINGLE_CHANNEL = `${BASE_URL}/canali-tv/{channel}/`
 
-const REG_EXP_SEASON_EPISODE = /^S.*?([0-9]+).*?E.*?([0-9]+).*/i;
+// const REG_EXP_SEASON_EPISODE = /^S.*?([0-9]+).*?E.*?([0-9]+).*/i;
+const REG_EXP_SEASON_EPISODE = /S(tagione)?\s?(\d+)[\s-]*(E(p)?(isodio)?\s?(\d+))?/i
+
 
 const CATEGORY = [
   // "rai",
@@ -340,6 +342,16 @@ class Channel {
         let str_desc = descr ? descr.structuredText : '';
         let str_url = a_url && a_url.attributes ? a_url.attributes.href : '';
         let str_episode = episode ? episode.structuredText : '';
+
+        if ( str_episode ) {
+          let match = str_episode.match( REG_EXP_SEASON_EPISODE );
+          if ( match && match.length && match[2]) {
+            let s = parseInt(match[2], 10);
+            let e = parseInt(match[6], 10);
+
+            str_episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
+          }
+        }
 
         let evt = new Event({
           id: `prog-${i + 1}`,
