@@ -332,18 +332,18 @@ Router.get('/', (req, res, next) => {
 
 function info(mountpath) {
 
-  console.log('## EPG router mounted');
-  console.log(`- GET ${mountpath}/update.:format?`);
-  console.log(`Updates epg and respond the XMLTV. format can be one of 'xml', 'json'`);
-  console.log(`querystring parameters:`);
-  console.log(`\t- 'today': Date you want to load expressed in YYYYDDMM (default today)`);
-  console.log(`\t- 'days': Number of days after, relative to 'today' (default 0, only today. Max 2 'til tomorrow after)`);
-  console.log(`\t- 'y': Check if include yesterday or not`);
-  console.log(`\t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
+  console.log(' ## EPG router mounted');
+  console.log(` - GET ${mountpath}/update.:format?`);
+  console.log(`     Updates epg and respond the XMLTV. format can be one of 'xml', 'json'`);
+  console.log(`     querystring parameters:`);
+  console.log(`     \t- 'today': Date you want to load expressed in YYYYDDMM (default today)`);
+  console.log(`     \t- 'days': Number of days after, relative to 'today' (default 0, only today. Max 2 'til tomorrow after)`);
+  console.log(`     \t- 'y': Check if include yesterday or not`);
+  console.log(`     \t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
 
-  console.log(`- GET ${mountpath}/show.:format?`);
-  console.log(`Shows cached epg and respond the XMLTV. format can be one of 'xml', 'json'`);
-  console.log(`\t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
+  console.log(` - GET ${mountpath}/show.:format?`);
+  console.log(`     Shows cached epg and respond the XMLTV. format can be one of 'xml', 'json'`);
+  console.log(`     \t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
 
 }
 

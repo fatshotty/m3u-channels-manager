@@ -579,16 +579,16 @@ Router.get('/search.:format', (req, res, next) => {
 function info(mountpath) {
 
   console.log('## M3U router mounted');
-  console.log(`- GET ${mountpath}/update`);
-  console.log(`Updates M3U list from ${Config.M3U.Url}`);
-  console.log(`- GET ${mountpath}/live/:channel_id`);
-  console.log(`Redirects to the url of the channel by its ID`);
-  console.log(`- ${mountpath}/list/:group_id.:format?`);
-  console.log(`Responds all channels by given group_id. format can be one of 'm3u', 'json'`);
-  console.log(`- ${mountpath}/list.:format?`);
-  console.log(`Responds entire list of channels. format can be one of 'm3u', 'json'. You can specify groups passing '?groups=group_id,group_id' as query string`);
-  console.log(`- ${mountpath}/groups.:format?`);
-  console.log(`Responds all groups details. format can be one of 'm3u', 'json'`);
+  console.log(` - GET ${mountpath}/update`);
+  console.log(`     Updates M3U list from ${Config.M3U.Url}`);
+  console.log(` - GET ${mountpath}/live/:channel_id`);
+  console.log(`     Redirects to the url of the channel by its ID`);
+  console.log(` - ${mountpath}/list/:group_id.:format?`);
+  console.log(`     Responds all channels by given group_id. format can be one of 'm3u', 'json'`);
+  console.log(` - ${mountpath}/list.:format?`);
+  console.log(`     Responds entire list of channels. format can be one of 'm3u', 'json'. You can specify groups passing '?groups=group_id,group_id' as query string`);
+  console.log(` - ${mountpath}/groups.:format?`);
+  console.log(`     Responds all groups details. format can be one of 'm3u', 'json'`);
 
 };
 
