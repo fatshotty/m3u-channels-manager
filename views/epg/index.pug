@@ -4,39 +4,26 @@ block content
   #epg-page
     h3 Electronic Program Guide
       if !RO
-        button#update-chl.btn.btn-primary.btn-sm(title="Aggiorna la lista canali") Aggiorna lista canali
+        button#update-chl.btn.btn-primary.btn-sm(@click="updateChannels" :disabled="executing" title="Aggiorna la lista canali") Aggiorna lista canali
     small Qui puoi visualizzare la lista canali del palinsesto tv
 
-    p= `Canali attuali: ${EPG.XMLTV.length}`
+    p Canali attuali: {{channels_count}}
 
     #actions
-      form.form-inline(method="post" action="/settings")
+      form.form-inline(method="get" action="/update")
         if !RO
-          .form-group.mx-sm-3.mb-2
-            label(for="date") Data
-            input#date.form-control.form-control-sm(type='date', title="Selezionare il giorno desiderato" value=currentDate min=currentDate max=maxDate)
-          .form-group.mx-sm-3.mb-2
-            label(for="days") Numero giorni
-            select#days.form-control.form-control-sm(title="Selezionare il numero di giorni seguenti" value="0" )
-              option(value="0") 0
-              option(value="1") 1
-              option(value="2") 2
-          .form-group.mx-sm-3.mb-2
-            label(for="yest")
-              input#yest.form-control.form-control-sm(type="checkbox" value="1" title="Includere il giorno prima?" )
-              |  Ieri?
 
         .form-group.mx-sm-3.mb-2
           label(for="shift") Time-Shift?
-          input#shift.form-control.form-control-sm(type="text" placeholder="Indicare il time-shift separato da virgola" title="Indicare il time-shift separato da virgola per ogni canale (in ore) ex. Fox+1 e Fox+2 => 1,2" )
+            input#shift.form-control.form-control-sm(type="text" v-model="shiftTime" placeholder="Indicare il time-shift separato da virgola" title="Indicare il time-shift separato da virgola per ogni canale (in ore) ex. Fox+1 e Fox+2 => 1,2" )
 
         if !RO
           .form-group.mx-sm-3.mb-2
             label(for="full")
-              input#full.form-control.form-control-sm(type="checkbox" value="1" title="Indicare se caricare il dettaglio di ogni programma" )
+              input#full.form-control.form-control-sm(type="checkbox" v-model="fullDetailed" title="Indicare se caricare il dettaglio di ogni programma" )
               |  Dettagliato?
 
-          button#update-epg.btn.btn-primary(title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
+          button.btn.btn-primary(@click="updateEpg()" :disabled="executing" title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
 
       hr
 
@@ -48,9 +35,10 @@ block content
         .col-3.name
         .col-3.association
         .col-3.actions
-          a#download-epg.btn.btn-secondary(title="Scarica XMLTV dalla cache" href="#" target="_blank") Scarica XMLTV
-          if !RO
-            button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
+          button.btn.btn-outline-secondary(:disabled="executing" title="Genera EPG associativo" @click="saveAssociations()") Salva associazioni
+          button.btn.btn-outline-secondary(:disabled="executing" title="Apri EPG associativo" @click="openAssociations()") Apri associazioni
+          if hasSockFile
+            button#write-epg.btn.btn-outline-info(:disabled="executing" title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
 
       #channels-list
         Group(v-for="module in modules" :key="module.name" :group="module")

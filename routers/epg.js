@@ -11,15 +11,19 @@ const Net = require('net');
 const Log = Utils.Log;
 
 let Watcher = null;
+let WatcherAssociation = null;
 let WatchTimer = null;
+let WatchAssociationTimer = null;
+
+let ASSOCIATIONS = {};
 
 const EPG = EpgModule;
-// const SkyChannel = EpgModule.Channel;
-// const SkyEvent = EpgModule.Event;
+
 
 const EPG_CACHE_FILE = Path.join( Config.Path , 'epg_cache.json' );
+const EPG_CACHE_FILE_ASSOCIATIONS = Path.join( Config.Path , 'epg_cache_associations.json' );
 
-// const EPG = new SkyEpg()
+
 
 let LoadingChannels = false;
 let ChlPromise = null;
@@ -55,13 +59,24 @@ function loadFromCache() {
     Log.info(`EPG file correctly reloaded from cache`);
 
   } else {
-    Log.info('No EPG cache file found...');
+    FS.writeFileSync(EPG_CACHE_FILE, '{}', {encoding: 'utf-8'} );
+    Log.info('No EPG cache file found, create a new one...');
   }
 }
 loadFromCache();
 
 
+function loadAssociations() {
+  if ( FS.existsSync(EPG_CACHE_FILE_ASSOCIATIONS) ) {
+    let data = FS.readFileSync( EPG_CACHE_FILE_ASSOCIATIONS, {encoding: 'utf-8'} );
+    ASSOCIATIONS = JSON.parse(data);
+  } else {
+    FS.writeFileSync(EPG_CACHE_FILE_ASSOCIATIONS, '{}', {encoding: 'utf-8'} );
+    Log.warn('No associations file found, create a new one');
+  }
+}
 
+loadAssociations();
 
 function fileWatcher() {
   Log.debug('EPG making file watchable');
@@ -76,12 +91,28 @@ function fileWatcher() {
       }, 1000);
     }
   });
+
+  if ( WatcherAssociation ) WatcherAssociation.close();
+  WatcherAssociation = FS.watch(EPG_CACHE_FILE_ASSOCIATIONS, 'utf-8', (eventType, filename) => {
+    Log.debug('ASSOCIATION file watcher triggered');
+    if ( eventType == 'change' ) {
+      clearTimeout(WatchAssociationTimer);
+      WatchAssociationTimer = setTimeout( () => {
+        Log.info('--- epg associations file has been changed - reloading!')
+        loadAssociations();
+      }, 1000);
+    }
+  });
+
 }
 
 
 process.on('exit', () => {
   if ( Watcher ) {
     Watcher.close();
+  }
+  if ( WatcherAssociation ) {
+    WatcherAssociation.close();
   }
 })
 
@@ -320,10 +351,43 @@ Router.get('/show.:format?', (req, res, next) => {
 });
 
 
+function saveAssociation(name, data) {
+
+  ASSOCIATIONS[ name ] = data;
+
+  FS.writeFileSync( EPG_CACHE_FILE_ASSOCIATIONS, JSON.stringify(ASSOCIATIONS, null, 2), {encoding: 'utf-8'});
+
+}
+
+
+Router.post('/associations/:assname', (req, res, next) => {
+
+  let assname = req.params.assname;
+  saveAssociation(assname, req.body);
+
+  res.status(204).end();
+
+});
+
+
+Router.get('/associations/:assname', (req, res, next) => {
+
+  let association = ASSOCIATIONS[ req.params.assname ];
+
+  if ( association ) {
+    res.set('content-type', 'application/json');
+    res.status(200).end( JSON.stringify(association) );
+  } else {
+    res.status(404).end('Association not found');
+  }
+
+
+});
 
 
 Router.get('/', (req, res, next) => {
   res.render('epg/index', {
+    hasSockFile: Config.EPG.Sock,
     RO: Argv.ro,
     EPG,
     currentDate: Moment().format('YYYY-MM-DD'),
