@@ -1,0 +1,8 @@
+.module-wrapper
+  .row.group-item
+    .col-12
+      h4.name {{name}}
+
+  Channel(v-for="channel in channels" :channel="channel" :key="channel.Id")
+
+  hr

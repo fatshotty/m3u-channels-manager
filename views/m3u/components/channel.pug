@@ -1,14 +1,18 @@
-li.channel-item(:data-channel-id="channel.Id" :class="{'disabled': !isEnabled}")
-  .row
-    .col-6.channel-item
+.channel-item(:data-channel-id="channel.Id" :class="{'disabled': !isEnabled}")
+  .row.hoverable.channel-item
+    .col-1.enable-disable
       input(type="checkbox" v-model="isEnabled")
-      span.logo
-        img(:src="channel.TvgLogo")
-      a.channel-name(:href="channel.Redirect") {{channel.Name}}
+
+    .col-1.number {{channel.Number}}
+
+    .col-4.name
+      span {{channel.Name}}
       small
-        | (
+        | &nbsp; (
         a(:href="channel.StreamUrl") link originale
         | )
+
+
     .col-6(v-if="isEnabled")
       input(type="number" v-model="channel_num" placeholder="Numero" v-if="!isEdit")
       input(type="text" v-model="channel_ref" v-if="!isEdit")

@@ -1,0 +1,29 @@
+.wrapper-channel.channel-item
+  .row.channel-item(:class="{disabled: !selected}")
+    .col-1.enable-disable
+      input(type="checkbox" v-model="selected")
+    .col-1.logo
+      img(:src="channel.Logo" v-if="channel.Logo")
+      span(v-else="") -
+    .col-1.number {{channel.Number}}
+    .col-5.name
+      a(:href="channel.Url" target="_blank" v-if="channel.Url") {{channel.Name}}
+      span(v-else="") {{channel.Name}}
+      span
+        small(style="font-style: italic") ({{channel.IdEpg}})
+    .col-3.association
+      input(type="text" v-model="association" :placeholder="channel.IdEpg" :disabled="!selected")
+    .col-1.actions
+      button.btn.btn-info.btn-sm.epg(@click="showHideEpg()") EPG
+
+  .wrapper-epg(v-if="epgShown")
+
+    ul.epg-list(v-for="evts,datets in channel.Epg")
+      li.date {{transformDate(datets)}}
+
+      li.event-details(v-for="evt in evts" :title="altTitle(evt)")
+        span.poster.logo
+          img(:src="evt.Poster")
+        span.time(:title="evt.Duration") {{startStopEvent(evt)}}
+        span.title {{eventName(evt)}}
+        span.description {{evt.Desc}}

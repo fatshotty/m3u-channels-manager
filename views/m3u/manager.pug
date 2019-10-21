@@ -17,8 +17,8 @@ block content
           button.btn.btn-secondary.btn-sm(@click="unselectAll()") Deseleziona tutto
           button.btn.btn-primary.btn-sm(@click="saveAll()" style="float: right") Salva tutto
 
-        ul.groups-container
-          Group(v-for="group in groups" :group="group" :key="group.id" )
+        .groups-container
+          Group(v-for="group in groups" :group="group" :key="group.id" :opened="isGroupOpened(group.id)" )
 
 
 

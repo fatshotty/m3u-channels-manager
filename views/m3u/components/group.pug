@@ -1,6 +1,9 @@
-li.group-item(:data-group-id="group.id")
-  span.name {{group.name}}
-  span.counter(title="espandi lista")
-    small(@click="showChannels()") {{group.count}} canali
-  ul.channels-container(:class="{'hidden': !chlShown}")
+.group-wrapper
+  .row.group-item.hoverable.clickable(:data-group-id="group.id" @click="showChannels()")
+    .col-5
+      span.name {{group.name}}
+    .col-2
+      span.counter(title="espandi lista")
+        small() {{group.count}} canali
+  .channels-container(:class="{'hidden': !chlShown}")
     Channel(v-for="channel, index in channels" :channel="channel" :key="channel.Id + index" :selectedId="channelSelectedData(channel.Id)")

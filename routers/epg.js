@@ -86,7 +86,7 @@ process.on('exit', () => {
 })
 
 
-function loadChannels() {
+function loadChannels(skip_save) {
   if ( LoadingChannels ) {
     Log.error('Channels are still in loading');
     return;
@@ -96,7 +96,9 @@ function loadChannels() {
   ChlPromise = EPG.loadChannels(null, Config.EPG.bulk).then( () => {
     LoadingChannels = false;
     // write EPG to disk
-    FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(EPG.EPG), {encoding: 'utf-8'});
+    if ( !skip_save ) {
+      FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(EPG.EPG), {encoding: 'utf-8'});
+    }
   }, () => {LoadingChannels = false;} );
 }
 
@@ -121,7 +123,7 @@ function updateEPG(today, days, yesterday, details, cb) {
     dates.unshift( Moment(today).subtract(1, 'days').toDate() );
   }
 
-  loadChannels();
+  loadChannels(true);
 
   const loadByDate = (index) => {
     const date = dates[ index++ ];
@@ -309,7 +311,7 @@ Router.get('/show.:format?', (req, res, next) => {
         res.set('content-type', 'application/json')
         break;
       default:
-        res.set('content-disposition', `attachment; filename=\"epg-${Moment().format('DD-MM-YYYY')}.xml\"`)
+        // res.set('content-disposition', `attachment; filename=\"epg-${Moment().format('DD-MM-YYYY')}.xml\"`)
         res.set('content-type', 'application/xml')
     }
     res.end( result );

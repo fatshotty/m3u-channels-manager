@@ -40,6 +40,18 @@ a[href=""], a:not([href]) {
   margin-left: 10px;
 }
 
+.disabled {
+  opacity: 0.5;
+}
+
+.hoverable:hover {
+  background-color: #eee;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
 ul {
   list-style: none;
 }
@@ -174,9 +186,6 @@ form fieldset {
   font-size: 0.675rem;
 }
 
-.channel-item.disabled {
-  opacity: 0.5;
-}
 
 .epg-container {
   overflow-y: hidden;

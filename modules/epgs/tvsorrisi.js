@@ -143,7 +143,7 @@ class TvSorrisiEpg {
         Url: a.attributes.href,
         Number: a.attributes['data-channel-number'],
         Service: null,
-        Logo: `${BASE_URL}/bundles/tvscnewsite/css/images/loghi/${id}.png`
+        Logo: `${BASE_URL}/bundles/tvscnewsite/css/images/loghi/${id}_c.png`
       });
     }
 
@@ -170,10 +170,13 @@ class TvSorrisiEpg {
 
       Log.info(`${LOG_NAME} Loading channels programs`);
       const all_channel_req = [];
-      for( let chl of this._channels ) {
-        all_channel_req.push( (res, rej) => {
-          chl.loadEvents(date).then( res, rej );
-        });
+      for( let _chl of this._channels ) {
+        ((chl) => {
+          all_channel_req.push( (res, rej) => {
+            this._channels
+            chl.loadEvents(date).then( res, rej );
+          });
+        })(_chl);
       }
 
       Bulk( all_channel_req, bulk || 1).then( () => {

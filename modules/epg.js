@@ -33,13 +33,13 @@ class EPG {
 
     // TODO: process epg and get channels
     let json = {};
-    for ( let module of this.modules ) {
-      let channels = module.EPG;
+    for ( let _module of this.modules ) {
+      let channels = _module.EPG;
       let epg = [];
       for ( let channel of channels ) {
         epg.push( channel );
       }
-      json[ module.NAME ] = epg;
+      json[ _module.NAME ] = epg;
     }
 
     return json;
@@ -52,8 +52,8 @@ class EPG {
     // TODO: process epg and get channels
     let ids = {};
     let epg = [];
-    for ( let module of this.modules ) {
-      let channels = module.EPG;
+    for ( let _module of this.modules ) {
+      let channels = _module.EPG;
       for ( let channel of channels ) {
         if ( ! (channel.IdEpg in ids) ) {
           epg.push( channel );
@@ -105,9 +105,9 @@ class EPG {
 
   loadChannels(date, bulk) {
     let bulk_promise = [];
-    for ( let module of this.modules ) {
+    for ( let _module of this.modules ) {
       bulk_promise.push( (resolve, reject) => {
-        module.loadChannels(date, bulk).then(resolve, reject);
+        _module.loadChannels(date, bulk).then(resolve, reject);
       });
     }
 
@@ -118,19 +118,20 @@ class EPG {
   scrapeEpg(date, details, bulk) {
 
     let bulk_promise = [];
-    for ( let module of this.modules ) {
+    for ( let _module of this.modules ) {
       bulk_promise.push( (resolve, reject) => {
-        module.scrapeEpg(date, details, bulk).then( (data) => {
-          Log.info(`module ${module.NAME} completed!`);
+        _module.scrapeEpg(date, details, bulk).then( (data) => {
+          this.modules;
+          Log.info(`module ${_module.NAME} completed!`);
           resolve(data)
         }, (err) => {
-          Log.warn(`*** module ${module.NAME} completed with error! ${err}`);
+          Log.warn(`*** module ${_module.NAME} completed with error! ${err}`);
           reject(err);
         });
       });
     }
 
-    return Bulk( bulk_promise, bulk || 1 );
+    return Bulk( bulk_promise, 1 || bulk || 1 );
 
   }
 

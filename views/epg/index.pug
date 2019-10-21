@@ -38,48 +38,28 @@ block content
 
           button#update-epg.btn.btn-primary(title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
 
-      table(style="width: 100%")
-        thead
-          tr
-            th.enable-disable
-              input(type="checkbox" checked id="enable-all")
-            th.logo
-            th.number
-            th.name
-            th.association
-            th.actions
-              a#download-epg.btn.btn-secondary(title="Scarica XMLTV dal file di cache" href="#" target="_blank") Scarica XMLTV
-              if !RO
-                button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
-        tbody#channels-list
-          each chls,key in EPG.EPG
-            tr.group-item
-              td.name= key
-            each chl in chls
-              tr.channel-item(id=chl.Id)
-                td.enable-disable
-                  input(type="checkbox" checked)
-                td.logo
-                  img(src=chl.Logo)
-                td.number= chl.Number
-                td.name
-                  if (chl.Url)
-                      a(href=chl.Url target="_blank")= chl.Name
-                  else
-                    =chl.Name
-                  span
-                    small(style="font-style: italic")= `(${chl.IdEpg})`
-                td.association
-                  input(type="text" name=chl.IdEpg value="" placeholder=chl.IdEpg)
-                td.actions
-                  button.btn.btn-info.btn-sm.epg vedi l'attuale EPG
-              tr
-                td.channel-item.epg-container(colspan=6)
+      hr
+
+      .row.separator
+        .col-1.enable-disable
+          input(type="checkbox" v-model="selctedAll")
+        .col-1.logo
+        .col-1.number
+        .col-3.name
+        .col-3.association
+        .col-3.actions
+          a#download-epg.btn.btn-secondary(title="Scarica XMLTV dalla cache" href="#" target="_blank") Scarica XMLTV
+          if !RO
+            button#write-epg.btn.btn-outline-info(title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
+
+      #channels-list
+        Group(v-for="module in modules" :key="module.name" :group="module")
+
 
 
 
 
 block extrajs
   script.
-    window.Channels = !{JSON.stringify(EPG.XMLTV)};
+    window.Groups = !{JSON.stringify(EPG.EPG)};
   script(src="/epg.bundled.js")

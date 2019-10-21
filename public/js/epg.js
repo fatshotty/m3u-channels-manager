@@ -1,8 +1,142 @@
 import $ from 'jquery';
 import './app'
+import Vue from 'vue'
 import moment from 'moment'
 
+import group_template from '../../views/epg/components/module.pug';
+import channel_template from '../../views/epg/components/channel.pug';
+
 const PATH = '/epg';
+
+
+let EventBus = new Vue();
+
+
+Vue.component('Channel', {
+
+  template: channel_template(),
+
+  props: ['channel'],
+
+  data: function() {
+    return {
+      selected: true,
+      association: '',
+      epgShown: false
+    }
+  },
+
+  created() {
+    EventBus.$on('select-all-channels', ({value}) => {
+      this.selected = value;
+    });
+  },
+
+  mounted() {
+
+  },
+
+
+  watch: {
+  },
+
+
+  computed: {
+  },
+
+  methods: {
+    showHideEpg() {
+      this.epgShown = !this.epgShown;
+    },
+    transformDate(datets) {
+      let ts = Number(datets);
+      const date = new Date(ts);
+      return moment(date).format('DD/MM/YYYY');
+    },
+    altTitle(evt) {
+      return `${evt.Genre ? '(' + evt.Genre + ') - ' : ''}${evt.Description} ${evt.Episode ? '- (' + evt.Episode + ')' : ''}`
+    },
+    startStopEvent(evt) {
+      return `${moment(evt.Start).format('HH:mm')} - ${moment(evt.Stop).format('HH:mm')}`;
+    },
+    eventName(evt){
+      return `${evt.Title} ${evt.Prima ? ' ^ 1TV' : ''}`
+    }
+  }
+
+});
+
+
+Vue.component('Group', {
+
+  template: group_template(),
+
+  props: ['group'],
+
+  data: function() {
+    return {
+    }
+  },
+
+  created() {
+
+  },
+
+  mounted() {
+
+  },
+
+
+  watch: {
+  },
+
+
+  computed: {
+    name: function() {
+      return this.group.name;
+    },
+    channels: function() {
+      return this.group.channels;
+    }
+  },
+
+  methods: {
+
+  }
+
+});
+
+const VM = new Vue({
+  el: '#epg-page',
+
+  data: {
+    modules: [],
+    selctedAll: true,
+  },
+
+  created() {
+    let g_keys = Object.keys(window.Groups);
+    for ( let g_key of g_keys ) {
+      this.modules.push({
+        name: g_key,
+        channels: window.Groups[ g_key ]
+      });
+    }
+  },
+
+  computed: {
+
+  },
+  watch: {
+    selctedAll: function(new_value) {
+      EventBus.$emit('select-all-channels', {value: new_value});
+    }
+  },
+  methods: {
+
+  }
+});
+
 
 const ChannelsList = $('#channels-list');
 const UpdateChl = $('#update-chl');

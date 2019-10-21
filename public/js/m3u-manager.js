@@ -7,14 +7,9 @@ import channel_template from '../../views/m3u/components/channel.pug';
 
 const PATH = '/tv';
 
-const UnCheckAll = $('#uncheckall');
-
-const UL_GROUPS = $('#groups');
-
 let PERSONAL = null;
 
-
-$.get(`${PATH}/personal.json`).then( (groups) => {
+let PromPersonal = $.get(`${PATH}/personal.json`).then( (groups) => {
   PERSONAL = groups || [];
 });
 
@@ -26,11 +21,11 @@ const VM = new Vue({
   },
 
   created() {
-
-    $.get(`${PATH}/groups.json`).then( (groups) => {
-      this.groups.splice( 0, this.groups.length, ...groups );
-    });
-
+    PromPersonal.then( () => {
+      $.get(`${PATH}/groups.json`).then( (groups) => {
+        this.groups.splice( 0, this.groups.length, ...groups );
+      });
+    })
   },
 
   computed: {
@@ -42,6 +37,10 @@ const VM = new Vue({
   methods: {
     unselectAll() {
       this.$emit('unselect-all');
+    },
+
+    isGroupOpened(id) {
+      return id in PERSONAL
     },
 
     saveAll() {
@@ -87,7 +86,7 @@ Vue.component('Group', {
 
   template: group_template(),
 
-  props: ['group'],
+  props: ['group', 'opened'],
 
   data: function() {
     return {
@@ -97,6 +96,7 @@ Vue.component('Group', {
   },
 
   created() {
+    if ( this.opened ) this.showChannels();
   },
 
   mounted() {

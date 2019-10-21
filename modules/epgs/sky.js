@@ -159,8 +159,6 @@ class SkyEpg {
 
       Log.info(`${LOG_NAME} Loading channels programs`);
 
-
-
       const all_channel_req = [];
       for( let chl of this._channels ) {
         all_channel_req.push( (res, rej) => {

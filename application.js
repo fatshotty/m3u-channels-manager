@@ -211,7 +211,19 @@ if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
       }
       console.log(`Server listing on port ${Config.Port}`);
     } else {
+
+      if ( Argv.m3u ) {
+        require('./routers/m3u').info('/tv');
+        console.log('');
+      }
+      if ( Argv.epg ) {
+        require('./routers/epg').info('/epg');
+      }
+
+      console.log('');
+
       require('./server.js');
+      console.log(`Server listing on port ${Config.Port}`);
     }
   } else {
     require('./server.js');
