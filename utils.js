@@ -301,10 +301,10 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
 
       if ( ASSOCIATIONS ) {
         if ( ! (IdEpg in ASSOCIATIONS) ) {
-          Log.info(`${IdEpg} has not been requested`);
+          Log.debug(`${IdEpg} has not been requested`);
           continue;
         } else {
-          Log.info(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
+          Log.debug(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
           IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
         }
       }

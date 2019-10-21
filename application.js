@@ -129,6 +129,12 @@ global.Argv = Args
         default: false,
         describe: 'load full EPG details'
       })
+      .option('association', {
+        type: 'string',
+        describe: 'spcifies the association while generating XMLTV',
+        default: ''
+      })
+
 
       .implies('update', 'today')
 

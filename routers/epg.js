@@ -32,7 +32,7 @@ let ChlPromise = null;
 function parseCommand(Argv, cb) {
 
   if ( Argv.update ) {
-    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, cb);
+    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, Argv.association, cb);
 
   } else if ( Argv.show ) {
     returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, null, cb);
@@ -179,9 +179,23 @@ function updateEPG(today, days, yesterday, details, cb) {
 }
 
 
-function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) {
+function updateAndReturnEPG(today, days, yesterday, shift, format, details, association cb) {
+  let ass =  null;
+  if ( association ) {
+    if ( ! (association in ASSOCIATIONS ) ) {
+      ass = ASSOCIATIONS[ association ];
+      shift = ass.shift;
+      details = ass.detailed;
 
-  let shifts = Array.isArray(shift) ? shift : shift.split(',');
+      Log.info(`update EPG using association ${association}`);
+    } else {
+      Log.warn(`cannot found association ${association}`);
+      process.exit(1);
+    }
+  }
+
+  Array.isArray(shift) ? shift : shift.split(',');
+
   shifts = shifts.map( (s) => {
     return parseInt(s, 10)
   }).filter( (s) => {
@@ -194,7 +208,7 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, cb) 
         cb(JSON.stringify(result) );
         break;
       default:
-        cb( Utils.createXMLTV(result, shifts).toString() );
+        cb( Utils.createXMLTV(result, shifts, null, ass.channels).toString() );
     }
   });
 }
