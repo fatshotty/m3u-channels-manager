@@ -412,15 +412,15 @@ Router.get('/xmltv/:assname.:format', (req, res, next) => {
   let assname = req.params.assname;
   let format = req.params.format || 'xml'
 
-  if ( ! (assname in ASSOCIATIONS) ) {
-    res.status(404).end(`- no association found under name ${assname} -`);
-    return;
-  }
+  // if ( ! (assname in ASSOCIATIONS) ) {
+  //   res.status(404).end(`- no association found under name ${assname} -`);
+  //   return;
+  // }
 
-  let association = ASSOCIATIONS[ assname ];
+  // let association = ASSOCIATIONS[ assname ];
 
 
-  returnCachedEPGFormatted(null, 'xml', null, association, (result) => {
+  returnCachedEPGFormatted(null, 'xml', null, assname, (result) => {
 
     switch( format ) {
       case 'gz':

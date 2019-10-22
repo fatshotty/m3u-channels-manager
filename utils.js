@@ -314,7 +314,7 @@ function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
           Log.debug(`${OriginalIdEpg} of ${module_name} has not been requested, skip!`);
           continue;
         }
-        OriginalIdEpg = association_module[ OriginalIdEpg ];
+        OriginalIdEpg = association_module[ OriginalIdEpg ] || OriginalIdEpg;
       }
 
 
@@ -381,7 +381,7 @@ function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
           Log.debug(`${OriginalIdEpg} of ${module_name} has not been requested, skip!`);
           continue;
         }
-        OriginalIdEpg = association_module[ OriginalIdEpg ];
+        OriginalIdEpg = association_module[ OriginalIdEpg ] || OriginalIdEpg;
       }
 
 

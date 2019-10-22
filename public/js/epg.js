@@ -234,14 +234,15 @@ Controllare il log per assicurarsi che il processo finisca`
         type: 'POST',
         url: `${PATH}/associations/${association_name}`,
         data: JSON.stringify( result ),
-        success: function(data) {
+        success: (data) => {
           alert(
 `L'associazione è stata salvata con successo.
 Sarà disponibile a questo link:
-${document.location.origin}${PATH}/show.xml?association=${association_name}`
+${document.location.origin}${PATH}/xmltv/${association_name}.xml`
           );
+          this.loadedAssociation = association_name;
         },
-        error: function(xhr, statusText, err) {
+        error: (xhr, statusText, err) => {
           console.warn(arguments);
           alert(`Errore: ${err}`);
         },
@@ -282,7 +283,7 @@ ${document.location.origin}${PATH}/show.xml?association=${association_name}`
           }
         }
 
-      }, (err) => {
+      }, (xhr, statustext, err) => {
         alert(`Errore: ${err}`);
       });
     }
