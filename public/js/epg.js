@@ -179,6 +179,7 @@ Controllare il log per assicurarsi che il processo finisca`
       );
       if ( res ) {
         alert('Una volta terminato il processo è necessario ricaricare la pagina');
+        let query = [];
         if ( this.shiftTime ) {
           query.push(`shift=${this.shiftTime}`);
         }
@@ -186,11 +187,11 @@ Controllare il log per assicurarsi che il processo finisca`
           query.push(`details=1`);
         }
         this.executing = true;
-        $.get(`${PATH}/update.xml?${query.join('&')}`).done(function (data, textStatus, jqXHR) {
+        $.get(`${PATH}/update.xml?${query.join('&')}`).done( (data, textStatus, jqXHR) => {
           alert('EPG generato correttamente e salvato nel file di cache');
           this.executing = false;
         })
-        .fail(function (jqXHR, textStatus, errorThrown) {
+        .fail( (jqXHR, textStatus, errorThrown) => {
           if ( textStatus == 'timeout') {
             alert('Il processo sta impiegando più tempo del previsto. Controllare il log per assicurarsi che vada tutto bene');
           } else {

@@ -107,36 +107,13 @@ global.Argv = Args
         type: 'boolean',
         describe: 'output beautifier'
       })
-      .option('today', {
-        type: 'string',
-        describe: 'spcifies the referrer date expressed in \'YYYYMMDD\' format, default today',
-        default: new Date()
-      })
-      .option('days', {
-        type: 'number',
-        default: '0',
-        describe: 'spcifies the number of days referred to \'today\''
-      })
-      .option('yest', {
-        alias: 'yesterday',
-        type: 'boolean',
-        default: false,
-        describe: 'specifies if load \'yesterday\' or not'
-      })
 
       .option('full', {
         type: 'boolean',
         default: false,
         describe: 'load full EPG details'
       })
-      .option('association', {
-        type: 'string',
-        describe: 'spcifies the association while generating XMLTV',
-        default: ''
-      })
 
-
-      .implies('update', 'today')
 
     .option('show', {
       type: 'boolean',
@@ -147,20 +124,14 @@ global.Argv = Args
         default: ['0'],
         describe: 'specifies the time-shift expressed in hours'
       })
-      .option('cgs', {
-        type: 'array',
-        alias: 'channel-groups',
-        default: [''],
-        describe: 'specifies channels groups to use in XMLTV (musica, bambini, news, mondi, cinema, sport, intrattenimento, digitale, primafila, meglio)'
-      })
-      .option('kltv', {
-        type: 'boolean',
-        default: false,
-        describe: 'write xml following KLTV specifications'
+      .option('association', {
+        type: 'string',
+        describe: 'spcifies the association while generating XMLTV',
+        default: ''
       })
 
 
-  .group(['epg', 'channels', 'update', 'show', 'cgs', 'today', 'days', 'yest', 'shift'], 'EPG module')
+  .group(['epg', 'channels', 'update', 'show', 'shift'], 'EPG module')
 
   .option('serve', {
     type: 'boolean',

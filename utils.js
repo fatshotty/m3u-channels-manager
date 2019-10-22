@@ -265,7 +265,7 @@ function createXMLKodiLive(groups, base_url) {
 }
 
 
-function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
+function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
 
   if ( ! Array.isArray(SHIFT) ) {
     SHIFT = [SHIFT];
@@ -275,9 +275,6 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
     SHIFT.unshift( 0 );
   }
 
-  if ( !GROUPS || GROUPS.length <= 0 ) {
-    GROUPS = null;
-  }
 
   Log.info('creating XMLTV');
   Log.debug(`Shift hours ${SHIFT.join(', ')}`)
@@ -288,225 +285,248 @@ function createXMLTV(EPG, SHIFT, GROUPS, ASSOCIATIONS) {
   TV.writeAttribute('source-info-name', 'EPG');
   TV.writeAttribute('generator-info-name', 'simple tv grab it');
   TV.writeAttribute('generator-info-url', '');
-  for( let CHL of EPG ) {
 
-    if ( GROUPS ) {
-      if ( CHL.Group && GROUPS.indexOf( CHL.Group ) <= -1 ) {
+  let module_names = Object.keys(EPG);
+
+
+  // LOOP FOR CHANNELs
+  for ( let module_name of module_names ) {
+
+    let association_module = null;
+
+    if ( ASSOCIATIONS ) {
+      if ( ! (module_name in ASSOCIATIONS) ) {
+        Log.info(`${module_name} epg-module will be skipped`);
+        // next module
         continue;
       }
+      association_module = ASSOCIATIONS[ module_name ];
     }
 
-    for ( let shift of SHIFT ) {
-      let IdEpg = CHL.IdEpg;
+    let module_channel_list = EPG[ module_name ];
 
-      if ( ASSOCIATIONS ) {
-        if ( ! (IdEpg in ASSOCIATIONS) ) {
-          Log.debug(`${IdEpg} has not been requested`);
+    for( let CHL of module_channel_list ) {
+
+      let OriginalIdEpg = CHL.IdEpg;
+
+      if ( association_module ) {
+        if ( ! (OriginalIdEpg in association_module) ) {
+          Log.debug(`${OriginalIdEpg} of ${module_name} has not been requested, skip!`);
           continue;
-        } else {
-          Log.debug(`${IdEpg} will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
-          IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
         }
+        OriginalIdEpg = association_module[ OriginalIdEpg ];
       }
 
-      const chl_id = shift ? `${IdEpg} +${shift}` : IdEpg;
 
-      const chl_name = shift ? `${CHL.Name} +${shift}` : CHL.Name;
-      const chl_el = TV.startElement('channel');
-      chl_el.writeAttribute('id', chl_id);
-      chl_el.writeAttribute('name', chl_name);
-      if ( ! shift ) {
-        chl_el.writeAttribute('number', CHL.Number);
-      }
+      for ( let shift of SHIFT ) {
+        let IdEpg = OriginalIdEpg;
 
-      chl_el.startElement('display-name')
-        .writeAttribute('lang', 'it')
-        .text(chl_name)
-        .endElement();
+        const chl_id = shift ? `${IdEpg} +${shift}` : IdEpg;
 
-      if ( !shift && CHL.Number ) {
+        const chl_name = shift ? `${CHL.Name} +${shift}` : CHL.Name;
+        const chl_el = TV.startElement('channel');
+        chl_el.writeAttribute('id', chl_id);
+        chl_el.writeAttribute('name', chl_name);
+        if ( ! shift ) {
+          chl_el.writeAttribute('number', CHL.Number);
+        }
+
         chl_el.startElement('display-name')
           .writeAttribute('lang', 'it')
-          .text(CHL.Number)
+          .text(chl_name)
           .endElement();
-      }
 
-      chl_el.startElement('icon').writeAttribute('src', CHL.Logo).endElement();
-      if ( CHL.Url ) {
-        chl_el.startElement('url').text( CHL.Url ).endElement();
+        if ( !shift && CHL.Number ) {
+          chl_el.startElement('display-name')
+            .writeAttribute('lang', 'it')
+            .text(CHL.Number)
+            .endElement();
+        }
+
+        chl_el.startElement('icon').writeAttribute('src', CHL.Logo).endElement();
+        if ( CHL.Url ) {
+          chl_el.startElement('url').text( CHL.Url ).endElement();
+        }
+        chl_el.endElement();
       }
-      chl_el.endElement();
     }
+
   }
 
 
-  for( let CHL of EPG ) {
+  // LOOP FOR PROGRAMMEs
 
-    if ( GROUPS ) {
-      if ( CHL.Group && GROUPS.indexOf( CHL.Group ) <= -1 ) {
+  for ( let module_name of module_names ) {
+
+    let association_module = null;
+
+    if ( ASSOCIATIONS ) {
+      if ( ! (module_name in ASSOCIATIONS) ) {
+        Log.info(`${module_name} epg-module will be skipped`);
+        // next module
         continue;
       }
+      association_module = ASSOCIATIONS[ module_name ];
     }
 
-    for( let shift of SHIFT ) {
+    let module_channel_list = EPG[ module_name ];
 
-      let IdEpg = CHL.IdEpg;
 
-      if ( ASSOCIATIONS ) {
-        if ( ! (IdEpg in ASSOCIATIONS) ) {
-          Log.info(`${IdEpg} has not been requested`);
+    for( let CHL of module_channel_list ) {
+
+      let OriginalIdEpg = CHL.IdEpg;
+
+      if ( association_module ) {
+        if ( ! (OriginalIdEpg in association_module) ) {
+          Log.debug(`${OriginalIdEpg} of ${module_name} has not been requested, skip!`);
           continue;
-        } else {
-          Log.info(`${IdEpg} programs will be written as '${ASSOCIATIONS[ IdEpg ] || IdEpg}'`);
-          IdEpg = ASSOCIATIONS[ IdEpg ] || IdEpg;
-
         }
+        OriginalIdEpg = association_module[ OriginalIdEpg ];
       }
 
 
-      const chl_id = shift ? `${IdEpg} +${shift}` : IdEpg;
+      for( let shift of SHIFT ) {
+        let IdEpg = OriginalIdEpg;
 
-      const dates = Object.keys( CHL.Epg );
+        const chl_id = shift ? `${IdEpg} +${shift}` : IdEpg;
 
-      for ( let datetime_str of dates ) {
-        const programs = CHL.Epg[ datetime_str ];
+        const dates = Object.keys( CHL.Epg );
 
-        for ( let PRG of programs ) {
+        for ( let datetime_str of dates ) {
+          const programs = CHL.Epg[ datetime_str ];
 
-          const prg_el = TV.startElement('programme');
+          for ( let PRG of programs ) {
 
-          let starttime = new Date(PRG.Start);
-          starttime.setMinutes( starttime.getMinutes() + (60 * shift) );
-          prg_el.writeAttribute('start', Moment(starttime).format('YYYYMMDDHHmmss Z').replace(':', '') );
+            const prg_el = TV.startElement('programme');
 
-          let endtime = new Date(PRG.Stop);
-          endtime.setMinutes( endtime.getMinutes() + (60 * shift) );
-          prg_el.writeAttribute('stop', Moment(endtime).format('YYYYMMDDHHmmss Z').replace(':', '') );
+            let starttime = new Date(PRG.Start);
+            starttime.setMinutes( starttime.getMinutes() + (60 * shift) );
+            prg_el.writeAttribute('start', Moment(starttime).format('YYYYMMDDHHmmss Z').replace(':', '') );
 
-          prg_el.writeAttribute('channel', chl_id);
+            let endtime = new Date(PRG.Stop);
+            endtime.setMinutes( endtime.getMinutes() + (60 * shift) );
+            prg_el.writeAttribute('stop', Moment(endtime).format('YYYYMMDDHHmmss Z').replace(':', '') );
 
-          // const id_el = prg_el.startElement('id');
-          // if ( PRG.Id ) {
-          //   id_el.text(PRG.Id);
-          // }
-          // id_el.endElement();
-          // const pid_el = prg_el.startElement('pid');
+            prg_el.writeAttribute('channel', chl_id);
 
-          // if ( PRG.Pid ) {
-          //   pid_el.text(PRG.Pid);
-          // }
-          // pid_el.endElement();
-
-          const prg_title = PRG.Title;
-          if ( PRG.prima ) {
-            prg_title += ' 1^TV';
-          }
-          const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')
-                  .text(prg_title || '')
-                  .endElement();
-
-          let category;
-
-          category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, TV_HEAD_PVR_GENRE_INDEX);
-          Log.debug(`extracted TvHeadEnd category : ${category}`);
-          if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                    .text( category )
-                    .endElement();
-          }
-
-          category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, PVR_GENRE_INDEX);
-          Log.debug(`extracted PVR category: ${category}`);
-          if ( category ) {
-            const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                    .text( category )
-                    .endElement();
-          }
-
-
-          const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Genre || PRG.Subgenre || '')
-                  .endElement();
-          const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
-                  .text(PRG.Subgenre || '')
-                  .endElement();
-
-
-          if ( PRG.Poster ) {
-            const thumbnail_url_el = prg_el.startElement('icon')
-                    .text(PRG.Poster || '')
-                    .endElement();
-          }
-          const description_el = prg_el.startElement('desc').writeAttribute('lang', 'it')
-          if ( PRG.Description) {
-            description_el.text(PRG.Description || '');
-          }
-          description_el.endElement();
-          const country_el = prg_el.startElement('country')
-                  .text('IT')
-                  .endElement();
-
-
-          const subtitles_el = prg_el.startElement('sub-title').writeAttribute('lang', 'it')
-          if ( PRG.data.desc ) {
-            subtitles_el.text( PRG.data.desc.substring(0, 50) );
-          }
-          subtitles_el.endElement();
-
-          if ( PRG.Date ) {
-            const date_el = prg_el.startElement('date')
-                  .text( PRG.Date )
-                  .endElement();
-          }
-
-          if ( PRG.Director || (PRG.Actors && PRG.Actors.length > 0) ) {
-            const credits_el = prg_el.startElement('credits')
-            if ( PRG.Director ) {
-              credits_el.startElement('director')
-                .text( PRG.Director )
-                .endElement();
+            const prg_title = PRG.Title;
+            if ( PRG.prima ) {
+              prg_title += ' 1^TV';
             }
-            if ( PRG.Actors && PRG.Actors.length > 0) {
-              for ( let act of PRG.Actors ){
-                if ( !act ) continue;
-                credits_el.startElement('actor')
-                  .text( act )
-                  .endElement();
+            const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')
+                    .text(prg_title || '')
+                    .endElement();
+
+
+            const description_el = prg_el.startElement('desc').writeAttribute('lang', 'it')
+            if ( PRG.Description ) {
+              description_el.text(PRG.Description || '');
+            }
+            description_el.endElement();
+
+
+            const subtitles_el = prg_el.startElement('sub-title').writeAttribute('lang', 'it')
+            if ( PRG.data.desc ) {
+              subtitles_el.text( PRG.data.desc.substring(0, 50) );
+            }
+            subtitles_el.endElement();
+
+            const genre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                    .text(PRG.Genre || PRG.Subgenre || '')
+                    .endElement();
+
+            if ( DETAILED !== false ) {
+
+              // print all data if detailed requested
+
+              let category;
+              category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, PVR_GENRE_INDEX);
+              Log.debug(`extracted PVR category: ${category}`);
+              if ( category ) {
+                const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                        .text( category )
+                        .endElement();
+              }
+
+              category = extractCategoryByGenre(PRG.Genre, PRG.Subgenre, TV_HEAD_PVR_GENRE_INDEX);
+              Log.debug(`extracted TvHeadEnd category : ${category}`);
+              if ( category ) {
+                const category_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                        .text( category )
+                        .endElement();
+              }
+
+              const subgenre_el = prg_el.startElement('category').writeAttribute('lang', 'it')
+                      .text(PRG.Subgenre || '')
+                      .endElement();
+
+              const country_el = prg_el.startElement('country')
+                      .text('IT')
+                      .endElement();
+
+              if ( PRG.Poster ) {
+                const thumbnail_url_el = prg_el.startElement('icon')
+                        .text(PRG.Poster || '')
+                        .endElement();
+              }
+
+
+              if ( PRG.Date ) {
+                const date_el = prg_el.startElement('date')
+                      .text( PRG.Date )
+                      .endElement();
+              }
+
+              if ( PRG.Director || (PRG.Actors && PRG.Actors.length > 0) ) {
+                const credits_el = prg_el.startElement('credits')
+                if ( PRG.Director ) {
+                  credits_el.startElement('director')
+                    .text( PRG.Director )
+                    .endElement();
+                }
+                if ( PRG.Actors && PRG.Actors.length > 0) {
+                  for ( let act of PRG.Actors ){
+                    if ( !act ) continue;
+                    credits_el.startElement('actor')
+                      .text( act )
+                      .endElement();
+                  }
+                }
+                credits_el.endElement();
+              }
+
+
+              if ( PRG.Episode ) {
+                let _epidose_str = PRG.Episode;
+
+                prg_el.startElement('episode-num')
+                      .writeAttribute('system', 'xmltv_ns')
+                      .text( _epidose_str )
+                      .endElement();
+
+                let _eps = _epidose_str.split('.');
+                let s = parseInt(_eps[0], 10 );
+                let e = parseInt(_eps[1], 10 );
+                s = s || s == '0' ? `S${s + 1}` : false;
+                if ( s ) {
+                  e = e || e == '0' ? `E${e + 1}` : '';
+                  prg_el.startElement('episode-num')
+                      .writeAttribute('system', 'onscreen')
+                      .text( `${s}${e}` )
+                      .endElement();
+                }
+
+
               }
             }
-            credits_el.endElement();
+
+            prg_el.endElement();
           }
-
-
-          if ( PRG.Episode ) {
-            let _epidose_str = PRG.Episode;
-
-            prg_el.startElement('episode-num')
-                  .writeAttribute('system', 'xmltv_ns')
-                  .text( _epidose_str )
-                  .endElement();
-
-            let _eps = _epidose_str.split('.');
-            let s = parseInt(_eps[0], 10 );
-            let e = parseInt(_eps[1], 10 );
-            s = s || s == '0' ? `S${s + 1}` : false;
-            if ( s ) {
-              e = e || e == '0' ? `E${e + 1}` : '';
-              prg_el.startElement('episode-num')
-                  .writeAttribute('system', 'onscreen')
-                  .text( `${s}${e}` )
-                  .endElement();
-            }
-
-
-          }
-
-          prg_el.endElement();
         }
+
       }
 
     }
-
   }
 
   TV.endElement();

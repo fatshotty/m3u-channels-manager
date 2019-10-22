@@ -8,6 +8,7 @@ yarn.lock
 package-lock.json
 
 .env
+public/js/epg_old.js
 
 guide_*.xm*
 test.js

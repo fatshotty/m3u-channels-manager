@@ -428,8 +428,8 @@ class Event {
           this.data.subgenre = cleanString(values[1] || '');
         } else if ( field == 'episode' ) {
           if ( matches && matches.length && matches[2]) {
-            let s = parseInt(match[2], 10);
-            let e = parseInt(match[6], 10);
+            let s = parseInt(matches[2], 10);
+            let e = parseInt(matches[6], 10);
 
             value = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
           }

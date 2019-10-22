@@ -32,10 +32,10 @@ let ChlPromise = null;
 function parseCommand(Argv, cb) {
 
   if ( Argv.update ) {
-    updateAndReturnEPG(Argv.today, Argv.days, Argv.yest, Argv.shift, Argv.format, Argv.full, Argv.association, cb);
+    updateAndReturnEPG(Argv.shift, Argv.format, Argv.full, Argv.association, cb);
 
   } else if ( Argv.show ) {
-    returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.cgs, null, cb);
+    returnCachedEPGFormatted(Argv.shift, Argv.format, Argv.full, Argv.association, cb);
   }
 
 }
@@ -134,25 +134,14 @@ function loadChannels(skip_save) {
 }
 
 
-function updateEPG(today, days, yesterday, details, cb) {
+function updateEPG(details, cb) {
 
-  today = ( today ? Moment(today, 'YYYYMMDD') : Moment() );
+  let today = Moment();
   today.hour(0).minute(0).seconds(0).millisecond(0);
   today = today.toDate();
 
-  if ( isNaN( today.getTime() ) ) {
-    throw `invalid 'today' arguments`;
-  }
 
-  days = Math.abs( parseInt(days, 10) );
-  const dates = new Array( (days > 2 ? 2 : days) + 1 );
-  for( let [i, d] of dates.entries() ) {
-    dates[i] = Moment(today).add(i, 'days').toDate();
-  }
-
-  if ( yesterday ) {
-    dates.unshift( Moment(today).subtract(1, 'days').toDate() );
-  }
+  let dates = [ today ];
 
   loadChannels(true);
 
@@ -171,7 +160,7 @@ function updateEPG(today, days, yesterday, details, cb) {
       Log.info(`No more dates, completed in ${Date.now() - starttime}ms`);
       let _epg_ = EPG.EPG;
       FS.writeFileSync( EPG_CACHE_FILE, JSON.stringify(_epg_), {encoding: 'utf-8'});
-      cb(EPG.XMLTV);
+      cb(_epg_);
     }
   };
   let starttime = Date.now()
@@ -179,7 +168,7 @@ function updateEPG(today, days, yesterday, details, cb) {
 }
 
 
-function updateAndReturnEPG(today, days, yesterday, shift, format, details, association cb) {
+function updateAndReturnEPG(shift, format, details, association, cb) {
   let ass =  null;
   if ( association ) {
     if ( ! (association in ASSOCIATIONS ) ) {
@@ -190,11 +179,12 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, asso
       Log.info(`update EPG using association ${association}`);
     } else {
       Log.warn(`cannot found association ${association}`);
-      process.exit(1);
+      cb(`- cannot found association ${association} -`);
+      return;
     }
   }
 
-  Array.isArray(shift) ? shift : shift.split(',');
+  let shifts = Array.isArray(shift) ? shift : shift.split(',');
 
   shifts = shifts.map( (s) => {
     return parseInt(s, 10)
@@ -202,13 +192,13 @@ function updateAndReturnEPG(today, days, yesterday, shift, format, details, asso
     return !isNaN( s );
   });
 
-  updateEPG( today, days, yesterday, !!details, (result) => {
+  updateEPG( !!details, (result) => {
     switch( format ) {
       case 'json':
         cb(JSON.stringify(result) );
         break;
       default:
-        cb( Utils.createXMLTV(result, shifts, null, ass.channels).toString() );
+        cb( Utils.createXMLTV(result, shifts, details, ass && ass.channels).toString() );
     }
   });
 }
@@ -233,15 +223,12 @@ Router.get('/update.:format?', (req, res, next) => {
     return;
   }
 
-  let today = req.query.today;
-  let days = parseInt(req.query.days || 0, 10);
-  let yesterday = req.query.y || false;
   let shift = req.query.shift || '0';
   let details = !!(req.query.details || false);
   const format = req.params.format
 
   try {
-    updateAndReturnEPG( today, days, yesterday, shift, format, details, (result) => {
+    updateAndReturnEPG( shift, format, details, null, (result) => {
       res.status(200);
 
       switch( format ) {
@@ -295,40 +282,34 @@ Router.get('/write', (req, res, next) => {
 function returnCachedEPG() {
   // reload from cache because other process can update the epg
   loadFromCache();
-  return EPG.XMLTV;
+  return EPG.EPG;
 }
 
-function returnCachedEPGFormatted(shift, format, groups, associations, cb) {
+function returnCachedEPGFormatted(shift, format, detailed, association_name, cb) {
   const json = returnCachedEPG();
 
   let shifts = Array.isArray(shift) ? shift : (shift || '').split(',');
+
+  let association = null;
+
+  if ( association_name ) {
+    if ( ! (association_name in ASSOCIATIONS) ) {
+      Log.error(`no association found under name ${association_name}`);
+      cb( `- no association found under name ${association_name} -` )
+      return;
+    }
+
+    Log.info(`use association: ${association_name}`);
+    association = ASSOCIATIONS[ association_name ];
+    shifts = association.shift.split(',');
+    detailed = association.detailed;
+  }
+
   shifts = shifts.map( (s) => {
     return parseInt(s, 10)
   }).filter( (s) => {
     return !isNaN( s );
   });
-
-  groups = Array.isArray(groups) ? groups : (groups || '').split(',');
-  groups = groups.map( (g) => {
-    return g.trim();
-  }).filter( (g) => {
-    return !!g;
-  });
-
-
-  if ( associations ) {
-    if ( typeof associations == 'string' ) {
-      associations = associations.trim().split(';');
-    }
-    let _associations = {};
-    for( let ass of associations ) {
-      let matches = ass.match( /^(.*)=(.*)$/i );
-      if ( matches ) {
-        _associations[ matches[1].trim() ] = matches[2].trim();
-      }
-    }
-    associations = _associations
-  }
 
 
   switch( format ) {
@@ -336,33 +317,36 @@ function returnCachedEPGFormatted(shift, format, groups, associations, cb) {
       cb(  JSON.stringify( json ) );
       break;
     default:
-      cb( Utils.createXMLTV(json, shifts, groups, associations).toString() );
+      cb( Utils.createXMLTV(json, shifts, detailed, association.channels).toString() );
   }
 }
 
-Router.get('/show.:format?', (req, res, next) => {
+// Router.get('/show.:format?', (req, res, next) => {
 
-  let shift = req.query.shift || '0';
-  let format = req.params.format
-  let groups = req.query.g;
+//   let shift = req.query.shift || '0';
+//   let format = req.params.format
+//   let groups = req.query.g;
 
-  let channels = req.query.channels;
+//   let channels = req.query.channels;
 
-  res.status(200);
+//   res.status(200);
 
-  returnCachedEPGFormatted(shift, format, groups, channels, (result) => {
-    switch( format ) {
-      case 'json':
-        res.set('content-type', 'application/json')
-        break;
-      default:
-        // res.set('content-disposition', `attachment; filename=\"epg-${Moment().format('DD-MM-YYYY')}.xml\"`)
-        res.set('content-type', 'application/xml')
-    }
-    res.end( result );
-  });
+//   returnCachedEPGFormatted(shift, format, [detailed], channels, (result) => {
+//     switch( format ) {
+//       case 'json':
+//         res.set('content-type', 'application/json')
+//         break;
+//       default:
+//         // res.set('content-disposition', `attachment; filename=\"epg-${Moment().format('DD-MM-YYYY')}.xml\"`)
+//         res.set('content-type', 'application/xml')
+//     }
+//     res.end( result );
+//   });
 
-});
+// });
+
+
+
 
 
 function saveAssociation(name, data) {
@@ -395,8 +379,62 @@ Router.get('/associations/:assname', (req, res, next) => {
     res.status(404).end('Association not found');
   }
 
-
 });
+
+
+Router.get('/xmltv.:format', (req, res, next) => {
+  // show entire epg
+  let format = req.params.format || 'xml'
+  let shifts = req.query.shift;
+  let detailed = req.query.full;
+
+  if ( detailed !== undefined ) {
+    detailed = !!detailed;
+  }
+
+  returnCachedEPGFormatted(shifts, format, detailed, association, (result) => {
+
+    switch( format ) {
+      case 'json':
+        res.set('content-type', 'application/json')
+        break;
+      case 'gz':
+        // TODO: gz compression
+      default:
+        res.set('content-type', 'application/xml')
+    }
+    res.end( result );
+  });
+})
+
+Router.get('/xmltv/:assname.:format', (req, res, next) => {
+  // show entire epg using association
+  let assname = req.params.assname;
+  let format = req.params.format || 'xml'
+
+  if ( ! (assname in ASSOCIATIONS) ) {
+    res.status(404).end(`- no association found under name ${assname} -`);
+    return;
+  }
+
+  let association = ASSOCIATIONS[ assname ];
+
+
+  returnCachedEPGFormatted(null, 'xml', null, association, (result) => {
+
+    switch( format ) {
+      case 'gz':
+        // TODO: gz compression
+        // res.set('content-type', 'application/json')
+        // break;
+      default:
+        res.set('content-type', 'application/xml')
+    }
+    res.end( result );
+  });
+
+
+})
 
 
 Router.get('/', (req, res, next) => {
@@ -416,14 +454,15 @@ function info(mountpath) {
   console.log(` - GET ${mountpath}/update.:format?`);
   console.log(`     Updates epg and respond the XMLTV. format can be one of 'xml', 'json'`);
   console.log(`     querystring parameters:`);
-  console.log(`     \t- 'today': Date you want to load expressed in YYYYDDMM (default today)`);
-  console.log(`     \t- 'days': Number of days after, relative to 'today' (default 0, only today. Max 2 'til tomorrow after)`);
-  console.log(`     \t- 'y': Check if include yesterday or not`);
   console.log(`     \t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
+  console.log(`     \t- 'full': Specifies if epg will be fullfilled or not`);
 
-  console.log(` - GET ${mountpath}/show.:format?`);
+  console.log(` - GET ${mountpath}/xmltv.:format?`);
   console.log(`     Shows cached epg and respond the XMLTV. format can be one of 'xml', 'json'`);
   console.log(`     \t- 'shift': Number of hours of time-shift. E.g. FoxHD -> FoxHD+1`);
+
+  console.log(` - GET ${mountpath}/xmltv/:association_name.xml`);
+  console.log(`     Shows cached epg and respond the XMLTV using specified association name`);
 
 }
 
