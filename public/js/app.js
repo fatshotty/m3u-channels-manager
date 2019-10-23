@@ -11,12 +11,21 @@ const LogEl = document.getElementById('log');
 const ClearLog = document.getElementById('clear_log');
 let should_scroll_log = true;
 
-ClearLog.addEventListener('click', (e) => {
-  e.preventDefault();
-  LogEl.innerHTML = '';
-})
+if ( ClearLog ) {
+  ClearLog.addEventListener('click', (e) => {
+    e.preventDefault();
+    LogEl.innerHTML = '';
+  })
+}
 
 function logmessage({message, level}) {
+
+  if ( ! LogEl ) {
+    let method = console[ (level || '').toLowerCase() ];
+    method = method || console.log;
+    method.call(console, message);
+    return;
+  }
 
   const row = document.createElement('div');
   row.classList.add('log-line');
@@ -37,6 +46,7 @@ function logmessage({message, level}) {
   }
   row.appendChild( msgEl );
 
+
   LogEl.appendChild( row );
 
   if ( should_scroll_log ) {
@@ -49,13 +59,16 @@ window.LogMessage = logmessage;
 
 socket.on('logmessage', logmessage);
 
-ParentLogEl.addEventListener('scroll', () => {
-  if ( (ParentLogEl.scrollTop + ParentLogEl.offsetHeight) >= ParentLogEl.scrollHeight ) {
-    should_scroll_log = true;
-  } else {
-    should_scroll_log = false;
-  }
-});
+if ( ParentLogEl ) {
+  ParentLogEl.addEventListener('scroll', () => {
+    if ( (ParentLogEl.scrollTop + ParentLogEl.offsetHeight) >= ParentLogEl.scrollHeight ) {
+      should_scroll_log = true;
+    } else {
+      should_scroll_log = false;
+    }
+  });
+}
+
 
 socket.on('connect', () => {
   logmessage({message: '(connected)'});
