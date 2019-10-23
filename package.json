@@ -35,7 +35,9 @@
     "vue": "2.6.10",
     "jquery": "3.4.1",
     "socket.io-client": "2.3.0",
-    "popper.js": "1.15.0"
+    "popper.js": "1.15.0",
+    "express-basic-auth": "1.2.0",
+    "dotenv": "8.0.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
