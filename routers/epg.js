@@ -19,6 +19,7 @@ let ASSOCIATIONS = {};
 
 const EPG = EpgModule;
 
+const MOUNT_PATH = '/epg';
 
 const EPG_CACHE_FILE = Path.join( Config.Path , 'epg_cache.json' );
 const EPG_CACHE_FILE_ASSOCIATIONS = Path.join( Config.Path , 'epg_cache_associations.json' );
@@ -466,4 +467,4 @@ function info(mountpath) {
 
 }
 
-module.exports = {Router, EPG, loadChannels, returnCachedEPG, parseCommand, info, fileWatcher};
+module.exports = {Router, MountPath: MOUNT_PATH, EPG, loadChannels, returnCachedEPG, parseCommand, info, fileWatcher};

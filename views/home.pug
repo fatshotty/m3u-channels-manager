@@ -46,6 +46,9 @@ block content
               label(for='useforstream' style="float: right")
                 | Includi nello stream url
                 input#useforstream(type="checkbox" name="useforstream" value=Config.M3U.UseForStream checked=Config.M3U.UseForStream===true)
+              label(for='usefulldomain' style="float: right; margin-right: 10px")
+                | Usa Url completo nel link di stream
+                input#usefulldomain(type="checkbox" name="usefulldomain" value=Config.M3U.UseFullDomain checked=Config.M3U.UseFullDomain===true)
               input#useragent.form-control(type='text', placeholder='Kodi' name="useragent" value=Config.M3U.UserAgent || 'Kodi' )
               small.form-text.text-muted specificare lo user-agent usato per recuperare la lista, ad esempio 'Kodi' o 'VLC'
             .form-group

@@ -10,8 +10,14 @@ const EPG = require('../modules/epg');
 const Utils = require('../utils');
 const Log = Utils.Log;
 
+
+const MOUNTH_PATH = '/tv';
+
+
 let Watcher = null;
 let WatchTimer = null;
+let WatcherConfig = null;
+let WatchTimerConfig = null;
 
 const M3U_CACHE_FILE = Path.join( Config.Path , 'm3u_cache.txt' );
 const PERSONAL_FILE = Path.join( Config.Path , 'm3u_personal.json' );
@@ -19,10 +25,11 @@ const PERSONAL_FILE = Path.join( Config.Path , 'm3u_personal.json' );
 let M3U_LIST_STRING = '';
 let M3U_PERSONAL = null;
 
-const BASE_URL = ['http:/', `${Config.LocalIp}:${Config.Port}`, 'tv'].join('/');
+// const BASE_URL = ['http:/', `${Config.LocalIp}:${Config.Port}`, 'tv'].join('/');
+let DOMAIN_URL = `http://${Config.LocalIp}:${Config.Port}`;
 
 let M3UList = null;
-M3UList = new M3UK([BASE_URL, 'live'].join('/'));
+M3UList = new M3UK( `${DOMAIN_URL}${MOUNTH_PATH}/live` );
 
 
 if ( FS.existsSync(M3U_CACHE_FILE) ) {
@@ -63,6 +70,7 @@ function fileWatcher() {
       }, 1000);
     }
   });
+
 }
 
 
@@ -193,8 +201,8 @@ Router.get('/live/:channel', (req, res, next) => {
   const channel = req.params.channel;
 
   Log.warn(`****
-    you are using a deprecated api. Use '/live?channel=${channel}' instead
-    ****`);
+you are using a deprecated api. Use '/live?channel=${channel}' instead
+****`);
 
   getStreamUrlOfChannel(channel).then( (live_channel) => {
 
@@ -280,14 +288,14 @@ function getMappedStreamUrlOfChannel(req_chl_id, group) {
     let chls = M3U_PERSONAL[ grp_key ];
 
     for ( let chl of chls ) {
-      if ( chl.MapTo == req_chl_id ) {
+      if ( chl.ID == req_chl_id ) {
         Log.info(`found channels '${chl.ID}' by '${req_chl_id}' of '${grp_key}'`);
         return getStreamUrlOfChannel(chl.ID, grp_key);
       }
     }
   }
 
-  Promise.reject(`No channel found searching for '${req_chl_id}' in '${group}'`);
+  return Promise.reject(`No channel found searching for '${req_chl_id}' in '${group}'`);
 }
 
 
@@ -389,6 +397,11 @@ Router.get('/list.:format?', (req, res, next) => {
 
 
 function respondAllGroups(format) {
+  let link = `/list`;
+  if ( Config.M3U.UseFullDomain ) {
+    link = `${DOMAIN_URL}${MOUNTH_PATH}${link}`;
+  }
+
   switch (format) {
     case 'json':
       const resultjson = M3UList.groups.map( (g) => {
@@ -397,11 +410,11 @@ function respondAllGroups(format) {
       return JSON.stringify(resultjson);
       break;
     case 'xml':
-       return Utils.createXMLKodiLive( M3UList.groups, `${BASE_URL}/list` ).toString();
+      return Utils.createXMLKodiLive( M3UList.groups, `${DOMAIN_URL}${MOUNTH_PATH}/list` ).toString();
       break;
     default:
       const resultm3u = M3UList.groups.map( (g) => {
-        return [`#EXTINF:0, ${g.Name}`, `${BASE_URL}/list/${g.Id}.m3u`].join('\n');
+        return [`#EXTINF:0, ${g.Name}`, `${link}/${g.Id}.m3u8`].join('\n');
       });
       resultm3u.unshift('#EXTM3U');
       return resultm3u.join('\n')
@@ -438,7 +451,10 @@ Router.get('/', (req, res, next) => {
 
 
 
-function respondPersonalM3U(format) {
+function respondPersonalM3U(format, fulldomain) {
+
+  fulldomain = fulldomain || Config.M3U.UseFullDomain;
+
   let result_channels = [];
   if ( M3U_PERSONAL ) {
     let group_keys = Object.keys(M3U_PERSONAL);
@@ -465,12 +481,26 @@ function respondPersonalM3U(format) {
           let temp_redirect = temp_ch.Redirect;
 
           if ( temp_redirect ) {
-            let url = new URL( temp_redirect );
-            url.pathname = '/tv/personal/live';
-            url.searchParams.set('channel', personalChannel.MapTo);
-            url.searchParams.delete('group');
-            // TODO: add piping
-            temp_ch.Redirect = url.toString();
+            // let url = new URL( temp_redirect );
+            // url.pathname = '/tv/personal/live';
+            // url.searchParams.set('channel', personalChannel.MapTo);
+            // url.searchParams.delete('group');
+            // // TODO: add piping
+            // if ( Config.M3U.UseFullDomain ) {
+            //   temp_ch.Redirect = url.toString();
+            // } else {
+            //   // TODO: use url without domain
+            //
+            // }
+            let url_paths = temp_redirect.split('?');
+            url_paths.shift();
+            if ( fulldomain ) {
+              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/personal/live?channel=${temp_ch.Id}`;
+            } else {
+              temp_redirect = `${MOUNTH_PATH}/personal/live?channel=${temp_ch.Id}`;
+            }
+
+            temp_ch.Redirect = temp_redirect;
           }
 
           result_channels.push( temp_ch );
@@ -497,6 +527,7 @@ function respondPersonalM3U(format) {
 
 Router.get('/personal.:format?', (req, res, next) => {
   let format = req.params.format || 'html';
+  let fulldomain = req.query.domain == 'true';
 
   if ( format === 'json' ) {
 
@@ -505,7 +536,7 @@ Router.get('/personal.:format?', (req, res, next) => {
 
   } else if ( format.indexOf('m3u') === 0 ) {
 
-    let resp = respondPersonalM3U();
+    let resp = respondPersonalM3U(format, fulldomain);
     res.set('content-type', 'application/x-mpegURL');
     res.status(200).end( resp );
 
@@ -576,27 +607,33 @@ Router.get('/search.:format', (req, res, next) => {
 });
 
 
-function info(mountpath) {
+function info() {
 
   console.log('## M3U router mounted');
-  console.log(` - GET ${mountpath}/update`);
+  console.log(` - GET ${MOUNTH_PATH}/update`);
   console.log(`     Updates M3U list from ${Config.M3U.Url}`);
-  console.log(` - GET ${mountpath}/live/:channel_id`);
+  console.log(` - GET ${MOUNTH_PATH}/live/:channel_id`);
   console.log(`     Redirects to the url of the channel by its ID`);
-  console.log(` - ${mountpath}/list/:group_id.:format?`);
+  console.log(` - ${MOUNTH_PATH}/list/:group_id.:format?`);
   console.log(`     Responds all channels by given group_id. format can be one of 'm3u', 'json'`);
-  console.log(` - ${mountpath}/list.:format?`);
+  console.log(` - ${MOUNTH_PATH}/list.:format?`);
   console.log(`     Responds entire list of channels. format can be one of 'm3u', 'json'. You can specify groups passing '?groups=group_id,group_id' as query string`);
-  console.log(` - ${mountpath}/groups.:format?`);
+  console.log(` - ${MOUNTH_PATH}/groups.:format?`);
   console.log(`     Responds all groups details. format can be one of 'm3u', 'json'`);
 
 };
 
 
 function updateSettings(config) {
-  let burl = ['http:/', `${config.LocalIp}:${config.Port}`, 'tv'].join('/');
-  M3UList._baseUrl = [burl, 'live'].join('/');
+
+  DOMAIN_URL = `http://${config.LocalIp}:${config.Port}`;
+  if ( Config.M3U.UseFullDomain ) {
+    M3UList._baseUrl = `${DOMAIN_URL}${MOUNTH_PATH}`;
+  } else {
+    M3UList._baseUrl = MOUNTH_PATH;
+  }
+
 }
 
 
-module.exports = {Router, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info, updateSettings, fileWatcher};
+module.exports = {Router, MountPath: MOUNTH_PATH, respondStreamUrl, respondSingleGroup, respondList, respondAllGroups, refreshM3U, parseCommand, info, updateSettings, fileWatcher};

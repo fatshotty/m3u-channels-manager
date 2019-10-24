@@ -20,7 +20,8 @@ if ( ! FS.existsSync(Argv.config) ) {
       "Url": "",
       "ExcludeGroups": [],
       "UserAgent": "VLC",
-      "UseForStream": false
+      "UseForStream": false,
+      "UseFullDomain": true
     },
     "Port": 3000,
     "Path": `${global.CWD}/cache`,
@@ -35,7 +36,7 @@ if ( ! FS.existsSync(Argv.config) ) {
 
 let Config = null;
 
-Config = global.Config = require( Argv.config );
+Config = global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
 
 
 Config.Log = Path.resolve(global.CWD, Config.Log);
@@ -96,20 +97,22 @@ function loadRouters() {
 
   if ( Argv.m3u ) {
     Log.debug('loading module M3U...')
-    Modules['/tv'] = require('./routers/m3u');
+    let mod_m3u = require('./routers/m3u');
+    Modules[ mod_m3u.MountPath ] = mod_m3u;
     if ( !Argv.serve && !Argv.epg ) {
-      Modules['/tv'].parseCommand(Argv, (resp) => {
+      mod_m3u.parseCommand(Argv, (resp) => {
         console.log( resp );
       });
     }
   }
   if ( Argv.epg ) {
     Log.debug('loading module EPG...')
-    Modules['/epg'] = require('./routers/epg');
+    let mod_epg = require('./routers/epg');
+    Modules[ mod_epg.MountPath ] = mod_epg;
     if ( !Argv.serve && !Argv.m3u ) {
-      Modules['/epg'].parseCommand(Argv, (resp) => {
+      mod_epg.parseCommand(Argv, (resp) => {
         if ( Argv.beauty ) {
-          resp = Pretty.xml( resp )
+          resp = Pretty.xml( resp );
         }
         if ( Argv.sock || Config.EPG.Sock ) {
           const Client = Net.connect( {path: Argv.sock || Config.EPG.Sock }, function () {
@@ -157,6 +160,34 @@ if ( !Config.LocalIp) {
 
 function serveHTTP() {
 
+  let WatchTimer = null;
+  let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
+    Log.debug('Config file watcher triggered');
+    if ( eventType == 'change' ) {
+      clearTimeout(WatchTimer);
+      WatchTimer = setTimeout( () => {
+        Log.info('--- config file has been changed - reloading!')
+        Config = global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
+
+
+        const mod_keys = Object.keys( Modules );
+        for ( let mod_k of mod_keys ) {
+          const mod = Modules[ mod_k ];
+          mod.updateSettings && mod.updateSettings( Config );
+        }
+
+      }, 1000);
+    }
+  });
+
+  process.on('exit', () => {
+    if ( Watcher ) {
+      Watcher.close();
+      clearTimeout(WatchTimer);
+    }
+  });
+
+
   if ( !Argv.ro ) {
     App.post('/settings', (req, res, next) => {
 
@@ -168,6 +199,7 @@ function serveHTTP() {
       let url = req.body.url;
       let userAgent = req.body.useragent;
       let useforstream = req.body.useforstream;
+      let usefulldomain = req.body.usefulldomain;
       let groups = req.body.groups;
       let bulk = req.body.bulk;
       let loglevel = req.body.loglevel
@@ -194,7 +226,8 @@ function serveHTTP() {
             return g.trim();
           }),
           "UserAgent": userAgent || 'Kodi',
-          "UseForStream": !!useforstream
+          "UseForStream": !!useforstream,
+          "UseFullDomain": !!usefulldomain
         },
         "Port": Number(port),
         "Path": cache,
@@ -209,12 +242,6 @@ function serveHTTP() {
       Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
 
       FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
-
-      const mod_keys = Object.keys( Modules );
-      for ( let mod_k of mod_keys ) {
-        const mod = Modules[ mod_k ];
-        mod.updateSettings && mod.updateSettings( Config );
-      }
 
       Log.info('updated!')
       setTimeout(() => {
