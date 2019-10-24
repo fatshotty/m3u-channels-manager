@@ -36,6 +36,8 @@ if ( FS.existsSync(M3U_CACHE_FILE) ) {
   M3U_LIST_STRING = FS.readFileSync(M3U_CACHE_FILE, {encoding: 'utf-8'});
   loadM3U();
 } else {
+  // create temporary file
+  FS.writeFileSync(M3U_CACHE_FILE, '', {encoding: 'utf-8'});
   refreshM3U();
 }
 
