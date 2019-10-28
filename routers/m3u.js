@@ -233,6 +233,7 @@ Router.get('/personal/live', (req, res, next) => {
     }
 
   }, (reason) => {
+    Log.error(`No channel found for ${channel}`);
     res.status(404).end(reason);
   });
 
@@ -290,7 +291,7 @@ function getMappedStreamUrlOfChannel(req_chl_id, group) {
     let chls = M3U_PERSONAL[ grp_key ];
 
     for ( let chl of chls ) {
-      if ( chl.ID == req_chl_id ) {
+      if ( chl.MapTo == req_chl_id ) {
         Log.info(`found channels '${chl.ID}' by '${req_chl_id}' of '${grp_key}'`);
         return getStreamUrlOfChannel(chl.ID, grp_key);
       }
