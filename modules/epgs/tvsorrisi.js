@@ -174,7 +174,7 @@ class TvSorrisiEpg {
       for( let _chl of this._channels ) {
         ((chl) => {
           all_channel_req.push( (res, rej) => {
-            this._channels
+            // this._channels
             chl.loadEvents(date).then( res, rej );
           });
         })(_chl);
@@ -473,6 +473,7 @@ class Channel {
 
       }, (result) => {
         Object.assign( event.data, result || {});
+        event.fixEventData && event.fixEventData();
       });
 
 
@@ -652,7 +653,7 @@ class Event {
       Desc: this.data.desc,
       Description: this.Description,
       Episode: this.Episode,
-      Prima: this.data.prima,
+      Prima: false,  // cannot retrieve this info
       Duration: this.data.dur
     }
   }

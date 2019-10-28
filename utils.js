@@ -409,10 +409,10 @@ function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
 
             prg_el.writeAttribute('channel', chl_id);
 
-            const prg_title = PRG.Title;
-            if ( PRG.prima ) {
+            let prg_title = PRG.Title;
+            if ( PRG.Prima ) {
               if ( prg_title.indexOf('1^ TV') < 0 ) {
-                prg_title += ' 1^ TV';
+                prg_title = `${prg_title.trim()} - 1^ TV`;
               }
             }
             const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')

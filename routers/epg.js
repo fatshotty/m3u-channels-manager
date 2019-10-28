@@ -318,7 +318,7 @@ function returnCachedEPGFormatted(shift, format, detailed, association_name, cb)
       cb(  JSON.stringify( json ) );
       break;
     default:
-      cb( Utils.createXMLTV(json, shifts, detailed, association.channels).toString() );
+      cb( Utils.createXMLTV(json, shifts, detailed, association && association.channels).toString() );
   }
 }
 

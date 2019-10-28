@@ -20,6 +20,8 @@ const PROGRAM_POSTER = `${SKY_DOMAIN}/app/guidatv/images{icon}`;
 // const REG_EXP_SEASON_EPISODE = /^((S(\w+)?(\d+))?)(\s?)((E(\w+)?(\d+))?)/i;
 const REG_EXP_SEASON_EPISODE = /S(tagione)?\s?(\d+)[\s-]*(E(p)?(isodio)?\s?(\d+))?/i
 
+const REG_EXP_PRIMA = /(((\s+)?-(\s+)?)+)?((\s+)?1(\s+)?\^(\s+)?TV)$/i;
+
 const CATEGORY = [
   // "musica",
   // "bambini",
@@ -277,6 +279,8 @@ class Channel {
         evt.calculateStartTime(usedate);
         usedate = evt.Start;
 
+        evt.fixEventData();
+
         epg.push( evt );
       }
       Log.debug(`${LOG_NAME} loaded EPG for ${this.Name} in date ${date_str}- Total: ${epg.length}`);
@@ -469,6 +473,10 @@ class Event {
     return '';
   }
 
+  get Prima() {
+    return this.data.prima;
+  }
+
   get Director() {
     return '';
   }
@@ -499,7 +507,7 @@ class Event {
 
   fixEventData() {
     Log.debug('fix event data');
-    const match = this.Description.match( REG_EXP_SEASON_EPISODE );
+    let match = this.Description.match( REG_EXP_SEASON_EPISODE );
     if ( match && match.length && match[2]) {
       let s = parseInt(match[2], 10);
       let e = parseInt(match[6], 10);
@@ -507,6 +515,13 @@ class Event {
       this.data.episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
 
       this.data.description = (this.data.description || this.data.desc).replace( REG_EXP_SEASON_EPISODE, '').trim()
+    }
+
+
+    match = this.Title.match( REG_EXP_PRIMA );
+    if ( match && match[0] ) {
+      this.data.prima = true;
+      this.data.title = this.Title.replace( REG_EXP_PRIMA, '' ).trim();
     }
   }
 
@@ -555,7 +570,7 @@ class Event {
       Desc: this.data.desc,
       Description: this.Description,
       Episode: this.Episode,
-      Prima: this.data.prima,
+      Prima: this.Prima,
       Duration: this.data.dur
     }
   }
