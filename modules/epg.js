@@ -151,6 +151,6 @@ const epg = new EPG();
 epg.addModule('Sky', new Sky.SkyEpg() );
 epg.addModule('Rai', new Rai.RaiEpg() );
 epg.addModule('TvSorrisi', new TvSorrisi.TvSorrisiEpg() );
-epg.addModule('Rytech', new Rytech.Rytech() );
+// epg.addModule('Rytech', new Rytech.Rytech() );
 
 module.exports = epg;
