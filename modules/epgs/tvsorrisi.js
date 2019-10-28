@@ -69,6 +69,7 @@ class TvSorrisiEpg {
           if ( evt._start ) {
             event._start = new Date( evt._start );
           }
+          event.fixEventData();
           arr_events.push( event );
         }
       }
@@ -346,16 +347,6 @@ class Channel {
         let str_url = a_url && a_url.attributes ? a_url.attributes.href : '';
         let str_episode = episode ? episode.structuredText : '';
 
-        if ( str_episode ) {
-          let match = str_episode.match( REG_EXP_SEASON_EPISODE );
-          if ( match && match.length && match[2]) {
-            let s = parseInt(match[2], 10);
-            let e = parseInt(match[6], 10);
-
-            str_episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
-          }
-        }
-
         let evt = new Event({
           id: `prog-${i + 1}`,
           pid: `prog-${i + 1}`,
@@ -372,6 +363,8 @@ class Channel {
           Url: str_url,
           Episode: str_episode
         });
+
+        evt.fixEventData();
         epg.push( evt );
       } catch( e ) {
         Log.error(`${LOG_NAME} Error occurred while parsing ${i} program of ${this.Name}`, e);
@@ -598,6 +591,19 @@ class Event {
 
   calculateStartTime(refdate) {
     this._start = getEPGDate(refdate, this.data.starttime);
+  }
+
+  fixEventData() {
+    let str_episode = this.data.episode;
+    if ( str_episode ) {
+      let match = str_episode.match( REG_EXP_SEASON_EPISODE );
+      if ( match && match.length && match[2]) {
+        let s = parseInt(match[2], 10);
+        let e = parseInt(match[6], 10);
+
+        this.data.episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
+      }
+    }
   }
 
   loadDetails(chl) {

@@ -411,7 +411,9 @@ function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
 
             const prg_title = PRG.Title;
             if ( PRG.prima ) {
-              prg_title += ' 1^TV';
+              if ( prg_title.indexOf('1^ TV') < 0 ) {
+                prg_title += ' 1^ TV';
+              }
             }
             const title_el = prg_el.startElement('title').writeAttribute('lang', 'it')
                     .text(prg_title || '')

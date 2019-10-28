@@ -69,6 +69,7 @@ class SkyEpg {
           if ( evt._start ) {
             event._start = new Date( evt._start );
           }
+          event.fixEventData()
           arr_events.push( event );
         }
       }
@@ -332,6 +333,7 @@ class Channel {
 
         let _str_URL = params.URL.replace('{event}', params.data.id);
         const _Req = require('request-promise');
+        Log.info(`${LOG_NAME} Try get information from: ${_str_URL}`);
         const req = _Req( {
           uri: _str_URL,
           json: true
@@ -354,6 +356,7 @@ class Channel {
 
       }, (result) => {
         Object.assign( event.data, result || {});
+        event.fixEventData && event.fixEventData();
       });
 
     }
@@ -460,14 +463,7 @@ class Event {
     return this.data.description || this.data.desc;
   }
   get Episode() {
-    const match = this.Description.match( REG_EXP_SEASON_EPISODE );
-    if ( match && match.length && match[2]) {
-      let s = parseInt(match[2], 10);
-      let e = parseInt(match[6], 10);
-
-      return `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
-    }
-    return ''
+    return this.data.episode || '';
   }
   get Date() {
     return '';
@@ -498,6 +494,19 @@ class Event {
     this.data = Object.assign({}, opts);
     if ( data.Start ) {
       this._start = new Date(data.Start);
+    }
+  }
+
+  fixEventData() {
+    Log.debug('fix event data');
+    const match = this.Description.match( REG_EXP_SEASON_EPISODE );
+    if ( match && match.length && match[2]) {
+      let s = parseInt(match[2], 10);
+      let e = parseInt(match[6], 10);
+
+      this.data.episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
+
+      this.data.description = (this.data.description || this.data.desc).replace( REG_EXP_SEASON_EPISODE, '').trim()
     }
   }
 

@@ -17,12 +17,12 @@ block content
           label(for="shift") Time-Shift?
             input#shift.form-control.form-control-sm(type="text" v-model="shiftTime" placeholder="Indicare il time-shift separato da virgola" title="Indicare il time-shift separato da virgola per ogni canale (in ore) ex. Fox+1 e Fox+2 => 1,2" )
 
-        if !RO
+
           .form-group.mx-sm-3.mb-2
             label(for="full")
               input#full.form-control.form-control-sm(type="checkbox" v-model="fullDetailed" title="Indicare se caricare il dettaglio di ogni programma" )
               |  Dettagliato?
-
+        if !RO
           button.btn.btn-primary(@click="updateEpg()" :disabled="executing" title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
 
       hr
