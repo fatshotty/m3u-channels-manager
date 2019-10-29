@@ -24,6 +24,7 @@ if ( ! FS.existsSync(Argv.config) ) {
       "UseFullDomain": true
     },
     "Port": 3000,
+    "SocketPort": 14332,
     "Path": `${global.CWD}/cache`,
     "EPG": {
       "bulk": 2,
@@ -90,7 +91,7 @@ function loadRouters() {
 
   if ( Argv.serve ) {
     Server = require('http').createServer(App);
-    const IO = require('socket.io')(14432);
+    const IO = require('socket.io')(Config.SocketPort || 14432);
     require('./socket-io')(IO, Argv.debug ? 'debug' : undefined);
   }
 
@@ -195,6 +196,7 @@ function serveHTTP() {
 
       let ip = req.body.ip;
       let port = req.body.port;
+      let socketPort = req.body.socketPort;
       let cache = req.body.cache;
       let url = req.body.url;
       let userAgent = req.body.useragent;
@@ -206,10 +208,16 @@ function serveHTTP() {
       let sock = req.body.sock;
 
       port = parseInt(port);
+      socketPort = parseInt(socketPort);
+
       bulk = parseInt(bulk);
 
       if ( isNaN(port) ) {
         port = Config.Port;
+      }
+
+      if ( isNaN(socketPort) ) {
+        socketPort = Config.SocketPort;
       }
 
       if ( isNaN(bulk) ) {
@@ -230,6 +238,7 @@ function serveHTTP() {
           "UseFullDomain": !!usefulldomain
         },
         "Port": Number(port),
+        "SocketPort": Number(socketPort),
         "Path": cache,
         "EPG": {
           "bulk": Number(bulk),

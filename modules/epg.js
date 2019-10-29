@@ -2,6 +2,7 @@ const Rai = require('./epgs/rai');
 const Sky = require('./epgs/sky');
 const TvSorrisi = require('./epgs/tvsorrisi');
 const Rytech = require('./epgs/rytech');
+const GuidaTv = require('./epgs/guidatv');
 const Utils = require('../utils');
 const Bulk = require('batch-promise');
 
@@ -149,8 +150,9 @@ class EPG {
 
 const epg = new EPG();
 epg.addModule('Sky', new Sky.SkyEpg() );
-epg.addModule('Rai', new Rai.RaiEpg() );
 epg.addModule('TvSorrisi', new TvSorrisi.TvSorrisiEpg() );
+epg.addModule('GuidaTv', new GuidaTv.GuidaTvEpg() );
+epg.addModule('Rai', new Rai.RaiEpg() );
 // epg.addModule('Rytech', new Rytech.Rytech() );
 
 module.exports = epg;

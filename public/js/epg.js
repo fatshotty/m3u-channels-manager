@@ -286,6 +286,23 @@ ${document.location.origin}${PATH}/xmltv/${association_name}.xml`
       }, (xhr, statustext, err) => {
         alert(`Errore: ${err}`);
       });
+    },
+
+    writeEpg() {
+
+      if ( ! confirm(`Scrivere il file XMLTV via file sock?`) ) {
+        return;
+      }
+
+      this.executing = true;
+
+      $.post(`${PATH}/write?shift=${this.shiftTime}`).then( () => {
+        alert('file scritto correttamente');
+        this.executing = false;
+      }, () => {
+        alert('Si è verificato un errore');
+        this.executing = false;
+      });
     }
   }
 });

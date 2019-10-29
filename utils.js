@@ -520,6 +520,12 @@ function createXMLTV(EPG, SHIFT, DETAILED, ASSOCIATIONS) {
 
 
               }
+
+
+              if ( PRG.Url ) {
+                prg_el.startElement('url').text( PRG.Url ).endElement();
+              }
+
             }
 
             prg_el.endElement();

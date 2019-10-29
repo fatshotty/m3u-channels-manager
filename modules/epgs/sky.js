@@ -86,7 +86,7 @@ class SkyEpg {
 
       let all_channels_sky = [];
 
-      let tp = new ThreadPool(SCRAP_LINK.length);
+      let tp = new ThreadPool(SCRAP_LINK.length, bulk);
 
       for ( let link of SCRAP_LINK ) {
         let _d = {
@@ -170,7 +170,7 @@ class SkyEpg {
       }
 
       Bulk( all_channel_req, bulk || 1).then( () => {
-        let tp = new ThreadPool(10);
+        let tp = new ThreadPool(10, bulk || 1);
 
         let all_events_req = [];
         if ( details ) {

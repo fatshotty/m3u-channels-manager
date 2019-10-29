@@ -23,13 +23,17 @@ block content
 
               small.form-text.text-muted specificare il livello di log dell'applicativo (NOTE: 'debug' e' molto verboso!)
             .form-group
-              label(for='port') Indirizzo IP all'interno della rete domestica
-              input#port.form-control(type='text' placeholder='192.168.1.2' name="ip" value=Config.LocalIp)
+              label(for='ip_addr') Indirizzo IP all'interno della rete domestica
+              input#ip_addr.form-control(type='text' placeholder='192.168.1.2' name="ip" value=Config.LocalIp)
               small.form-text.text-muted specificare l'indirizzo ip di questo dispositivo all'interno della rete domestica
             .form-group
               label(for='port') Porta di ascolto del server http
               input#port.form-control(type='number' placeholder='3000' name="port" value=Config.Port)
               small.form-text.text-muted consigliato 3000
+            .form-group
+              label(for='sock_port') Porta di ascolto del socket (web-ui)
+              input#sock_port.form-control(type='number' placeholder='14432' name="socketPort" value=Config.SocketPort)
+              small.form-text.text-muted specificare la porta di ascolto su cui connettere la web-ui
             .form-group
               label(for='cache') Percorso della cartella di cache
               input#cache.form-control(type='text', placeholder='./cache' name="cache" value=Config.Path)

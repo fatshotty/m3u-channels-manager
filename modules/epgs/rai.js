@@ -250,6 +250,8 @@ class Channel {
 
       epg.map( e => e.calculateStartTime(date) );
 
+    }, (err) => {
+      Log.error(`${LOG_NAME} error while getting events for ${this.Id}`);
     })
 
   }

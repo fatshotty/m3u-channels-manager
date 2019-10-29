@@ -248,7 +248,7 @@ Router.get('/update.:format?', (req, res, next) => {
 
 });
 
-Router.get('/write', (req, res, next) => {
+Router.post('/write', (req, res, next) => {
 
   if ( Argv.ro ) {
     res.status(412).end('Operation not permitted');

@@ -10,7 +10,7 @@ const CPUs = OS.cpus();
 const NUMBER_CPU = CPUs.length;
 let Executors = null;
 try {
-  let NTP = require ("node-threadpool");
+  let NTP = require("node-threadpool");
   Executors = NTP.Executors;
   Log.info('Thread loaded');
 } catch( e ) {
@@ -138,7 +138,7 @@ class ThreadPool {
 
     }
 
-    Log.info(`Queued ${promises.length} job with bulk ${Executors ? this._limit : this._bulk} per time`);
+    Log.info(`Queued ${promises.length} job with ${Executors ? 'limit ' + this._limit : 'bulk ' + this._bulk} per time`);
 
     let PS = null;
     if ( ! Executors ) {
