@@ -12,29 +12,6 @@ const Cluster = require('cluster');
 let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
 
 
-if ( ! FS.existsSync(Argv.config) ) {
-  const def_conf = {
-    "LogLevel": "info",
-    "Log": `${global.CWD}/manager.log`,
-    "M3U": {
-      "Url": "",
-      "ExcludeGroups": [],
-      "UserAgent": "VLC",
-      "UseForStream": false,
-      "UseFullDomain": true
-    },
-    "Port": 3000,
-    "SocketPort": 14332,
-    "Path": `${global.CWD}/cache`,
-    "EPG": {
-      "bulk": 2,
-      "Sock": ""
-    }
-  };
-
-  FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
-}
-
 let Config = null;
 
 Config = global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
@@ -49,11 +26,6 @@ let Log = Utils.Log;
 Log.info('Starting application...');
 Log.info(`Referred path  ${global.CWD}`);
 
-
-if ( ! FS.existsSync(Config.Path) ) {
-  Log.info(`create cache folder ${Config.Path}`);
-  FS.mkdirSync(Config.Path);
-}
 
 const OS = require('os');
 const BodyParser = require('body-parser');

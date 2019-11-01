@@ -162,8 +162,39 @@ global.Argv = Args
 
 
 
+if ( ! FS.existsSync(Argv.config) ) {
+  const def_conf = {
+    "LogLevel": "info",
+    "Log": `${global.CWD}/manager.log`,
+    "M3U": {
+      "Url": "",
+      "ExcludeGroups": [],
+      "UserAgent": "VLC",
+      "UseForStream": false,
+      "UseFullDomain": true
+    },
+    "Port": 3000,
+    "SocketPort": 14332,
+    "Path": `${global.CWD}/cache`,
+    "EPG": {
+      "bulk": 2,
+      "Sock": ""
+    }
+  };
+
+  FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
+}
+
 
 global.Config = require( Argv.config );
+
+
+if ( ! FS.existsSync(Config.Path) ) {
+  Utils.Log.info(`create cache folder ${Config.Path}`);
+  FS.mkdirSync(Config.Path);
+}
+
+
 
 if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
   Args.showHelp();
