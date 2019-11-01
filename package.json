@@ -1,6 +1,6 @@
 {
   "name": "tv-channels-manager-ita",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "M3U channels list splitter and serves channel links",
   "main": "application.js",
   "scripts": {
