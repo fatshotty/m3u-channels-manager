@@ -498,9 +498,9 @@ function respondPersonalM3U(format, fulldomain) {
             let url_paths = temp_redirect.split('?');
             url_paths.shift();
             if ( fulldomain ) {
-              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/personal/live?channel=${temp_ch.Id}`;
+              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/personal/live?channel=${personalChannel.MapTo}`;
             } else {
-              temp_redirect = `${MOUNTH_PATH}/personal/live?channel=${temp_ch.Id}`;
+              temp_redirect = `${MOUNTH_PATH}/personal/live?channel=${personalChannel.MapTo}`;
             }
 
             temp_ch.Redirect = temp_redirect;
