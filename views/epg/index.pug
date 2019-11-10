@@ -38,7 +38,7 @@ block content
           button.btn.btn-outline-secondary(:disabled="executing" title="Genera EPG associativo" @click="saveAssociations()") Salva associazioni
           button.btn.btn-outline-secondary(:disabled="executing" title="Apri EPG associativo" @click="openAssociations()") Apri associazioni
           if hasSockFile
-            button#write-epg.btn.btn-outline-info(:disabled="executing" title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
+            button#write-epg.btn.btn-outline-info(@click="writeEpg" :disabled="executing" title="Scrivi XMLTV sul file SOCK (se presente nelle impostazioni)") Scrivi XMLTV
 
       #channels-list
         Group(v-for="module in modules" :key="module.name" :group="module")
