@@ -234,27 +234,30 @@ class Channel {
 
     Log.info(`${LOG_NAME} loading events for ${this.Id}`);
 
-    return this.request( this.Url ).then( (html) => {
+    return new Promise( (resolve, reject) => {
+      this.request( this.Url ).then( (html) => {
 
-      this.parseHtml( html, epg );
+        this.parseHtml( html, epg );
 
-      Log.info(`${LOG_NAME} GOT events for ${this.Id}`);
+        Log.info(`${LOG_NAME} GOT events for ${this.Id}`);
 
 
-      let last_event_loaded;
-      for ( let evt of epg ) {
-        evt.calculateStartTime(date);
-        if ( last_event_loaded ) {
-          let dur = new Date(evt.Start) - new Date(last_event_loaded.Start);
-          last_event_loaded.data.dur = (dur / 1000) / 60;
+        let last_event_loaded;
+        for ( let evt of epg ) {
+          evt.calculateStartTime(date);
+          if ( last_event_loaded ) {
+            let dur = new Date(evt.Start) - new Date(last_event_loaded.Start);
+            last_event_loaded.data.dur = (dur / 1000) / 60;
+          }
+          last_event_loaded = evt;
         }
-        last_event_loaded = evt;
-      }
 
-      // remove latest event because it has no "Duration"
-      epg.pop()
+        // remove latest event because it has no "Duration"
+        epg.pop()
+        resolve();
 
-    });
+      }, reject );
+    })
 
   }
 
