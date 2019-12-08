@@ -174,6 +174,7 @@ function serveHTTP() {
       let userAgent = req.body.useragent;
       let useforstream = req.body.useforstream;
       let usefulldomain = req.body.usefulldomain;
+      let tv_enabled = req.body.tvenabled;
       let groups = req.body.groups;
       let bulk = req.body.bulk;
       let loglevel = req.body.loglevel
@@ -207,7 +208,8 @@ function serveHTTP() {
           }),
           "UserAgent": userAgent || 'Kodi',
           "UseForStream": !!useforstream,
-          "UseFullDomain": !!usefulldomain
+          "UseFullDomain": !!usefulldomain,
+          "Enabled": !!tv_enabled
         },
         "Port": Number(port),
         "SocketPort": Number(socketPort),

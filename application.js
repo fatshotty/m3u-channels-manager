@@ -171,7 +171,8 @@ if ( ! FS.existsSync(Argv.config) ) {
       "ExcludeGroups": [],
       "UserAgent": "VLC",
       "UseForStream": false,
-      "UseFullDomain": true
+      "UseFullDomain": true,
+      "Enabled": true
     },
     "Port": 3000,
     "SocketPort": 14332,

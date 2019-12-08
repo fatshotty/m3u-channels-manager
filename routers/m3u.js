@@ -185,6 +185,11 @@ function respondStreamUrl(chlId, group, cb) {
 
 Router.get('/live', (req, res, next) => {
 
+  if ( Config.M3U.Enabled !== true ) {
+    Log.warn('stream is not enabled');
+    return res.status(422).end('stream is not enabled');
+  }
+
   let channel = req.query.channel;
   let group = req.query.group;
 
@@ -206,6 +211,11 @@ Router.get('/live/:channel', (req, res, next) => {
 you are using a deprecated api. Use '/live?channel=${channel}' instead
 ****`);
 
+  if ( Config.M3U.Enabled !== true ) {
+    Log.warn('stream is not enabled');
+    return res.status(422).end('stream is not enabled');
+  }
+
   getStreamUrlOfChannel(channel).then( (live_channel) => {
 
     res.redirect(302, live_channel);
@@ -218,6 +228,11 @@ you are using a deprecated api. Use '/live?channel=${channel}' instead
 
 
 Router.get('/personal/live', (req, res, next) => {
+
+  if ( Config.M3U.Enabled !== true ) {
+    Log.warn('stream is not enabled');
+    return res.status(422).end('stream is not enabled');
+  }
 
   let channel = req.query.channel;
   let group = req.query.group;
