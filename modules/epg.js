@@ -151,7 +151,7 @@ class EPG {
 const epg = new EPG();
 epg.addModule('Sky', new Sky.SkyEpg() );
 epg.addModule('TvSorrisi', new TvSorrisi.TvSorrisiEpg() );
-epg.addModule('GuidaTv', new GuidaTv.GuidaTvEpg() );
+// epg.addModule('GuidaTv', new GuidaTv.GuidaTvEpg() );
 epg.addModule('Rai', new Rai.RaiEpg() );
 // epg.addModule('Rytech', new Rytech.Rytech() );
 
