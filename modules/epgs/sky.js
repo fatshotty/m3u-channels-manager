@@ -9,6 +9,8 @@ const Utils = require('../../utils');
 const LOG_NAME = "Sky - "
 const Log = Utils.Log;
 
+//   https://apid.sky.it/gtv/v1/channels?env=DTH
+//   https://apid.sky.it/gtv/v1/events?env=DTH
 const SKY_DOMAIN = 'http://guidatv.sky.it';
 const CHANNEL_PATH = `${SKY_DOMAIN}/guidatv/canale/{name}.shtml`;
 const SINGLE_CHANNEL = `${SKY_DOMAIN}/app/guidatv/contenuti/data/grid/{date}/ch_{channel}.js`
@@ -36,10 +38,10 @@ const CATEGORY = [
 ];
 
 
-const SCRAP_LINK = [];
-for ( let cat of CATEGORY ) {
-  SCRAP_LINK.push( URL_CHANNELS.replace('{category}', cat) );
-}
+const SCRAP_LINK = ['https://apid.sky.it/gtv/v1/channels?env=DTH'];
+// for ( let cat of CATEGORY ) {
+//   SCRAP_LINK.push( URL_CHANNELS.replace('{category}', cat) );
+// }
 
 class SkyEpg {
 
@@ -105,40 +107,39 @@ class SkyEpg {
             json: true
           }).then( (data) => {
             Log.info(`${LOG_NAME} got channels from ${params.link}`);
-            const last = params.link.split('/').pop();
-            const groups = last.match(/_(.*)_/i)
-            if ( groups ) {
-              data.GROUP = groups[1];
-            }
-            return data
+
+            return data.channels;
+
+            // const last = params.link.split('/').pop();
+            // const groups = last.match(/_(.*)_/i)
+            // if ( groups ) {
+            //   data.GROUP = groups[1];
+            // }
+            // return data
           }, (err) => {
             Log.error(`${LOG_NAME} for ${params.link} - ${err}`);
           })
         }, (result) => {
-          all_channels_sky.push(result);
+          all_channels_sky = result;
         });
       }
 
       tp.start( () => {
         Log.info(`${LOG_NAME} all channels link have been loaded ${all_channels_sky.length}`);
-        for ( let res of all_channels_sky ) {
-          if ( ! Array.isArray(res) ) continue;
-          const g = res.GROUP;
-          for( let CHL of res ) {
-            const channel_data = {
-              Id: CHL.id,
-              Name: CHL.name,
-              Number: CHL.number,
-              Service: CHL.service,
-              Logo: CHL.channelvisore || CHL.channellogonew,
-              Group: g
-            };
+        for ( let CHL of all_channels_sky ) {
 
-            const exists = this.checkExistingChannel( channel_data.Id );
+          const channel_data = {
+            Id: CHL.id,
+            Name: CHL.name,
+            Number: CHL.number,
+            Logo: `${SKY_DOMAIN}${CHL.logo}`,
+            Group: (CHL.category || {}).name || 'generic'
+          };
 
-            if ( !exists ) {
-              this._channels.push( new Channel(channel_data) );
-            }
+          const exists = this.checkExistingChannel( channel_data.Id );
+
+          if ( !exists ) {
+            this._channels.push( new Channel(channel_data) );
           }
         }
 
@@ -148,11 +149,15 @@ class SkyEpg {
 
   }
 
-  checkExistingChannel(id) {
-    const c = this._channels.filter( (c) => {
+  getChannel(id) {
+    let c = this._channels.filter( (c) => {
       return c.Id == id;
     });
-    return !!(c && c.length);
+    return c && c[0];
+  }
+
+  checkExistingChannel(id) {
+    return !!(this.getChannel(id));
   }
 
   scrapeEpg(date, details, bulk) {
@@ -162,38 +167,47 @@ class SkyEpg {
 
       Log.info(`${LOG_NAME} Loading channels programs`);
 
-      const all_channel_req = [];
-      for( let chl of this._channels ) {
-        all_channel_req.push( (res, rej) => {
-          chl.loadEvents(date).then( res, rej );
-        });
-      }
+      let allchannelids = this._channels.map( c => c.Id );
 
-      Bulk( all_channel_req, bulk || 1).then( () => {
-        let tp = new ThreadPool(10, bulk || 1);
+      let startDate = Moment(date);
+      let endDate = Moment(startDate).add(24, 'h');
 
-        let all_events_req = [];
-        if ( details ) {
-          for( let chl of this._channels ) {
-            // all_events_req.push( (res, rej) => {
-            //   chl.loadEventsDetail(date, bulk).then( res, rej );
-            // });
-            const programs_to_load = chl.loadEventsDetail(date, bulk, tp);
-            Log.info(`${LOG_NAME} Preparing details for ${chl.Name} - total: ${programs_to_load.length}`);
-            all_events_req =  all_events_req.concat( programs_to_load );
+      let query = [
+        `from=${startDate.format('YYYY-MM-DDTHH:mm:ss')}Z`,
+        `to=${endDate.format('YYYY-MM-DDTHH:mm:ss')}Z`,
+        `channels=${allchannelids.join(',')}`,
+        `pageSize=9999999`,
+        `pageNum=0`
+      ].join('&');
+
+      this.request(`https://apid.sky.it/gtv/v1/events?env=DTH&${query}`).then( (all_events) => {
+
+        all_events = all_events.events;
+
+        for ( let event of all_events ) {
+          let evt_channel = event.channel;
+          if ( evt_channel ) {
+            let chl = this.getChannel( event.channel.id );
+
+            if ( !chl) {
+              // TODO: create channel
+              Log.warn(`${LOG_NAME} no channel in list for ${event.eventId}: ${event.channel.id}`);
+              continue;
+            }
+
+            chl.addEventData(date, event);
+
+          } else {
+            Log.warn(`${LOG_NAME} no channel for event ${event.eventId}`);
           }
         }
 
-        Log.info(`${LOG_NAME} Starting load events details for ${all_events_req.length} programs`);
+        resolve();
 
-        tp.start( () => {
-          Log.info(`${LOG_NAME} No more request channels and programs - finish`);
-          tp.terminate( () => {
-            resolve();
-          });
-        });
+      }).catch( (err) => {
+        reject(err);
+      })
 
-      });
     });
   }
 
@@ -254,41 +268,46 @@ class Channel {
   }
 
 
-  loadEvents(date) {
-    const date_str = Moment(date).format('YY_MM_DD');
+  addEventData(date, evt_data) {
 
-    Log.info(`${LOG_NAME} Loading EPG for ${this.Name} date ${date_str}`);
+    let content_data = evt_data.content || {};
 
-    const req = this.request( SINGLE_CHANNEL.replace('{date}', date_str).replace('{channel}', this.Id) );
+    Log.info(`${LOG_NAME} Populate EPG for ${this.Name}`);
 
-    const epg = this._epg[ date.getTime() ] = [];
+    let epg = this._epg[ date.getTime() ];
+    if ( !epg ) {
+      epg = this._epg[ date.getTime() ] = [];
+    }
 
     Log.debug(`${LOG_NAME} Loading events for ${this.Name}`);
 
-    return req.then( ( programs ) => {
-      let usedate = new Date(date);
+    let data = {};
+    data.id = evt_data.eventId;
+    data.title = evt_data.eventTitle;
+    data.genre = (content_data.genre || {}).name;
+    data.subgenre = (content_data.subgenre || {}).name;
+    data.thumbnail_url = `${SKY_DOMAIN}${(((content_data.imagesMap || []).filter(im => im.key == "cover")[0] || {}).img || {}).url}`;
+    data.description = evt_data.eventSynopsis;
+    data.desc = data.description;
+    data.prima = evt_data.primeVision;
+    data.starttime = Moment(evt_data.starttime);
+    data.Start = data.starttime.toDate();
+    data.endtime = Moment(evt_data.endtime);
+    data.dur = (((data.endtime - data.starttime) / 1000) / 60);
 
-      const plans = programs.plan;
-      for( let plan of plans ) {
-        if ( plan.id == '-1' || plan.id == '1' || plan.id == '0'){
-          continue;
-        }
-
-        const evt = new Event(plan);
-
-        evt.calculateStartTime(usedate);
-        usedate = evt.Start;
-
-        evt.fixEventData();
-
-        epg.push( evt );
+    if (content_data.seasonNumber) {
+      let str = `${content_data.seasonNumber - 1}.`;
+      if ( content_data.episodeNumber ) {
+        str += `${content_data.episodeNumber - 1}.`;
       }
-      Log.debug(`${LOG_NAME} loaded EPG for ${this.Name} in date ${date_str}- Total: ${epg.length}`);
+      data.episode = str;
+    }
 
-    }).catch( (err) => {
-      Log.error(`${LOG_NAME} Error loading channel ${this.Name} ${date_str}`);
-      Log.error(`${LOG_NAME} ${(err || {}).name}`);
-    });
+    let evtObj = new Event(data);
+    epg.push( evtObj );
+    evtObj.fixEventData();
+
+    Log.debug(`${LOG_NAME} loaded EPG for ${data.title}`);
   }
 
   toJSON(detailed) {
@@ -498,6 +517,7 @@ class Event {
     opts.desc =  data.Desc || data.desc;
     opts.prima = data.Prima || data.prima;
     opts.starttime = data.starttime;
+    opts.episode = data.episode;
 
     this.data = Object.assign({}, opts);
     if ( data.Start ) {
@@ -509,12 +529,15 @@ class Event {
     Log.debug('fix event data');
     let match = this.Description.match( REG_EXP_SEASON_EPISODE );
     if ( match && match.length && match[2]) {
-      let s = parseInt(match[2], 10);
-      let e = parseInt(match[6], 10);
+      // let s = parseInt(match[2], 10);
+      // let e = parseInt(match[6], 10);
 
-      this.data.episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
+      // this.data.episode = `${s ? s - 1 : ''}.${e ? e - 1 : ''}.`;
 
       this.data.description = (this.data.description || this.data.desc).replace( REG_EXP_SEASON_EPISODE, '').trim()
+      if ( this.data.description.indexOf('- ') == 0 ) {
+        this.data.description = this.data.description.substring(2).trim();
+      }
     }
 
 
