@@ -393,7 +393,7 @@ Router.get('/xmltv.:format', (req, res, next) => {
     detailed = !!detailed;
   }
 
-  returnCachedEPGFormatted(shifts, format, detailed, association, (result) => {
+  returnCachedEPGFormatted(shifts, format, detailed, null, (result) => {
 
     switch( format ) {
       case 'json':

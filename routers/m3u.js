@@ -26,7 +26,11 @@ let M3U_LIST_STRING = '';
 let M3U_PERSONAL = null;
 
 // const BASE_URL = ['http:/', `${Config.LocalIp}:${Config.Port}`, 'tv'].join('/');
-let DOMAIN_URL = `http://${Config.LocalIp}:${Config.Port}`;
+let auth = '';
+// if ( global.HAS_BASIC_AUTH ) {
+//   auth = `${process.env.BASIC_USER}:${process.env.BASIC_PWD}@`;
+// }
+let DOMAIN_URL = `http://${auth}${Config.LocalIp}:${Config.Port}`;
 
 let M3UList = null;
 M3UList = new M3UK( `${DOMAIN_URL}${MOUNTH_PATH}/live` );

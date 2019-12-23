@@ -39,10 +39,44 @@ App.use( Express.static( `${__dirname}/public`) );
 App.use( Express.static(  Path.resolve( global.CWD, 'node_modules/bootstrap/dist/css/') ) );
 
 
-if ( HAS_BASIC_AUTH ) {
-  const BasicAuth = require('express-basic-auth');
-  App.use( BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }}) );
+// if ( HAS_BASIC_AUTH ) {
+//   const BasicAuth = require('express-basic-auth');
+//   App.use( BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }}) );
+// }
+
+function checkLocalRequest(req) {
+
+  let ip_local = req.connection.localAddress;
+  let ip_remot = req.connection.remoteAddress
+
+  Log.info(`local ip is: ${ip_local} - remote ip is: ${ip_remot}`);
+
+  if ( ip_local === ip_remot ) {
+    return true;
+  } else {
+
+
+    let ip_local_str = ip_local.split('.').slice(0, -2).join('.');
+    let ip_remot_str = ip_remot.split('.').slice(0, -2).join('.');
+
+    return ip_local_str === ip_remot_str;
+  }
 }
+
+App.use( (req, res, next) => {
+
+  let isLocal = checkLocalRequest(req);
+
+  if ( !isLocal && HAS_BASIC_AUTH ) {
+    const BasicAuth = require('express-basic-auth');
+    let fn = BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }});
+
+    fn( req, res, next);
+  } else {
+    next();
+  }
+
+})
 
 
 App.use( CORS() );
