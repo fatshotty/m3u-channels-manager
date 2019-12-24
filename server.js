@@ -1,5 +1,6 @@
-require('dotenv').config();
 const Utils = require('./utils');
+require('dotenv').config({ path: `${Utils.calculatePath(__filename)}/.env` });
+
 const FS = require('fs');
 const Net = require('net');
 const Pretty = require('pretty-data').pd;
@@ -49,7 +50,7 @@ function checkLocalRequest(req) {
   let ip_local = req.connection.localAddress;
   let ip_remot = req.connection.remoteAddress
 
-  Log.info(`local ip is: ${ip_local} - remote ip is: ${ip_remot}`);
+  Log.info(`local ip is: ${ip_local} - remote ip is: ${ip_remot} - ${JSON.stringify(req.ips)}`);
 
   if ( ip_local === ip_remot ) {
     return true;
@@ -236,7 +237,7 @@ function serveHTTP() {
         "LocalIp": ip,
         "Log": Config.Log,
         "M3U": {
-          "Url": url,
+          "Url": typeof url != 'undefined' ? url : Config.M3U.Url,
           "ExcludeGroups": groups.split(',').map( (g) => {
             return g.trim();
           }),
