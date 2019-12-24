@@ -24,6 +24,12 @@ class M3U {
       }
     }
 
+    for( let g of this.groups ) {
+      if ( g.Id == name ) {
+        return g;
+      }
+    }
+
     return null;
   }
 
