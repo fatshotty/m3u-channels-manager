@@ -13,6 +13,12 @@ block content
 
           fieldset
             h5 Generali
+
+            .form-group
+              label(for='list_name') Nome della lista
+              input#list_name.form-control(type='text' placeholder='personal' name="name" value=Config.Name)
+              small.form-text.text-muted specificare un nome da assegnare alla lista
+
             .form-group
               label(for='loglevel') Livello di Log
               select#loglevel.form-control(name="loglevel" value=Config.LogLevel)

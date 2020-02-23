@@ -201,6 +201,8 @@ function serveHTTP() {
 
       Log.info('updating settings')
 
+
+      let name = req.body.name;
       let ip = req.body.ip;
       let port = req.body.port;
       let socketPort = req.body.socketPort;
@@ -233,6 +235,7 @@ function serveHTTP() {
       }
 
       Config = global.Config = {
+        "Name": name || 'personal',
         "LogLevel": loglevel || Config.LogLevel,
         "LocalIp": ip,
         "Log": Config.Log,
