@@ -473,83 +473,111 @@ Router.get('/', (req, res, next) => {
 
 
 
-function respondPersonalM3U(format, fulldomain) {
+function respondPersonalM3U(format, fulldomain, direct) {
 
-  fulldomain = fulldomain || Config.M3U.UseFullDomain;
+  return new Promise( (resolve) => {
 
-  let result_channels = [];
-  if ( M3U_PERSONAL ) {
-    let group_keys = Object.keys(M3U_PERSONAL);
+    fulldomain = fulldomain || Config.M3U.UseFullDomain;
 
-    for ( let grp_key of group_keys ) {
-      let personalChannels = M3U_PERSONAL[ grp_key ];
-      let group = M3UList.getGroupById( grp_key );
-      if ( group ) {
-        for ( let personalChannel of personalChannels) {
-          let personalId = personalChannel.ID;
-          let channel = group.getChannelById(personalId);
-          if ( ! channel ) {
-            Log.warn(`no channel '${personalId}' found in '${grp_key}'`);
-            continue;
-          }
+    let result_channels = [];
+    if ( M3U_PERSONAL ) {
+      let group_keys = Object.keys(M3U_PERSONAL);
 
-          let temp_ch = channel.clone();
-
-          temp_ch.TvgId = personalChannel.MapTo;
-          temp_ch.TvgName = personalChannel.MapTo;
-          temp_ch.Name = personalChannel.MapTo;
-          temp_ch.Number = personalChannel.Number;
-
-          let temp_redirect = temp_ch.Redirect;
-
-          if ( temp_redirect ) {
-            // let url = new URL( temp_redirect );
-            // url.pathname = '/tv/personal/live';
-            // url.searchParams.set('channel', personalChannel.MapTo);
-            // url.searchParams.delete('group');
-            // // TODO: add piping
-            // if ( Config.M3U.UseFullDomain ) {
-            //   temp_ch.Redirect = url.toString();
-            // } else {
-            //   // TODO: use url without domain
-            //
-            // }
-            let url_paths = temp_redirect.split('?');
-            url_paths.shift();
-            if ( fulldomain ) {
-              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
-            } else {
-              temp_redirect = `${MOUNTH_PATH}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
+      for ( let grp_key of group_keys ) {
+        let personalChannels = M3U_PERSONAL[ grp_key ];
+        let group = M3UList.getGroupById( grp_key );
+        if ( group ) {
+          for ( let personalChannel of personalChannels) {
+            let personalId = personalChannel.ID;
+            let channel = group.getChannelById(personalId);
+            if ( ! channel ) {
+              Log.warn(`no channel '${personalId}' found in '${grp_key}'`);
+              continue;
             }
 
-            temp_ch.Redirect = temp_redirect;
+            let temp_ch = channel.clone();
+
+            temp_ch.TvgId = personalChannel.MapTo;
+            temp_ch.TvgName = personalChannel.MapTo;
+            temp_ch.Name = personalChannel.MapTo;
+            temp_ch.Number = personalChannel.Number;
+
+            let temp_redirect = temp_ch.Redirect;
+
+            if ( temp_redirect ) {
+              // let url = new URL( temp_redirect );
+              // url.pathname = '/tv/personal/live';
+              // url.searchParams.set('channel', personalChannel.MapTo);
+              // url.searchParams.delete('group');
+              // // TODO: add piping
+              // if ( Config.M3U.UseFullDomain ) {
+              //   temp_ch.Redirect = url.toString();
+              // } else {
+              //   // TODO: use url without domain
+              //
+              // }
+              let url_paths = temp_redirect.split('?');
+              url_paths.shift();
+              if ( fulldomain ) {
+                temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
+              } else {
+                temp_redirect = `${MOUNTH_PATH}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
+              }
+
+              temp_ch.Redirect = temp_redirect;
+            }
+
+            result_channels.push( temp_ch );
+
           }
-
-          result_channels.push( temp_ch );
-
         }
       }
+
     }
 
-  }
 
+    let prom_res = Promise.resolve();
 
-  result_channels.sort( (a, b) => {
-    let n_a = parseInt(a.Number || 0, 10);
-    let n_b = parseInt(b.Number || 0, 10);
-    return n_a > n_b ? 1 : -1;
+    if ( direct ) {
+      let i = -1;
+      let rewrite = () => {
+        i++;
+        if ( i >= result_channels.length ) {
+          return Promise.resolve();
+        }
+        let ch = result_channels[ i ];
+        let id = ch.TvgId;
+        return getMappedStreamUrlOfChannel(id).then( (url) =>{
+          ch.Redirect = url;
+        }).then( rewrite );
+      };
+      prom_res = prom_res.then( rewrite );
+    }
+
+    prom_res.then( () => {
+
+      result_channels.sort( (a, b) => {
+        let n_a = parseInt(a.Number || 0, 10);
+        let n_b = parseInt(b.Number || 0, 10);
+        return n_a > n_b ? 1 : -1;
+      });
+
+      // TODO: direct link
+
+      let resultm3u = result_channels.map( c => c.toM3U() );
+
+      resultm3u.unshift('#EXTM3U');
+      resolve( resultm3u.join('\n') )
+    });
+
   });
-
-  let resultm3u = result_channels.map( c => c.toM3U() );
-
-  resultm3u.unshift('#EXTM3U');
-  return resultm3u.join('\n')
 }
 
 
 Router.get('/personal.:format?', (req, res, next) => {
   let format = req.params.format || 'html';
   let fulldomain = req.query.domain == 'true';
+  let direct = req.query.direct === 'true';
 
   if ( format === 'json' ) {
 
@@ -558,9 +586,11 @@ Router.get('/personal.:format?', (req, res, next) => {
 
   } else if ( format.indexOf('m3u') === 0 ) {
 
-    let resp = respondPersonalM3U(format, fulldomain);
-    res.set('content-type', 'application/x-mpegURL');
-    res.status(200).end( resp );
+    respondPersonalM3U(format, fulldomain, direct).then( (resp) => {
+
+      res.set('content-type', 'application/x-mpegURL');
+      res.status(200).end( resp );
+    });
 
   } else {
     // html or other format
