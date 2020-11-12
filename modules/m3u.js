@@ -410,6 +410,14 @@ class Channel {
     this._group = g;
   }
 
+  get Radio() {
+    return String( String(this._radio) == 'true' );
+  }
+
+  set Radio(v) {
+    this._radio = String( v == 'true' );
+  }
+
   constructor(data) {
     Log.debug(`New Channel found ${data.name} - ${data['tvg-id']}`);
     this._name = data['name'];
@@ -418,6 +426,8 @@ class Channel {
     this._tvgName = data['tvg-name'];
     this._tvgLogo = data['tvg-logo'];
     this._streamUrl = data['link'];
+
+    this._radio = data['radio'];
 
     this._number = data['tvg-chno'];
 
@@ -453,7 +463,8 @@ class Channel {
       StreamUrl: this.StreamUrl,
       Redirect: this.RedirectUrl,
       GroupId: this.Group.Id,
-      GroupName: this.Group.Name
+      GroupName: this.Group.Name,
+      Radio: this.Radio == 'true'
     };
   }
 
@@ -476,6 +487,13 @@ class TempCh {
   }
   set Name(v) {
     this.data.Name = v;
+  }
+
+  get Radio() {
+    return String(this.data.Radio) == 'true';
+  }
+  set Radio(v) {
+    this.data.Radio = String(v == 'true');
   }
 
   get Duration() {
@@ -550,6 +568,10 @@ class TempCh {
   toM3U(header, direct) {
     const row = [`#EXTINF:${this.Duration || -1}`];
     row.push( `tvg-id="${this.TvgId || ''}"`);
+
+    if ( this.Radio ) {
+      row.push( 'radio="true"' );
+    }
 
     if ( ! `${this.TvgLogo}`.startsWith('data:image') ) {
       row.push( `tvg-logo="${this.TvgLogo || ''}"`);
