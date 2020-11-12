@@ -148,6 +148,11 @@ function refreshM3U(cb) {
 }
 
 Router.get('/update', (req, res, next) => {
+
+  if ( Argv.ro ) {
+    return next(`Cannot perform action`);
+  }
+
   Log.info(`Updating m3u list...`);
   Log.debug(`...from ${Config.M3U.Url}`);
   refreshM3U( (err, body) => {
@@ -322,7 +327,7 @@ function getMappedStreamUrlOfChannel(req_chl_id, group) {
 
 
 
-function respondSingleGroup(groupId, format) {
+function respondSingleGroup(groupId, format, direct) {
 
   const group = M3UList.getGroupById( groupId );
 
@@ -335,7 +340,14 @@ function respondSingleGroup(groupId, format) {
     case 'json':
       return JSON.stringify(group.toJson());
     default:
-      return group.toM3U(true);
+      let chls = group.channels.slice(0);
+      chls.sort( (a, b) => {
+        let n_a = parseInt(a.Number || 0, 10);
+        let n_b = parseInt(b.Number || 0, 10);
+        return n_a > n_b ? 1 : -1;
+      });
+
+      return chls.map( (c, i) => c.toM3U(i == 0, direct) ).join('\n');
   }
 }
 
@@ -343,7 +355,12 @@ Router.get('/list/:group.:format?', (req, res, next) => {
 
   Log.info(`Request list by group ${req.params.group}. Respond with ${req.params.format || 'm3u'}`);
 
-  const response = respondSingleGroup( req.params.group, req.params.format );
+  let direct = Config.M3U.UseDirectLink;
+  if ( 'direct' in req.query ){
+    direct = req.query.direct == 'true';
+  }
+
+  const response = respondSingleGroup( req.params.group, req.params.format, direct );
 
   if ( ! response ) {
     res.status(404).end( 'No group found by ' + req.params.group);
@@ -367,7 +384,7 @@ Router.get('/list/:group.:format?', (req, res, next) => {
 
 
 
-function respondList(groups, format) {
+function respondList(groups, format, direct) {
   let all_groups = M3UList.groups;
 
   if ( groups && groups.length ) {
@@ -390,7 +407,18 @@ function respondList(groups, format) {
       }
       return JSON.stringify( response )
     default:
-      return all_groups.map( (g, i) => { return g.toM3U(i === 0) }).join('\n');
+      let chls = [];
+      for( let g of all_groups ){
+        chls.splice(chls.length, 0, ...g.channels.slice(0) );
+      }
+      chls.sort( (a, b) => {
+        let n_a = parseInt(a.Number || 0, 10);
+        let n_b = parseInt(b.Number || 0, 10);
+        return n_a > n_b ? 1 : -1;
+      });
+
+      return chls.map( (c, i) => c.toM3U(i == 0, direct) ).join('\n');
+      // all_groups.map( (g, i) => { return g.toM3U(i === 0, direct) }).join('\n');
   }
 }
 
@@ -398,10 +426,15 @@ Router.get('/list.:format?', (req, res, next) => {
   const format = req.params.format;
   const groups = req.query.groups;
 
+  let direct = Config.M3U.UseDirectLink;
+  if ( 'direct' in req.query ){
+    direct = req.query.direct == 'true';
+  }
+
   Log.info(`Requested entire list. Respond with ${format || 'm3u'}`);
   Log.info(`Filter by ${groups}`);
 
-  const response = respondList(groups, format);
+  const response = respondList(groups, format, direct);
 
   res.status(200);
 
@@ -577,7 +610,11 @@ function respondPersonalM3U(format, fulldomain, direct) {
 Router.get('/personal.:format?', (req, res, next) => {
   let format = req.params.format || 'html';
   let fulldomain = req.query.domain == 'true';
-  let direct = req.query.direct === 'true';
+
+  let direct = Config.M3U.UseDirectLink;
+  if ( 'direct' in req.query ){
+    direct = req.query.direct == 'true';
+  }
 
   if ( format === 'json' ) {
 
@@ -592,9 +629,11 @@ Router.get('/personal.:format?', (req, res, next) => {
       res.status(200).end( resp );
     });
 
-  } else {
+  } else if ( !Argv.ro ) {
     // html or other format
     res.render('m3u/manager', {M3UList, Channels: EPG.GroupedChannels});
+  } else {
+    next(`cannot perform action`);
   }
 
 });

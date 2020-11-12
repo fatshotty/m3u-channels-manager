@@ -172,6 +172,7 @@ if ( ! FS.existsSync(Argv.config) ) {
       "UserAgent": "VLC",
       "UseForStream": false,
       "UseFullDomain": true,
+      "UseDirectLink": false,
       "Enabled": true
     },
     "Port": 3000,

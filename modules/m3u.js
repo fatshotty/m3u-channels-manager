@@ -358,8 +358,8 @@ class Group {
     return this.channels.map( (c) => {return c.toJson()} );
   }
 
-  toM3U(header) {
-    const res = this.channels.map( (c) => { return c.toM3U() } );
+  toM3U(header, direct) {
+    const res = this.channels.map( (c) => { return c.toM3U(false, direct) } );
     if ( header ) {
       res.unshift('#EXTM3U');
     }
@@ -457,8 +457,8 @@ class Channel {
     };
   }
 
-  toM3U(header) {
-    return this.clone().toM3U(header);
+  toM3U(header, direct) {
+    return this.clone().toM3U(header, direct);
   }
 }
 
@@ -547,7 +547,7 @@ class TempCh {
     this.data = data;
   }
 
-  toM3U(header) {
+  toM3U(header, direct) {
     const row = [`#EXTINF:${this.Duration || -1}`];
     row.push( `tvg-id="${this.TvgId || ''}"`);
 
@@ -560,7 +560,7 @@ class TempCh {
 
     row.push( `group-title="${this.GroupName}"`);
 
-    const res = [`${row.join(' ')},${this.Name}`, this.Redirect];
+    const res = [`${row.join(' ')},${this.Name}`, direct ? this.StreamUrl : this.Redirect];
     if ( header ) {
       res.unshift('#EXTM3U');
     }

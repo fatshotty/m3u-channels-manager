@@ -36,6 +36,9 @@ App.disable('x-powered-by');
 
 App.set('view engine', 'pug');
 App.set('views', Path.join(__dirname, '/views') );
+
+App.locals = Object.assign({}, App.locals, {RO: Argv.ro});
+
 App.use( Express.static( `${__dirname}/public`) );
 App.use( Express.static(  Path.resolve( global.CWD, 'node_modules/bootstrap/dist/css/') ) );
 
@@ -91,6 +94,16 @@ App.use( (err, req, res, next) => {
   next(err);
 })
 
+if ( Argv.ro ) {
+  App.use( (req, res, next) => {
+    if ( req.method === 'GET' ) {
+      next();
+    } else {
+      next(`Cannot perform method`);
+    }
+  })
+}
+
 const Modules = {};
 let Server = null;
 
@@ -138,7 +151,7 @@ function loadRouters() {
   Object.assign(App.locals, {Config}, {NAME: Package.name}, {Modules: Object.keys( Modules )});
 
   App.get('/', (req, res, next) => {
-    res.render('home', {RO: Argv.ro});
+    res.render('home');
   });
 
   // Load routers
@@ -209,8 +222,9 @@ function serveHTTP() {
       let cache = req.body.cache;
       let url = req.body.url;
       let userAgent = req.body.useragent;
-      let useforstream = req.body.useforstream;
-      let usefulldomain = req.body.usefulldomain;
+      let useforstream = req.body.useforstream == "true";
+      let usefulldomain = req.body.usefulldomain == "true";
+      let usedirectlink = req.body.usedirectlink == "true";
       let tv_enabled = req.body.tvenabled;
       let groups = req.body.groups;
       let bulk = req.body.bulk;
@@ -247,6 +261,7 @@ function serveHTTP() {
           "UserAgent": userAgent || 'Kodi',
           "UseForStream": !!useforstream,
           "UseFullDomain": !!usefulldomain,
+          "UseDirectLink": !!usedirectlink,
           "Enabled": !!tv_enabled
         },
         "Port": Number(port),

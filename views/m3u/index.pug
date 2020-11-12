@@ -3,9 +3,10 @@ extend ../layout
 block content
   #m3u-page
     h3 Canali TV
-      button#update.btn.btn-primary.btn-sm(title="Aggiorna la lista") Aggiorna
-      a.right.btn.btn-outline-info(href="/tv/personal" style="float: right") Gestore
-      a.right.btn.btn-outline-info(href="/tv/personal.m3u8" style="float: right") Ottieni lista personale
+      if !RO
+        button#update.btn.btn-primary.btn-sm(title="Aggiorna la lista") Aggiorna
+        a.right.btn.btn-outline-info(href="/tv/personal" style="float: right") Gestore
+        a.right.btn.btn-outline-info(href="/tv/personal.m3u8" style="float: right") Ottieni lista personale
     small Qui puoi spulciare la tua lista
 
 

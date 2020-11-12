@@ -50,7 +50,7 @@ block content
               | Canali TV
               label(for='tv_enabled' style="float: right; margin-right: 10px")
                 | attivato
-                input#tv_enabled(type="checkbox" name="tvenabled" value=Config.M3U.Enabled checked=Config.M3U.Enabled===true)
+                input#tv_enabled(type="checkbox" name="tvenabled" value="true" checked=Config.M3U.Enabled===true)
             .form-group
               label(for='urlm3u') Percorso da cui recuperare la lista M3U
               input#urlm3u.form-control(type='text' placeholder='URL o percorso' name="url" value=Config.M3U.Url)
@@ -59,10 +59,13 @@ block content
               label(for='useragent') User-Agent
               label(for='useforstream' style="float: right")
                 | Includi nello stream url
-                input#useforstream(type="checkbox" name="useforstream" value=Config.M3U.UseForStream checked=Config.M3U.UseForStream===true)
+                input#useforstream(type="checkbox" name="useforstream" value="true" checked=Config.M3U.UseForStream===true)
               label(for='usefulldomain' style="float: right; margin-right: 10px")
                 | Usa Url completo nel link di stream
-                input#usefulldomain(type="checkbox" name="usefulldomain" value=Config.M3U.UseFullDomain checked=Config.M3U.UseFullDomain===true)
+                input#usefulldomain(type="checkbox" name="usefulldomain" value="true" checked=Config.M3U.UseFullDomain===true)
+              label(for='usedirectlink' style="float: right; margin-right: 10px")
+                | Usa Url diretti, senza usare proxy
+                input#usedirectlink(type="checkbox" name="usedirectlink" value="true" checked=Config.M3U.UseDirectLink===true)
               input#useragent.form-control(type='text', placeholder='Kodi' name="useragent" value=Config.M3U.UserAgent || 'Kodi' )
               small.form-text.text-muted specificare lo user-agent usato per recuperare la lista, ad esempio 'Kodi' o 'VLC'
             .form-group
