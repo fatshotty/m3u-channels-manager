@@ -66,6 +66,8 @@ function request(url, headers, callback, streaming) {
 
         callback( null, string );
       })
+    } else if ( (res.statusCode > 300 && res.statusCode <= 303) && (res.headers && res.headers.location)) {
+      request(res.headers.location, headers, callback, streaming);
     } else /* if ( res.statusCode >= 400 ) */ {
       let error = res.statusCode >= 300 && res.statusCode < 400 ? `url redirects to ${res.headers && res.headers.location}` : res.statusCode;
       Log.warn(`Error: ${error}`);
