@@ -1,5 +1,4 @@
 const Utils = require('./utils');
-require('dotenv').config({ path: `${Utils.calculatePath(__filename)}/.env` });
 
 const FS = require('fs');
 const Net = require('net');
@@ -10,13 +9,23 @@ const Express = require("express");
 const Cluster = require('cluster');
 
 
-let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
-
-
 let Config = null;
 
-Config = global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
+if ( !global.Config ) {
+  global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
 
+  if ( Argv.port ) {
+    global.Config.Port = Argv.port
+  }
+  if ( Argv.socketport ) {
+    global.Config.SocketPort = Argv.socketport
+  }
+}
+
+Config = global.Config;
+
+require('dotenv').config({ path: `${Argv.envfile || Utils.calculatePath(__filename)}/.env` });
+let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
 
 Config.Log = Path.resolve(global.CWD, Config.Log);
 
@@ -71,7 +80,7 @@ App.use( (req, res, next) => {
 
   let isLocal = checkLocalRequest(req);
 
-  if ( !isLocal && HAS_BASIC_AUTH ) {
+  if ( (!isLocal && HAS_BASIC_AUTH) || (HAS_BASIC_AUTH && process.env.BASIC_AUTH_OVERALL == 'true')) {
     const BasicAuth = require('express-basic-auth');
     let fn = BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }});
 

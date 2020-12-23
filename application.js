@@ -39,6 +39,15 @@ global.Argv = Args
     boolean: true,
     describe: 'enable read-only state'
   })
+  .option('port', {
+    describe: 'set the http port'
+  })
+  .option('socketport', {
+    describe: 'set the http socket-port'
+  })
+  .option('envfile', {
+    describe: 'specify the env file'
+  })
   .option('config', {
     alias: 'c',
     describe: 'set the configuration file path. It must be a json',
@@ -175,8 +184,8 @@ if ( ! FS.existsSync(Argv.config) ) {
       "UseDirectLink": false,
       "Enabled": true
     },
-    "Port": 3000,
-    "SocketPort": 14332,
+    "Port": Argv.port || 3000,
+    "SocketPort": Argv.socketport || 14332,
     "Path": `${global.CWD}/cache`,
     "EPG": {
       "bulk": 2,
@@ -189,6 +198,13 @@ if ( ! FS.existsSync(Argv.config) ) {
 
 
 global.Config = require( Argv.config );
+
+if ( Argv.port ) {
+  global.Config.Port = Argv.port
+}
+if ( Argv.socketport ) {
+  global.Config.SocketPort = Argv.socketport
+}
 
 
 if ( ! FS.existsSync(Config.Path) ) {
