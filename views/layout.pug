@@ -36,5 +36,7 @@ html
 
 
     script.
-      window.Config = !{JSON.stringify(Config)}
+      window.Config = {
+        SocketPort: !{JSON.stringify(Config.SocketPort)}
+      };
     block extrajs
