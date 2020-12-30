@@ -111,7 +111,7 @@ SearchForm.on('submit', (e) => {
       SearchResult.html( `
         <small>
           <a class="btn btn-outline-info btn-sm" href="${PATH}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato JSON">Scarica JSON</a>
-          <a class="btn btn-outline-info btn-sm" href="${PATH}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato M3U">Scarica M3U</a>
+          <a class="btn btn-outline-info btn-sm" href="${PATH}/search.m3u8?q=${str}" target="_blank" title="Scarica la lista in formato M3U">Scarica M3U</a>
         </small>
       ` )
 

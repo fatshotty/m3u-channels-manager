@@ -663,6 +663,12 @@ Router.get('/search.:format', (req, res, next) => {
 
   const format = req.params.format || 'm3u'
   const query = req.query.q || '';
+
+  let direct = Config.M3U.UseDirectLink;
+  if ( 'direct' in req.query ){
+    direct = req.query.direct == 'true';
+  }
+
   const result = {};
   for ( let group of M3UList.groups ) {
     for( let chl of group.channels ) {
@@ -688,7 +694,7 @@ Router.get('/search.:format', (req, res, next) => {
       res.set('content-type', 'application/x-mpegURL');
       for( let k of keys ) {
         m3u_res = m3u_res.concat( result[ k ].map( (chl) => {
-          return chl.toM3U()
+          return chl.toM3U(false, direct)
         }) );
       }
       res_result = ['#EXTM3U', m3u_res.join('\n')].join('\n');
