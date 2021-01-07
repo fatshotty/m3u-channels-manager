@@ -30,7 +30,7 @@ let auth = '';
 // if ( global.HAS_BASIC_AUTH ) {
 //   auth = `${process.env.BASIC_USER}:${process.env.BASIC_PWD}@`;
 // }
-let DOMAIN_URL = `http://${auth}${Config.LocalIp}:${Config.Port}`;
+let DOMAIN_URL = `http://${auth}${Config.LocalIp}`; // `:${Config.Port}`;
 
 let M3UList = null;
 M3UList = new M3UK( `${DOMAIN_URL}${MOUNTH_PATH}/live` );
@@ -723,7 +723,7 @@ function info() {
 
 function updateSettings(config) {
 
-  DOMAIN_URL = `http://${config.LocalIp}:${config.Port}`;
+  DOMAIN_URL = `http://${config.LocalIp}`;
   if ( Config.M3U.UseFullDomain ) {
     M3UList._baseUrl = `${DOMAIN_URL}${MOUNTH_PATH}`;
   } else {
