@@ -175,7 +175,8 @@ if ( ! FS.existsSync(Argv.config) ) {
   const def_conf = {
     "LogLevel": "info",
     "Log": `${global.CWD}/manager.log`,
-    "M3U": {
+    "M3U": [{
+      "Name": "",
       "Url": "",
       "ExcludeGroups": [],
       "UserAgent": "VLC",
@@ -183,7 +184,7 @@ if ( ! FS.existsSync(Argv.config) ) {
       "UseFullDomain": true,
       "UseDirectLink": false,
       "Enabled": true
-    },
+    }],
     "Port": Argv.port || 3000,
     "SocketPort": Argv.socketport || 14332,
     "Path": `${global.CWD}/cache`,

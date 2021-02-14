@@ -219,80 +219,92 @@ function serveHTTP() {
 
 
   if ( !Argv.ro ) {
-    App.post('/settings', (req, res, next) => {
 
-      Log.info('updating settings')
-
-
-      let name = req.body.name;
-      let ip = req.body.ip;
-      let port = req.body.port;
-      let socketPort = req.body.socketPort;
-      let cache = req.body.cache;
-      let url = req.body.url;
-      let userAgent = req.body.useragent;
-      let useforstream = req.body.useforstream == "true";
-      let usefulldomain = req.body.usefulldomain == "true";
-      let usedirectlink = req.body.usedirectlink == "true";
-      let tv_enabled = req.body.tvenabled;
-      let groups = req.body.groups;
-      let bulk = req.body.bulk;
-      let loglevel = req.body.loglevel
-      let sock = req.body.sock;
-
-      port = parseInt(port);
-      socketPort = parseInt(socketPort);
-
-      bulk = parseInt(bulk);
-
-      if ( isNaN(port) ) {
-        port = Config.Port;
-      }
-
-      if ( isNaN(socketPort) ) {
-        socketPort = Config.SocketPort;
-      }
-
-      if ( isNaN(bulk) ) {
-        bulk = Config.EPG.bulk;
-      }
-
-      Config = global.Config = {
-        "Name": name || 'personal',
-        "LogLevel": loglevel || Config.LogLevel,
-        "LocalIp": ip,
-        "Log": Config.Log,
-        "M3U": {
-          "Url": typeof url != 'undefined' ? url : Config.M3U.Url,
-          "ExcludeGroups": groups.split(',').map( (g) => {
-            return g.trim();
-          }),
-          "UserAgent": userAgent || 'Kodi',
-          "UseForStream": !!useforstream,
-          "UseFullDomain": !!usefulldomain,
-          "UseDirectLink": !!usedirectlink,
-          "Enabled": !!tv_enabled
-        },
-        "Port": Number(port),
-        "SocketPort": Number(socketPort),
-        "Path": cache,
-        "EPG": {
-          "bulk": Number(bulk),
-          "Sock": sock
-        }
-      };
-
-      Object.assign(App.locals, {Config});
-
-      Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
-
-      FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
-
-      Log.info('updated!')
-      setTimeout(() => {
-        res.redirect(302, '/')
-      }, 1000)
+    App.get('/settings.json', (req, res, next) => {
+      res.set('content-type', 'application/json');
+      res.end( JSON.stringify(Config) );
     });
+
+    App.post('/settings', (req, res, next) => {
+      Log.info('updating settings');
+
+      req.json
+
+    });
+    // App.post('/settings_old', (req, res, next) => {
+
+    //   Log.info('updating settings')
+
+
+    //   let name = req.body.name;
+    //   let ip = req.body.ip;
+    //   let port = req.body.port;
+    //   let socketPort = req.body.socketPort;
+    //   let cache = req.body.cache;
+    //   let url = req.body.url;
+    //   let userAgent = req.body.useragent;
+    //   let useforstream = req.body.useforstream == "true";
+    //   let usefulldomain = req.body.usefulldomain == "true";
+    //   let usedirectlink = req.body.usedirectlink == "true";
+    //   let tv_enabled = req.body.tvenabled;
+    //   let groups = req.body.groups;
+    //   let bulk = req.body.bulk;
+    //   let loglevel = req.body.loglevel
+    //   let sock = req.body.sock;
+
+    //   port = parseInt(port);
+    //   socketPort = parseInt(socketPort);
+
+    //   bulk = parseInt(bulk);
+
+    //   if ( isNaN(port) ) {
+    //     port = Config.Port;
+    //   }
+
+    //   if ( isNaN(socketPort) ) {
+    //     socketPort = Config.SocketPort;
+    //   }
+
+    //   if ( isNaN(bulk) ) {
+    //     bulk = Config.EPG.bulk;
+    //   }
+
+    //   Config = global.Config = {
+    //     "Name": name || 'personal',
+    //     "LogLevel": loglevel || Config.LogLevel,
+    //     "LocalIp": ip,
+    //     "Log": Config.Log,
+    //     "M3U": {
+    //       "Url": typeof url != 'undefined' ? url : Config.M3U.Url,
+    //       "ExcludeGroups": groups.split(',').map( (g) => {
+    //         return g.trim();
+    //       }),
+    //       "UserAgent": userAgent || 'Kodi',
+    //       "UseForStream": !!useforstream,
+    //       "UseFullDomain": !!usefulldomain,
+    //       "UseDirectLink": !!usedirectlink,
+    //       "Enabled": !!tv_enabled
+    //     },
+    //     "Port": Number(port),
+    //     "SocketPort": Number(socketPort),
+    //     "Path": cache,
+    //     "EPG": {
+    //       "bulk": Number(bulk),
+    //       "Sock": sock
+    //     }
+    //   };
+
+    //   Object.assign(App.locals, {Config});
+
+    //   Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
+
+    //   FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
+
+    //   Log.info('updated!')
+    //   setTimeout(() => {
+    //     res.redirect(302, '/')
+    //   }, 1000)
+    // });
   }
 
 

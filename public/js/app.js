@@ -4,7 +4,7 @@ import Moment from 'moment'
 import 'bootstrap'
 
 
-const socket = io.connect(`${document.location.hostname}:${Config.SocketPort || 14432}/`);
+const socket = io.connect(`${document.location.hostname}:${window.Config.SocketPort || 14432}/`);
 
 const ParentLogEl = document.getElementById('logger');
 const LogEl = document.getElementById('log');

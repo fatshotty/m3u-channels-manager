@@ -1,0 +1,92 @@
+.row.home-page-container
+  .col-md(v-if="loaded")
+    form(method="post" action="#" onsubmit="return false")
+
+      fieldset
+        h5 Generali
+
+        .form-group
+          label(for='loglevel') Livello di Log
+          select#loglevel.form-control(v-model="settings.LogLevel")
+            option(value="debug") debug
+            option(value="info") info
+            option(value="warn") warn
+            option(value="error") error
+
+          small.form-text.text-muted specificare il livello di log dell'applicativo (NOTE: 'debug' e' molto verboso!)
+        .form-group
+          label(for='ip_addr') Indirizzo IP all'interno della rete domestica
+          input#ip_addr.form-control(type='text' placeholder='192.168.1.2' v-model="settings.LocalIp")
+          small.form-text.text-muted specificare l'indirizzo ip di questo dispositivo all'interno della rete domestica
+        .form-group
+          label(for='port') Porta di ascolto del server http
+          input#port.form-control(type='number' placeholder='3000' v-model="settings.Port")
+          small.form-text.text-muted consigliato 3000
+        .form-group
+          label(for='sock_port') Porta di ascolto del socket (web-ui)
+          input#sock_port.form-control(type='number' placeholder='14432' v-model="settings.SocketPort")
+          small.form-text.text-muted specificare la porta di ascolto su cui connettere la web-ui
+        .form-group
+          label(for='cache') Percorso della cartella di cache
+          input#cache.form-control(type='text', placeholder='./cache' v-model="settings.Path")
+          small.form-text.text-muted specificare la cartella usata come cache
+
+      fieldset
+        h5
+          | Canali TV
+          label(for='tv_enabled' style="float: right; margin-right: 10px")
+            | attivato
+            input#tv_enabled(type="checkbox" v-model="settings.M3UEnabled")
+
+
+        ul.nav.nav-tabs(role="tablist")
+          li.nav-item(v-for="m3u,index in settings.M3U")
+            a.nav-link.nav-item(role="tab" href="#" @click="changeM3UTab(index)" :class="{'active': currentM3UTab == index}") {{m3u.Name || '_'}}
+          li.nav-item
+            a.nav-link(@click="addNewM3U()" href="#") +
+
+        .tab-content
+          div.tab-pane(v-for="m3u,index in settings.M3U" :class="{'active': currentM3UTab == index}")
+            a(href="#" style="float: right; margin-right: 10px")
+              i(@click="removeM3U(index)") rimuovi
+
+            .form-group
+              label Nome della lista
+              input.form-control(type='text' v-model="m3u.Name")
+              small.form-text.text-muted specifica un nome identificativo della lista
+
+            .form-group
+              label Percorso da cui recuperare la lista M3U
+              input.form-control(type='text' placeholder='URL o percorso' v-model="m3u.Url")
+              small.form-text.text-muted puoi specificare un path in locale
+            .form-group
+              label User-Agent
+              label(style="float: right")
+                | Includi nello stream url
+                input(type="checkbox" v-model="m3u.UseForStream")
+              label(style="float: right; margin-right: 10px")
+                | Usa Url completo nel link di stream
+                input(type="checkbox" v-model="m3u.UseFullDomain")
+              label(style="float: right; margin-right: 10px")
+                | Usa Url diretti, senza usare proxy
+                input(type="checkbox" v-model="m3u.UseDirectLink")
+              input.form-control(type='text' placeholder="VLC"  v-model="m3u.UserAgent")
+              small.form-text.text-muted specificare lo user-agent usato per recuperare la lista, ad esempio 'Kodi' o 'VLC'
+            .form-group
+              label Gruppi da escludere
+              input.form-control(type='text', placeholder="" v-model="m3u.ExcludeGroupsStr" )
+              small.form-text.text-muted specificare i gruppi da escludere separati da virgola
+
+
+      fieldset
+        h5 EPG
+        .form-group
+          label(for='bulk') Richeste concorrenti
+          input#bulk.form-control(type='number' placeholder='3' v-model="settings.EPG.bulk")
+          small.form-text.text-muted specificare il numero di richieste parallele (solitamente non oltre il num di core del cpu)
+        .form-group
+          label(for='sock') File di socket
+          input#sock.form-control(type='text' placeholder='Percorso del file .sock' v-model="settings.EPG.Sock")
+          small.form-text.text-muted specificare path del file socket su cui scrivere l'epg risultante (usato solitamente per TvHeadEnd Server)
+
+      button(class="btn btn-primary" @click="save()") Salva

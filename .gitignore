@@ -14,3 +14,5 @@ guide_*.xm*
 test.js
 
 genres.txt
+
+config*.json*
