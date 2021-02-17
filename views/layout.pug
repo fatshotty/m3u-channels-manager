@@ -16,8 +16,18 @@ html
               li.sidebar-header
                 a.sidebar-link(href="/") Home
               each module in Modules
-                li.sidebar-item.active
-                  a.sidebar-link(href=`${module}/`)= module.substring(1).toUpperCase()
+                if module == '/tv'
+                  li.sidebar-item
+                    a.sidebar-link(href="#")= module.substring(1).toUpperCase()
+                      ul.sidebar-nav
+                        each list in Config.M3U
+                          li.sidebar-item.active
+                            a.sidebar-link(href=`/tv/${list.Name}`)= list.Name
+
+
+                else
+                  li.sidebar-item
+                    a.sidebar-link(href=`${module}/`)= module.substring(1).toUpperCase()
 
 
 

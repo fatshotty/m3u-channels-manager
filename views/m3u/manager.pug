@@ -7,7 +7,7 @@ block content
       | Qui puoi creare la tua lista personale
       br
       | che sar&agrave; raggiungibile &nbsp;&nbsp;
-      a(href="/tv/personal.m3u8") a questo indirizzo
+      a(href=`/tv/${M3UList.Name}/personal.m3u8`) a questo indirizzo
 
     p= `Lista attuale: ${M3UList.groups.length} gruppi e ${(()=>{let count=0; M3UList.groups.map( g => count += g.channels.length ); return count})()} canali`
 
@@ -27,5 +27,8 @@ block content
 
 block extrajs
   script.
+    window.M3U = {
+      Name: !{JSON.stringify(M3UList.Name)}
+    };
     window.Channels = !{JSON.stringify(Channels)};
   script(src="/m3u-manager.bundled.js")

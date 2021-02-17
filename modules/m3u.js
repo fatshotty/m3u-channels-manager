@@ -1,10 +1,13 @@
 const Utils = require('../utils');
 const Log = Utils.Log;
 const cleanUpString = Utils.cleanUpString;
+const Readline = require('readline');
+const FS = require('fs');
 
 class M3U {
 
-  constructor(baseUrl) {
+  constructor(name, baseUrl) {
+    this.Name = name;
     this.groups = [];
     this.headers = {};
     this._baseUrl = baseUrl ? baseUrl : '';
@@ -95,47 +98,47 @@ class M3U {
     return null;
   }
 
-  load(string) {
 
-    Log.debug('Parsing m3u list');
 
-    const data = string.split('\n').filter( str => str.length > 0 );
+  async loadFromFile(file) {
+    let fileStream = FS.createReadStream(file);
+    const rl = Readline.createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+    });
+    // Note: we use the crlfDelay option to recognize all instances of CR LF
+    // ('\r\n') in input.txt as a single line break.
 
     const channels = [];
-    let row;
+    let parse_header = true;
+    let channel_index = 0;
+    Log.debug(`start reading m3u cache file ${file}`);
 
-    Log.debug('gettin headers');
-
-    while( row = data.shift() ) {
+    for await (let row of rl) {
       row = row.replace(/\r/, '');
-      if ( !row ) continue;
-      if ( row.indexOf('#EXTM3U') === 0 ) {
-        // skip header
-        continue;
-      }
-      if ( row.indexOf('#') === 0 ){
-        const parts = row.match( /([\w\-]+)+:(.*)/ );
-        if ( parts && parts[1] && ! parts[1].endsWith('INF') ) {
-          this.headers[ parts[1].toLowerCase() ] = cleanUpString( parts[2] ).trim();
+      if ( row.length <= 0) continue;
+
+      if ( parse_header ) {
+        // Each line in input.txt will be successively available here as `line`.
+
+        if ( !row ) continue;
+        if ( row.indexOf('#EXTM3U') === 0 ) {
+          // skip header
           continue;
         }
+        if ( row.indexOf('#') === 0 ){
+          const parts = row.match( /([\w\-]+)+:(.*)/ );
+          if ( parts && parts[1] && ! parts[1].endsWith('INF') ) {
+            this.headers[ parts[1].toLowerCase() ] = cleanUpString( parts[2] ).trim();
+            continue;
+          }
+        }
+
+        Log.debug(`headers found ${Object.keys(this.headers).length}`);
+        Log.debug('getting channels');
       }
 
-      // restore removed row
-      data.unshift(row);
-      break;
-    }
-
-    Log.debug(`headers found ${Object.keys(this.headers).length}`);
-
-    Log.debug('getting channels');
-
-    let channel_index = 0;
-
-    for( let i = 0; row = data[ i ]; i++ ) {
-      row = row.replace(/\r/, '');
-
-      if ( row.length <= 0) continue;
+      parse_header = false;
 
       if ( row.indexOf('#EXTM3U') === 0 ) {
         // skip header
@@ -143,9 +146,6 @@ class M3U {
         break;
       }
 
-      if ( i % 100 === 0 ) {
-        Log.debug( `parsing channel ${i}`);
-      }
 
       if ( row.indexOf('#') === 0 ) {
         // get data
@@ -189,23 +189,117 @@ class M3U {
         obj.redirect = this._baseUrl;
         obj.link = row;
       }
-
     }
 
-    Log.info(`laoded ${channels.length} channels`);
-
+    Log.info(`loaded ${channels.length} channels`);
     // Organize list
     this.organize( channels );
     this.sort();
-
     let chl_count = 0;
     for( let g of this.groups ) {
       chl_count += g.channels.length;
     }
-
     Log.info(`Loaded ${this.groups.length} groups and ${chl_count} channels`);
 
   }
+
+
+   // load(string) {
+
+  //   Log.debug('Parsing m3u list');
+
+  //   const data = string.split('\n').filter( str => str.length > 0 );
+
+  //   const channels = [];
+  //   let row;
+
+  //   while( row = data.shift() ) {
+  //     row = row.replace(/\r/, '');
+  //     if ( !row ) continue;
+  //     parseHeader(row);
+
+  //     // restore removed row
+  //     data.unshift(row);
+  //     break;
+  //   }
+
+  //   Log.debug(`headers found ${Object.keys(this.headers).length}`);
+
+  //   Log.debug('getting channels');
+
+
+  //   for( let i = 0; row = data[ i ]; i++ ) {
+  //     row = row.replace(/\r/, '');
+
+  //     if ( row.indexOf('#EXTM3U') === 0 ) {
+  //       // skip header
+  //       Log.error('** DUPLICATE LIST ** CANNOT CONTINUE READING CHANNELS list');
+  //       break;
+  //     }
+
+  //     if ( i % 100 === 0 ) {
+  //       Log.debug( `parsing channel ${i}`);
+  //     }
+
+  //     if ( row.indexOf('#') === 0 ) {
+  //       // get data
+  //       const obj_channel = channels[ channel_index ] ||  (channels[ channel_index ] = {});
+
+  //       const parts = row.match( /([\w\-]+)+:(.*)/ );
+
+  //       if ( parts && parts[1] ) {
+
+  //         switch ( parts[1] ) {
+  //           case 'EXTINF':
+  //             if ( parts[2] ) {
+  //               let infos = parts[ 2 ];
+  //               infos = infos.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g);
+  //               let details = infos.shift(), name = infos.join(',');
+  //               obj_channel.name = cleanUpString(name);
+  //               if ( details ) {
+  //                 details = details.split( /\s(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
+  //                 obj_channel.duration = details.shift();
+  //                 for( let j = 0, detail; detail = details[j++]; ) {
+  //                   const dets = detail.split('=');
+  //                   obj_channel[ dets[0].toLowerCase() ] = cleanUpString(dets[1]);
+  //                 }
+  //               }
+  //             }
+  //             break;
+  //           case 'EXT-X-STREAM-INF':
+  //             let infos = parts[ 2 ];
+  //             infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
+  //             for( let j = 0, info; info = infos[ j++ ]; ) {
+  //               const kv = info.split('=');
+  //               obj_channel[ kv[0].toLowerCase() ] = cleanUpString(kv[1]);
+  //             }
+  //         }
+
+  //       }
+
+
+  //     } else {
+  //       const obj = channels[ channel_index++ ] || {};
+  //       obj.redirect = this._baseUrl;
+  //       obj.link = row;
+  //     }
+
+  //   }
+
+  //   Log.info(`loaded ${channels.length} channels`);
+
+  //   // Organize list
+  //   this.organize( channels );
+  //   this.sort();
+
+  //   let chl_count = 0;
+  //   for( let g of this.groups ) {
+  //     chl_count += g.channels.length;
+  //   }
+
+  //   Log.info(`Loaded ${this.groups.length} groups and ${chl_count} channels`);
+
+  // }
 
 
   organize(channels) {
@@ -287,11 +381,15 @@ class M3U {
 
 
   toJson() {
-    const res = {};
+    const res = {Name: this.Name};
     for ( let g of this.groups ) {
       res[ g.Id ] = g.toJson();
     }
     return res;
+  }
+
+  toJSON() {
+    return this.toJson();
   }
 
   toM3U() {

@@ -8,7 +8,7 @@ const BtnUpdate = $('#update');
 BtnUpdate.on('click', (e) => {
   e.preventDefault();
   BtnUpdate.prop('disabled', true);
-  $.get(`${PATH}/update`).then( () => {
+  $.get(`${PATH}/${window.M3U.Name}/update`).then( () => {
     window.location.reload();
   }, (resp) => {
     alert(`Error:
@@ -39,8 +39,8 @@ BtnGenerateUrl.on('click', (e) => {
     return g.id
   });
   if ( groups.length ) {
-    pj = `${PATH}/list.json?groups=${groups.join(',')}`;
-    pm = `${PATH}/list.m3u?groups=${groups.join(',')}`;
+    pj = `${PATH}/${window.M3U.Name}/list.json?groups=${groups.join(',')}`;
+    pm = `${PATH}/${window.M3U.Name}/list.m3u?groups=${groups.join(',')}`;
   }
   ShowUrlJson.attr('href', pj)
   ShowUrlM3u.attr('href', pm)
@@ -55,10 +55,12 @@ $('#groups').on('click', 'span.counter', (e) => {
   e.stopPropagation();
   const li_g = $(e.target).closest('li.group-item');
   const g_id = li_g.data('groupId');
-  const container = li_g.find('ul').empty();
+  const container = li_g.find('ul');
+  if ( container.children().length > 0 ) {
+    return container.empty();
+  }
 
-
-  $.get(`${PATH}/list/${g_id}.json?`).done( (channels) => {
+  $.get(`${PATH}/${window.M3U.Name}/list/${g_id}.json?`).done( (channels) => {
     for( let chl of channels ) {
       const item = $(`
         <li data-channel-id="${chl.Id}" class="channel-item">
@@ -78,7 +80,7 @@ $('#groups').on('click', 'span.counter', (e) => {
 
 function ReloadGroups() {
   UL_GROUPS.html('Loading...');
-  $.get(`${PATH}/groups.json`).then( (groups) => {
+  $.get(`${PATH}/${window.M3U.Name}/groups.json`).then( (groups) => {
     UL_GROUPS.html('');
     for( let group of groups ) {
       $(`
@@ -106,12 +108,12 @@ SearchForm.on('submit', (e) => {
   const str = SearchInput.val();
   SearchResult.html('Loading...')
   if ( str.trim() ) {
-    $.get(`${PATH}/search.json?q=${str}`).then( (data) => {
+    $.get(`${PATH}/${window.M3U.Name}/search.json?q=${str}`).then( (data) => {
 
       SearchResult.html( `
         <small>
-          <a class="btn btn-outline-info btn-sm" href="${PATH}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato JSON">Scarica JSON</a>
-          <a class="btn btn-outline-info btn-sm" href="${PATH}/search.m3u8?q=${str}" target="_blank" title="Scarica la lista in formato M3U">Scarica M3U</a>
+          <a class="btn btn-outline-info btn-sm" href="${PATH}/${window.M3U.Name}/search.json?q=${str}" target="_blank" title="Scarica la lista in formato JSON">Scarica JSON</a>
+          <a class="btn btn-outline-info btn-sm" href="${PATH}/${window.M3U.Name}/search.m3u8?q=${str}" target="_blank" title="Scarica la lista in formato M3U">Scarica M3U</a>
         </small>
       ` )
 
@@ -121,7 +123,7 @@ SearchForm.on('submit', (e) => {
         for ( let chl of data[group] ) {
           $(`
             <li data-channel-id="${chl.Id}" class="channel-name">
-              <a href="${chl.Redirect}">${chl.Name}</a>
+              <a href="${chl.Redirect}">${chl.Name}</a><small> (<a href="${chl.StreamUrl}">link originale</a>)</small>
             </li>
           `).appendTo( UL );
         }
@@ -135,5 +137,3 @@ SearchForm.on('submit', (e) => {
   }
   SearchResult.html('');
 });
-
-

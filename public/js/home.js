@@ -64,11 +64,28 @@ const VM = new Vue({
     },
 
     save() {
-      $.post(`${PATH}/settings`, {
+
+      let names = this.settings.M3U.map(m => m.Name = m.Name.replace( /[^\w]/g, '_') );
+      let duplicates = false;
+      for ( let [i, name] of names.entries() ) {
+        if ( !name || names.slice(i+1).indexOf(name) > -1 ) {
+          duplicates = true;
+          break;
+        }
+      }
+
+      if ( duplicates ) {
+        alert('Ho trovato dei nomi di lista duplicati o non validi. Meglio usare dei nomi validi e univoci');
+        return;
+      }
+
+      $.ajax({
+        method: 'POST',
+        url: `${PATH}/settings.json`,
         headers: {
           'content-type': 'application/json'
         },
-        data: JSON.stringify(this.settings)
+        data: JSON.stringify({settings: this.settings})
       }).then( () => {
         window.location.reload();
       }).catch( (e) => {

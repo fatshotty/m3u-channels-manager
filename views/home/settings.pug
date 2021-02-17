@@ -31,13 +31,10 @@
           input#cache.form-control(type='text', placeholder='./cache' v-model="settings.Path")
           small.form-text.text-muted specificare la cartella usata come cache
 
-      fieldset
-        h5
-          | Canali TV
-          label(for='tv_enabled' style="float: right; margin-right: 10px")
-            | attivato
-            input#tv_enabled(type="checkbox" v-model="settings.M3UEnabled")
+      hr
 
+      fieldset
+        h5 Canali TV
 
         ul.nav.nav-tabs(role="tablist")
           li.nav-item(v-for="m3u,index in settings.M3U")
@@ -49,6 +46,9 @@
           div.tab-pane(v-for="m3u,index in settings.M3U" :class="{'active': currentM3UTab == index}")
             a(href="#" style="float: right; margin-right: 10px")
               i(@click="removeM3U(index)") rimuovi
+            label(for='tv_enabled' style="float: right; margin-right: 10px")
+              | attivato
+              input#tv_enabled(type="checkbox" v-model="m3u.Enabled")
 
             .form-group
               label Nome della lista
@@ -77,6 +77,8 @@
               input.form-control(type='text', placeholder="" v-model="m3u.ExcludeGroupsStr" )
               small.form-text.text-muted specificare i gruppi da escludere separati da virgola
 
+
+      hr
 
       fieldset
         h5 EPG

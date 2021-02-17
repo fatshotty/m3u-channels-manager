@@ -9,7 +9,7 @@ const PATH = '/tv';
 
 let PERSONAL = null;
 
-let PromPersonal = $.get(`${PATH}/personal.json`).then( (groups) => {
+let PromPersonal = $.get(`${PATH}/${window.M3U.Name}/personal.json`).then( (groups) => {
   PERSONAL = groups || [];
 });
 
@@ -22,7 +22,7 @@ const VM = new Vue({
 
   created() {
     PromPersonal.then( () => {
-      $.get(`${PATH}/groups.json`).then( (groups) => {
+      $.get(`${PATH}/${window.M3U.Name}/groups.json`).then( (groups) => {
         this.groups.splice( 0, this.groups.length, ...groups );
       });
     })
@@ -63,7 +63,7 @@ const VM = new Vue({
 
       $.ajax({
         type: 'POST',
-        url: `${PATH}/personal`,
+        url: `${PATH}/${window.M3U.Name}/personal`,
         data: JSON.stringify( result ),
         success: function(data) {
           alert('Salvataggio eseguito correttamente');
@@ -131,7 +131,7 @@ Vue.component('Group', {
       let p = Promise.resolve();
       if ( this.channels.length <= 0 ) {
         p = new Promise( (resolve, reject) => {
-          $.get(`${PATH}/list/${this.group.id}.json?`).done( (channels) => {
+          $.get(`${PATH}/${window.M3U.Name}/list/${this.group.id}.json?`).done( (channels) => {
             this.channels.splice( 0, this.channels.length, ...channels );
             resolve( channels );
           }).catch( () => {
@@ -250,4 +250,3 @@ Vue.component('Channel', {
   }
 
 });
-

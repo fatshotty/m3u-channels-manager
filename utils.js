@@ -20,6 +20,7 @@ let Log = Winston.createLogger({
   transports: []
 });
 Log.add(WinstonTransportFile)
+Log.add(new Winston.transports.Console());
 
 function setLogLevel(level) {
   WinstonTransportFile.level = level || Config.LogLevel || 'info';
@@ -625,4 +626,30 @@ function calculatePath(filename) {
   return path.join(Path.sep);
 }
 
-module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive};
+
+const DEFAULT_CONFIG = () => {
+  return {
+    "LogLevel": "info",
+    "Log": `${global.CWD}/manager.log`,
+    "M3U": [{
+      "UUID": '',
+      "Name": "list_1",
+      "Url": "",
+      "ExcludeGroups": [],
+      "UserAgent": "VLC",
+      "UseForStream": false,
+      "UseFullDomain": true,
+      "UseDirectLink": false,
+      "Enabled": true
+    }],
+    "Port": Argv.port || 3000,
+    "SocketPort": Argv.socketport || 14332,
+    "Path": `${global.CWD}/cache`,
+    "EPG": {
+      "bulk": 2,
+      "Sock": ""
+    }
+  };
+}
+
+module.exports = {DEFAULT_CONFIG, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive};

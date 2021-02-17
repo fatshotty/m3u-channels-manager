@@ -5,19 +5,19 @@ block content
     h3 Canali TV
       if !RO
         button#update.btn.btn-primary.btn-sm(title="Aggiorna la lista") Aggiorna
-        a.right.btn.btn-outline-info(href="/tv/personal" style="float: right") Gestore
+        a.right.btn.btn-outline-info(href=`/tv/personal` style="float: right") Gestore
         a.right.btn.btn-outline-info(href="/tv/personal.m3u8" style="float: right") Ottieni lista personale
     small Qui puoi spulciare la tua lista
 
 
-    p= `Lista attuale: ${M3UList.groups.length} gruppi e ${(()=>{let count=0; M3UList.groups.map( g => count += g.channels.length ); return count})()} canali`
+    p= `Lista attuale: ${M3U.groups.length} gruppi e ${(()=>{let count=0; M3U.groups.map( g => count += g.channels.length ); return count})()} canali`
 
     .row
       .col-md
         h5 Gruppi
           button#uncheckall.btn.btn-secondary.btn-sm Deseleziona tutti
           button#generate-url.btn.btn-primary.btn-sm(title="Genera l'url in base ai gruppi selezionati") Genera url
-          a#groups-url.btn.btn-outline-info.btn-sm(title="Url dei gruppi organizzati in m3u" href="/tv/groups.m3u") Lista gruppi
+          a#groups-url.btn.btn-outline-info.btn-sm(title="Url dei gruppi organizzati in m3u" href=`/tv/${M3U.Name}/groups.m3u`) Lista gruppi
 
           p
             a#show-url-json.btn.btn-outline-info.btn-sm(target="_blank" title="Scarica i gruppi selezionati in formato JSON") Scarica JSON
@@ -39,4 +39,6 @@ block content
 
 
 block extrajs
+  script.
+    window.M3U = !{JSON.stringify(M3U)};
   script(src="/m3u.bundled.js")

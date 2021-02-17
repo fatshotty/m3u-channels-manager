@@ -1,9 +1,6 @@
 const Utils = require('./utils');
 const FS = require('fs');
 const Args = require('yargs');
-const Net = require('net');
-const Pretty = require('pretty-data').pd;
-const Path = require('path')
 const SemVer = require('semver');
 const Package = require('./package.json');
 
@@ -18,20 +15,20 @@ global.CWD = Utils.calculatePath(__filename);
 global.App = App;
 App.locals.HAS_UPDATE = false;
 
-require('child_process').exec(`npm view ${Package.name} versions --json`, function(err, stdout, stderr) {
-  try {
-    const LIST = JSON.parse(stdout);
-    const LATEST = LIST.pop();
-    App.locals.HAS_UPDATE = SemVer.lt(Package.version, LATEST);
-    if ( App.locals.HAS_UPDATE ) {
-      Utils.Log.warn(`Update available, please run \`npm install ${Package.name}\` to upgrade`);
-    }
-  } catch( e ) {
-    if (err) {
-      Utils.Log.warn('- cannot get list of available versions - ', err.message.split('\n').shift());
-    }
-  }
-});
+// require('child_process').exec(`npm view ${Package.name} versions --json`, function(err, stdout, stderr) {
+//   try {
+//     const LIST = JSON.parse(stdout);
+//     const LATEST = LIST.pop();
+//     App.locals.HAS_UPDATE = SemVer.lt(Package.version, LATEST);
+//     if ( App.locals.HAS_UPDATE ) {
+//       Utils.Log.warn(`Update available, please run \`npm install ${Package.name}\` to upgrade`);
+//     }
+//   } catch( e ) {
+//     if (err) {
+//       Utils.Log.warn('- cannot get list of available versions - ', err.message.split('\n').shift());
+//     }
+//   }
+// });
 
 
 global.Argv = Args
@@ -172,27 +169,7 @@ global.Argv = Args
 
 
 if ( ! FS.existsSync(Argv.config) ) {
-  const def_conf = {
-    "LogLevel": "info",
-    "Log": `${global.CWD}/manager.log`,
-    "M3U": [{
-      "Name": "",
-      "Url": "",
-      "ExcludeGroups": [],
-      "UserAgent": "VLC",
-      "UseForStream": false,
-      "UseFullDomain": true,
-      "UseDirectLink": false,
-      "Enabled": true
-    }],
-    "Port": Argv.port || 3000,
-    "SocketPort": Argv.socketport || 14332,
-    "Path": `${global.CWD}/cache`,
-    "EPG": {
-      "bulk": 2,
-      "Sock": ""
-    }
-  };
+  const def_conf = Utils.DEFAULT_CONFIG();
 
   FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
 }
@@ -223,7 +200,7 @@ if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
     if ( Cluster.isMaster && Argv.fork ) {
 
       if ( Argv.m3u ) {
-        require('./routers/m3u').info('/tv');
+        require('./routers/tv').info('/tv');
         console.log('');
       }
       if ( Argv.epg ) {
@@ -240,7 +217,7 @@ if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
     } else {
 
       if ( Argv.m3u ) {
-        require('./routers/m3u').info('/tv');
+        require('./routers/tv').info('/tv');
         console.log('');
       }
       if ( Argv.epg ) {

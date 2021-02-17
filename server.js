@@ -1,5 +1,5 @@
 const Utils = require('./utils');
-
+const ShortUUID = require('shortid');
 const FS = require('fs');
 const Net = require('net');
 const Pretty = require('pretty-data').pd;
@@ -127,7 +127,7 @@ function loadRouters() {
 
   if ( Argv.m3u ) {
     Log.debug('loading module M3U...')
-    let mod_m3u = require('./routers/m3u');
+    let mod_m3u = require('./routers/tv');
     Modules[ mod_m3u.MountPath ] = mod_m3u;
     if ( !Argv.serve && !Argv.epg ) {
       mod_m3u.parseCommand(Argv, (resp) => {
@@ -200,11 +200,11 @@ function serveHTTP() {
         Config = global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
 
 
-        const mod_keys = Object.keys( Modules );
-        for ( let mod_k of mod_keys ) {
-          const mod = Modules[ mod_k ];
-          mod.updateSettings && mod.updateSettings( Config );
-        }
+        // const mod_keys = Object.keys( Modules );
+        // for ( let mod_k of mod_keys ) {
+        //   const mod = Modules[ mod_k ];
+        //   mod.updateSettings && mod.updateSettings( Config );
+        // }
 
       }, 1000);
     }
@@ -225,12 +225,36 @@ function serveHTTP() {
       res.end( JSON.stringify(Config) );
     });
 
-    App.post('/settings', (req, res, next) => {
+    App.post('/settings.json', (req, res, next) => {
       Log.info('updating settings');
 
-      req.json
+      let settings = req.body.settings;
 
+      if ( !settings ){
+        next('Invalid argument');
+        return;
+      }
+
+      settings.M3U.forEach(m => m.UUID = m.UUID || ShortUUID.generate());
+
+      const defConfig = Utils.DEFAULT_CONFIG();
+      Config = global.Config = Object.assign({}, defConfig, settings);
+
+      Config.M3U.forEach(m => m.Name = m.Name.replace(/[^\w]/g, '_').toLowerCase() );
+
+      Object.assign(App.locals, {Config});
+
+      Log.debug(`Settings ${JSON.stringify(Config, null, 2)}`);
+
+      FS.writeFileSync( Argv.config, JSON.stringify(Config, null, 2), {encoding: 'utf-8'} );
+
+      Log.info('updated!');
+      res.status(204);
+      res.end();
     });
+
+
+    // });
     // App.post('/settings_old', (req, res, next) => {
 
     //   Log.info('updating settings')
