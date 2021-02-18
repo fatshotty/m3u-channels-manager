@@ -333,7 +333,7 @@ function serveHTTP() {
 
 
   Server.listen(Config.Port, process.env.BIND_IP || '127.0.0.1', () => {
-    Log.info(`Server listing on port ${Config.Port}`);
+    Log.info(`Server listing on port ${process.env.BIND_IP || '127.0.0.1'}:${Config.Port}`);
   });
 }
 

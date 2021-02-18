@@ -29,6 +29,14 @@ let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
       Log.info('--- config file has been changed - M3U');
 
 
+      // fix M3UList
+      Config.M3U.forEach( (m3uConfig) => {
+        let m3u = M3UList.find(m => m3uConfig.Name == m.Name);
+        if ( !m3u ) {
+          M3UList.push( new M3UK( m3uConfig.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3uConfig.Name}/live` ) );
+        }
+      });
+
       fileWatcher();
 
       // const mod_keys = Object.keys( Modules );
