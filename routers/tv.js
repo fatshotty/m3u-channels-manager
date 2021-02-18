@@ -272,9 +272,26 @@ async function parseCommand(Argv, cb) {
 
   // }
 
-
 }
 
+
+Router.get('m3us.json', (req, res, next) => {
+
+  let resp = Config.M3U.map( (m) => {
+    return {
+      Name: m.Name,
+      UserAgent: m.UserAgent,
+      UseForStream: m.UseForStream,
+      UseFullDomain: m.UseFullDomain,
+      UseDirectLink: m.UseDirectLink,
+      Enabled: m.Enabled
+    }
+  });
+
+  res.set('content-type', 'application/json');
+  res.end( JSON.stringify(resp) );
+
+})
 
 
 Router.param('list_name', (req, res, next, value) => {
@@ -329,10 +346,6 @@ Router.get('/:list_name/update', async (req, res, next) => {
   req.M3U.clear();
   await req.M3U.loadFromFile(M3U_CACHE_FILE);
   req.M3U.removeGroups( req.M3U.ExcludeGroups );
-
-  if ( WatcherM3UFiles ) {
-
-  }
 
   res.status(204);
   res.end();
