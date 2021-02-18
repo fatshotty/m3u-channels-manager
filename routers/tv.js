@@ -275,7 +275,7 @@ async function parseCommand(Argv, cb) {
 }
 
 
-Router.get('m3us.json', (req, res, next) => {
+Router.get('/m3us.json', (req, res, next) => {
 
   let resp = Config.M3U.map( (m) => {
     return {
