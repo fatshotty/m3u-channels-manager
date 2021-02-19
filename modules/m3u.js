@@ -165,7 +165,8 @@ class M3U {
                 if ( details ) {
                   details = details.split( /\s(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
                   obj_channel.duration = details.shift();
-                  for( let j = 0, detail; detail = details[j++]; ) {
+                  for( let detail of details ) {
+                    if (!detail) continue;
                     const dets = detail.split('=');
                     obj_channel[ dets[0].toLowerCase() ] = cleanUpString(dets[1]);
                   }
