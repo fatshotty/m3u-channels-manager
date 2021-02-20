@@ -285,7 +285,26 @@ Router.get('/m3us.json', (req, res, next) => {
       UseFullDomain: m.UseFullDomain,
       UseDirectLink: m.UseDirectLink,
       Enabled: m.Enabled
-    }
+    };
+  });
+
+  res.set('content-type', 'application/json');
+  res.end( JSON.stringify(resp) );
+
+});
+Router.get('/m3us/groups.json', (req, res, next) => {
+
+  let resp = Config.M3U.map( (m) => {
+    let m3u = M3UList.find(n => n.Name === m.Name);
+    return {
+      Name: m.Name,
+      UserAgent: m.UserAgent,
+      UseForStream: m.UseForStream,
+      UseFullDomain: m.UseFullDomain,
+      UseDirectLink: m.UseDirectLink,
+      Enabled: m.Enabled,
+      Groups: m3u ? m3u.groups.map(g => ({Id: g.Id, Name: g.Name, Count: g.channels.length})) : []
+    };
   });
 
   res.set('content-type', 'application/json');
