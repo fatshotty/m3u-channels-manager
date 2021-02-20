@@ -457,6 +457,10 @@ class Group {
     return this.channels.map( (c) => {return c.toJson()} );
   }
 
+  toJSON() {
+    return this.toJson();
+  }
+
   toM3U(header, direct) {
     const res = this.channels.map( (c) => { return c.toM3U(false, direct) } );
     if ( header ) {
@@ -565,6 +569,10 @@ class Channel {
       GroupName: this.Group.Name,
       Radio: this.Radio == 'true'
     };
+  }
+
+  toJSON() {
+    return this.toJson();
   }
 
   toM3U(header, direct) {

@@ -275,7 +275,7 @@ async function parseCommand(Argv, cb) {
 }
 
 
-Router.get('/m3us.json', (req, res, next) => {
+Router.get('/all.json', (req, res, next) => {
 
   let resp = Config.M3U.map( (m) => {
     return {
@@ -292,7 +292,7 @@ Router.get('/m3us.json', (req, res, next) => {
   res.end( JSON.stringify(resp) );
 
 });
-Router.get('/m3us/groups.json', (req, res, next) => {
+Router.get('/all/groups.json', (req, res, next) => {
 
   let resp = Config.M3U.map( (m) => {
     let m3u = M3UList.find(n => n.Name === m.Name);
@@ -310,7 +310,56 @@ Router.get('/m3us/groups.json', (req, res, next) => {
   res.set('content-type', 'application/json');
   res.end( JSON.stringify(resp) );
 
-})
+});
+
+Router.get('/all/groups/merge.:format?', (req, res, next) => {
+
+  const format = req.params.format || 'json';
+
+
+  let m3us = M3UList.map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
+    let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
+    return {m3u: s.m3u, g: groups.filter(g => !!s.m3u.getGroupById( g ))}
+  }).filter(s => s.g.length > 0);
+
+  const execute = () => {
+    if (format.indexOf('m3u') == 0 ) {
+      res.set('content-type', 'application/x-mpegURL');
+      let chls = [];
+      for ( let m3u of m3us ) {
+        // for( let g of m3u.g ){
+          m3u.g.forEach(g => chls.splice(chls.length, 0, ...m3u.m3u.getGroupById(g).channels.slice(0).map(c => {
+            let m3uConfig = Config.M3U.find(m => m.Name === m3u.m3u.Name);
+            let direct = m3uConfig.UseDirectLink;
+            if ( 'direct' in req.query ){
+              direct = req.query.direct == 'true';
+            }
+            c._direct = direct;
+            return c;
+          })));
+        // }
+      }
+      chls.sort( (a, b) => {
+        let n_a = parseInt(a.Number || 0, 10);
+        let n_b = parseInt(b.Number || 0, 10);
+        return n_a > n_b ? 1 : -1;
+      });
+
+      return chls.map( (c, i) => c.toM3U(i == 0, c._direct) ).join('\n');
+
+    } else {
+      res.set('content-type', 'application/json');
+      const response = {};
+      for ( let m3u of m3us ) {
+        response[ m3u.m3u.Name ] = m3u.g.map(g => m3u.m3u.getGroupById(g) );
+      }
+      return JSON.stringify( response );
+    }
+  }
+
+  res.end( execute() );
+
+});
 
 
 Router.param('list_name', (req, res, next, value) => {
