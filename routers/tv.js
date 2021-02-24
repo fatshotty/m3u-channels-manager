@@ -319,7 +319,7 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
   let m3us = M3UList.map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
     let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
-    return {m3u: s.m3u, g: groups.filter(g => !!s.m3u.getGroupById( g ))}
+    return {m3u: s.m3u, g: s.m3u.groups.filter(g => groups.indexOf('*') > -1 || groups.indexOf(g.Id) > -1) };   //    groups.filter(g => !!s.m3u.getGroupById( g ))}
   }).filter(s => s.g.length > 0);
 
   const execute = () => {
@@ -328,7 +328,7 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
       let chls = [];
       for ( let m3u of m3us ) {
         // for( let g of m3u.g ){
-          m3u.g.forEach(g => chls.splice(chls.length, 0, ...m3u.m3u.getGroupById(g).channels.slice(0).map(c => {
+          m3u.g.forEach(g => chls.splice(chls.length, 0, ...g.channels.slice(0).map(c => {
             let m3uConfig = Config.M3U.find(m => m.Name === m3u.m3u.Name);
             let direct = m3uConfig.UseDirectLink;
             if ( 'direct' in req.query ){
@@ -351,7 +351,7 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
       res.set('content-type', 'application/json');
       const response = {};
       for ( let m3u of m3us ) {
-        response[ m3u.m3u.Name ] = m3u.g.map(g => m3u.m3u.getGroupById(g) );
+        response[ m3u.m3u.Name ] = m3u.g;
       }
       return JSON.stringify( response );
     }
