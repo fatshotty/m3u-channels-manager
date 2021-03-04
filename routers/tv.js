@@ -37,7 +37,7 @@ let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
         }
       });
 
-      fileWatcher();
+      // fileWatcher();
 
       // const mod_keys = Object.keys( Modules );
       // for ( let mod_k of mod_keys ) {
@@ -83,8 +83,9 @@ async function fileWatcher() {
     WatcherM3UFiles.on('ready', () => {
       WatcherM3UFiles
         .on('raw', (event, path, details) => {
-          Log.debug(`watched event: ${event}, ${path}, ${FS.existsSync(path) ? '' : ' -> deleted'}`);
-          console.log(`watched event: ${event}, ${path}`, FS.existsSync(path) ? '' : ' -> deleted');
+          let fullpath = Path.resolve( Path.join( Config.Path , path ));
+          Log.debug(`watched event: ${event}, ${path}, ${FS.existsSync(fullpath) ? '' : ' -> deleted'}`);
+          console.log(`watched event: ${event}, ${path}`, FS.existsSync(fullpath) ? '' : ' -> deleted');
           process.nextTick( () => {
             while(WatcherM3uFilesCallbacks.length){
               setTimeout(WatcherM3uFilesCallbacks.shift(), 1000);
@@ -105,7 +106,7 @@ async function fileWatcher() {
   }
 }
 
-fileWatcher();
+// fileWatcher();
 
 async function loadNewM3UFile(path, force) {
   path = Path.resolve(path);
