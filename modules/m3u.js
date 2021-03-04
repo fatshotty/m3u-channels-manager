@@ -128,7 +128,7 @@ class M3U {
         }
         if ( row.indexOf('#') === 0 ){
           const parts = row.match( /([\w\-]+)+:(.*)/ );
-          if ( parts && parts[1] && ! parts[1].endsWith('INF') ) {
+          if ( parts && parts[1] &&  parts[1].startsWith('EXT') && ! parts[1].endsWith('INF') ) {
             this.headers[ parts[1].toLowerCase() ] = cleanUpString( parts[2] ).trim();
             continue;
           }
@@ -149,7 +149,7 @@ class M3U {
 
       if ( row.indexOf('#') === 0 ) {
         // get data
-        const obj_channel = channels[ channel_index ] ||  (channels[ channel_index ] = {});
+        const obj_channel = channels[ channel_index ] ||  (channels[ channel_index ] = {extra: {}, props: []});
 
         const parts = row.match( /([\w\-]+)+:(.*)/ );
 
@@ -178,8 +178,11 @@ class M3U {
               infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
               for( let j = 0, info; info = infos[ j++ ]; ) {
                 const kv = info.split('=');
-                obj_channel[ kv[0].toLowerCase() ] = cleanUpString(kv[1]);
+                obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
               }
+              break;
+            default:
+              obj_channel.props.push( row );
           }
 
         }
@@ -543,6 +546,9 @@ class Channel {
                 .replace(/\//gi, '__')
                 .replace(/\+/gi, '__');
 
+    this._props = data.props;
+    this._extra = data.extra;
+
     this.Group = null;
   }
 
@@ -567,7 +573,9 @@ class Channel {
       Redirect: this.RedirectUrl,
       GroupId: this.Group.Id,
       GroupName: this.Group.Name,
-      Radio: this.Radio == 'true'
+      Radio: this.Radio == 'true',
+      Props: this._props,
+      Extra: this._extra
     };
   }
 
@@ -673,7 +681,23 @@ class TempCh {
   }
 
   toM3U(header, direct) {
-    const row = [`#EXTINF:${this.Duration || -1}`];
+    const res = [];
+
+    for ( let prop of this.data.Props ) {
+      res.push( `${prop}` );
+    }
+
+    let keys = Object.keys(this.data.Extra);
+    let str = [];
+    for ( let key of keys ) {
+      str.push(`${key}=${this.data.Extra[key]}`);
+    }
+    if ( str.length ) {
+      res.push(`#EXT-X-STREAM-INF:${str.join(',')}`);
+    }
+
+    const row = []
+    row.push(`#EXTINF:${this.Duration || -1}`);
     row.push( `tvg-id="${this.TvgId || ''}"`);
 
     if ( this.Radio ) {
@@ -689,7 +713,7 @@ class TempCh {
 
     row.push( `group-title="${this.GroupName}"`);
 
-    const res = [`${row.join(' ')},${this.Name}`, direct ? this.StreamUrl : this.Redirect];
+    res.push(`${row.join(' ')},${this.Name}`, direct ? this.StreamUrl : this.Redirect);
     if ( header ) {
       res.unshift('#EXTM3U');
     }

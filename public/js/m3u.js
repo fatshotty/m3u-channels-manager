@@ -48,7 +48,7 @@ BtnGenerateUrl.on('click', (e) => {
 
 BtnGroupsUrl.on('click', (e) => {
   e.preventDefault();
-  window.open(`${PATH}/groups.m3u`);
+  window.open(`${PATH}/${window.M3U.Name}/groups.m3u`);
 });
 
 $('#groups').on('click', 'span.counter', (e) => {
@@ -65,7 +65,7 @@ $('#groups').on('click', 'span.counter', (e) => {
       const item = $(`
         <li data-channel-id="${chl.Id}" class="channel-item">
           <span class="logo">
-            <img src="${chl.TvgLogo}" />
+            ${chl.TvgLogo ? '<img src="' + chl.TvgLogo + '" />' : ''}
           </span>
           <a href="${chl.Redirect}">${chl.Name}</a>
           <small>(<a href="${chl.StreamUrl}">link originale</a>)</small>
