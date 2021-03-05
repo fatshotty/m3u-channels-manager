@@ -132,6 +132,7 @@ function loadRouters() {
     if ( !Argv.serve && !Argv.epg ) {
       mod_m3u.parseCommand(Argv, (resp) => {
         console.log( resp );
+        process.exit(0);
       });
     }
   }
@@ -153,6 +154,7 @@ function loadRouters() {
           return;
         }
         console.log( resp );
+        process.exit(0);
       });
     }
   }
