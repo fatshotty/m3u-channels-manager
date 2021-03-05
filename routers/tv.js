@@ -37,7 +37,7 @@ let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
         }
       });
 
-      // fileWatcher();
+      fileWatcher();
 
       // const mod_keys = Object.keys( Modules );
       // for ( let mod_k of mod_keys ) {
@@ -80,33 +80,48 @@ async function fileWatcher() {
       persistent: true
     });
 
-    WatcherM3UFiles.on('ready', () => {
-      WatcherM3UFiles
-        .on('raw', (event, path, details) => {
-          let fullpath = Path.resolve( Path.join( Config.Path , path ));
-          Log.debug(`watched event: ${event}, ${path}, ${FS.existsSync(fullpath) ? '' : ' -> deleted'}`);
-          console.log(`watched event: ${event}, ${path}`, FS.existsSync(fullpath) ? '' : ' -> deleted');
-          process.nextTick( () => {
-            while(WatcherM3uFilesCallbacks.length){
-              setTimeout(WatcherM3uFilesCallbacks.shift(), 1000);
-            }
+    let timerReady;
+    let timerRaw, timerAdd = {}, timerChange = {};
+    WatcherM3UFiles.on('ready', (args) => {
+      clearTimeout(timerReady);
+      timerReady = setTimeout(() => {
+        WatcherM3UFiles
+          .on('raw', (event, path, details) => {
+            let fullpath = Path.resolve( Path.join( Config.Path , path ) );
+            Log.debug(`watched event: ${event}, ${path}, ${FS.existsSync(fullpath) ? '' : ' -> deleted'}`);
+            console.log(`watched event: ${event}, ${path}`, FS.existsSync(fullpath) ? '' : ' -> deleted');
+            clearTimeout(timerRaw)
+            timerRaw = setTimeout(() => {
+              while(WatcherM3uFilesCallbacks.length){
+                setTimeout(WatcherM3uFilesCallbacks.shift(), 1000);
+              }
+            }, 250);
+          })
+          .on('add', (path) => {
+            clearTimeout(timerAdd[path]);
+            timerAdd[path] = setTimeout(() => {
+              Log.debug(`file seems to be added: ${path}`);
+              if ( ! WatcherM3uFilesSkipAdd[path] ) {
+                Log.info(`parse cache file after added: ${path}`);
+                isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, false);
+              }
+              delete WatcherM3uFilesSkipAdd[path];
+            }, 250)
+          })
+          .on('change', (path) => {
+            clearTimeout(timerChange[path]);
+            timerChange[path] = setTimeout(() => {
+              Log.info(`parse cache file after changed: ${path}`);
+              isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, true);
+            }, 250);
           });
-        })
-        .on('add', (path) => {
-          if ( ! WatcherM3uFilesSkipAdd[path] ) {
-            isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, false);
-          }
-          delete WatcherM3uFilesSkipAdd[path];
-        })
-        .on('change', (path) => {
-          isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, true);
-        });
+      }, 1000);
     });
 
   }
 }
 
-// fileWatcher();
+fileWatcher();
 
 async function loadNewM3UFile(path, force) {
   path = Path.resolve(path);
