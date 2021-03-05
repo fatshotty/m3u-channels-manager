@@ -248,15 +248,12 @@ function refreshM3U(m3u) {
   });
 }
 
-
-async function refreshAllM3Us() {
-  for await (let m3u of Config.M3U) {
-    try {
-      let exit = refreshM3U(m3u)
-    } catch(e) {
-      Log.error(e);
-    }
+function refreshAllM3Us() {
+  let p = []
+  for (let m3u of Config.M3U) {
+    p.push( refreshM3U(m3u) );
   }
+  return Promise.all(p);
 }
 
 
@@ -264,8 +261,12 @@ async function parseCommand(Argv, cb) {
 
   if ( Argv.refresh ) {
 
-    await refreshAllM3Us();
-    cb('OK');
+    refreshAllM3Us().then( () => {
+      cb('OK');
+    }).catch( (e) => {
+      cb(e);
+    });
+
 
   } else {
     Log.error(`NO COMMANDS IMPLEMENTED YET`);
