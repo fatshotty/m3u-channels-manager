@@ -248,6 +248,7 @@ function refreshM3U(m3u) {
   });
 }
 
+
 function refreshAllM3Us() {
   let p = []
   for (let m3u of Config.M3U) {
@@ -255,7 +256,6 @@ function refreshAllM3Us() {
   }
   return Promise.all(p);
 }
-
 
 async function parseCommand(Argv, cb) {
 
@@ -266,7 +266,6 @@ async function parseCommand(Argv, cb) {
     }).catch( (e) => {
       cb(e);
     });
-
 
   } else {
     Log.error(`NO COMMANDS IMPLEMENTED YET`);
@@ -778,8 +777,8 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
   if ( direct ) {
 
     for await (let chl of result_channels) {
-      let id = ch.TvgId;
-      let url = await getMappedStreamUrlOfChannel(id);
+      let id = chl.TvgId;
+      let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id);
       chl.Redirect = url;
     }
   }
@@ -815,9 +814,13 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
 
   } else if ( format.indexOf('m3u') === 0 ) {
 
-    let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct);
-    res.set('content-type', 'application/x-mpegURL');
-    res.status(200).end( resp );
+    try {
+      let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct);
+      res.set('content-type', 'application/x-mpegURL');
+      res.status(200).end( resp );
+    } catch(e) {
+      next(e);
+    }
 
   } else if ( !Argv.ro ) {
     // html or other format
