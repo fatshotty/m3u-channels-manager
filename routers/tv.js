@@ -103,7 +103,7 @@ async function fileWatcher() {
               Log.debug(`file seems to be added: ${path}`);
               if ( ! WatcherM3uFilesSkipAdd[path] ) {
                 Log.info(`parse cache file after added: ${path}`);
-                isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, false);
+                isPersonalFile(path) ? loadPersonalM3UFile(path, true) : loadNewM3UFile(path, false);
               }
               delete WatcherM3uFilesSkipAdd[path];
             }, 250)
@@ -112,7 +112,7 @@ async function fileWatcher() {
             clearTimeout(timerChange[path]);
             timerChange[path] = setTimeout(() => {
               Log.info(`parse cache file after changed: ${path}`);
-              isPersonalFile(path) ? loadPersonalM3UFile(path) : loadNewM3UFile(path, true);
+              isPersonalFile(path) ? loadPersonalM3UFile(path, true) : loadNewM3UFile(path, true);
             }, 250);
           });
       }, 1000);
@@ -159,7 +159,7 @@ async function loadNewM3UFile(path, force) {
 }
 
 
-async function loadPersonalM3UFile(path) {
+async function loadPersonalM3UFile(path, forceSave) {
   path = Path.resolve(path);
   let basename = Path.basename(path, PERSONAL_FILE_SUFFIX);
   let personalData = {};
@@ -173,6 +173,10 @@ async function loadPersonalM3UFile(path) {
         personalData = JSON.parse(personalData);
       } catch(e) {
         Log.error(`Cannot parse 'personal' list`, e);
+      }
+      if ( forceSave ) {
+        // used in case of "watching file changes"
+        m3u.Personal = personalData;
       }
     }
   }
