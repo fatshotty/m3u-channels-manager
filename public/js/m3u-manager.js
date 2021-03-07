@@ -185,10 +185,14 @@ Vue.component('Channel', {
   },
 
   created() {
+
     if ( this.selectedId && this.selectedId.MapTo ) {
       this.channel_ref = `${this.selectedId.MapTo}`;
       this.channel_num = `${this.selectedId.Number}`;
       this.selected_epg_str = `${this.selectedId.MapTo}`;
+    } else {
+      this.channel_ref = this.channel.Name;
+      this.channel_num = this.channel.Number;
     }
 
     this.isEnabled = !!this.selectedId;
