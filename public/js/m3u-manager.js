@@ -140,7 +140,7 @@ Vue.component('Group', {
         });
       }
 
-      p.then( () => {
+      return p.then( () => {
         this.chlShown = !this.chlShown;
       })
     },
@@ -161,6 +161,16 @@ Vue.component('Group', {
         }
       }
       return result;
+    },
+    allNone(selected) {
+      if ( selected ) {
+        this.showChannels().then( () => {
+          this.chlShown = true;
+          this.$emit('select-all');
+        })
+      } else {
+        this.$emit('unselect-all');
+      }
     }
   }
 
@@ -195,10 +205,19 @@ Vue.component('Channel', {
       this.channel_num = this.channel.Number;
     }
 
-    this.isEnabled = !!this.selectedId;
+    this.isEnabled = !!this.selectedId || this.defaultEnabled;
 
     VM.$on('unselect-all', () => {
+      console.log('global unselect')
       this.isEnabled = false;
+    })
+    this.$parent.$on('unselect-all', () => {
+      console.log('single group unselect')
+      this.isEnabled = false;
+    })
+    this.$parent.$on('select-all', () => {
+      console.log('single group select')
+      this.isEnabled = true;
     })
   },
 
@@ -222,13 +241,15 @@ Vue.component('Channel', {
       }
       this.selectedEPG = null;
     }
-
   },
 
 
   computed: {
     EPG() {
       return Channels;
+    },
+    innerDefaultEnabled() {
+      return this.channel.defaultEnabled;
     }
   },
 

@@ -1,5 +1,9 @@
 .group-wrapper
   .row.group-item.hoverable.clickable(:data-group-id="group.id" @click="showChannels()")
+    .col-1
+      small.link(@click.stop="allNone(true)") tutti
+      | &nbsp;/&nbsp;
+      small.link(@click.stop="allNone(false)") nessuno
     .col-5
       span.name {{group.name}}
     .col-2
