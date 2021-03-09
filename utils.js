@@ -6,13 +6,14 @@ const Winston = require('winston');
 const Moment = require('moment');
 const Path = require('path');
 const Constant = require('./constants.json');
+const FS = require('fs');
 
 
 const PVR_GENRE_INDEX = 0;
 const TV_HEAD_PVR_GENRE_INDEX = 1;
 
 
-let WinstonTransportFile = new Winston.transports.File({ filename: `${calculatePath(__filename)}/manager.log` , level: 'info', format: Winston.format.simple(), 'timestamp':true });
+let WinstonTransportFile = new Winston.transports.File({ filename: Path.join(calculateLogPath(__filename), 'manager.log') , level: 'info', format: Winston.format.simple(), 'timestamp':true });
 let Log = Winston.createLogger({
   level: 'info',
   // format: winston.format.json(),
@@ -23,7 +24,7 @@ Log.add(WinstonTransportFile)
 Log.add(new Winston.transports.Console());
 
 function setLogLevel(level) {
-  WinstonTransportFile.level = level || Config.LogLevel || 'info';
+  WinstonTransportFile.level = level || global.Config.LogLevel || 'info';
 }
 
 function cleanUpString( str ) {
@@ -624,6 +625,29 @@ function calculatePath(filename) {
     path = path.splice( 0, index );
   }
   return path.join(Path.sep);
+}
+
+function calculateLogPath(filename) {
+  let logfilepath = global.Argv.logfilepath || global.Config.Log;
+  if ( logfilepath ) {
+    let path = '';
+    try {
+      if ( FS.lstatSync(logfilepath).isDirectory() ) {
+        path = logfilepath;
+      } else {
+        path = Path.dirname(logfilepath);
+      }
+    } catch(e) {
+      console.warn(logfilepath, 'error', e);
+    }
+
+    if ( FS.existsSync(path) ) {
+      return path
+    } else {
+      console.warn(logfilepath, 'does not exist');
+    }
+  }
+  return calculatePath(filename);
 }
 
 

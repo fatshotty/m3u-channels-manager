@@ -1,6 +1,6 @@
-const Utils = require('./utils');
 const FS = require('fs');
 const Args = require('yargs');
+const Path = require('path');
 const SemVer = require('semver');
 const Package = require('./package.json');
 
@@ -10,7 +10,6 @@ const OS = require('os')
 const Express = require("express");
 const App = Express();
 
-global.CWD = Utils.calculatePath(__filename);
 
 global.App = App;
 App.locals.HAS_UPDATE = false;
@@ -48,7 +47,11 @@ global.Argv = Args
   .option('config', {
     alias: 'c',
     describe: 'set the configuration file path. It must be a json',
-    default: `${global.CWD}/config.json`
+    default: Path.join(process.cwd(), 'config.json')
+  })
+  .option('logfilepath', {
+    decribe: 'set the termporary logfile',
+    default: ''
   })
   .normalize('config')
 
@@ -190,7 +193,8 @@ if ( ! FS.existsSync(Config.Path) ) {
   FS.mkdirSync(Config.Path);
 }
 
-
+const Utils = require('./utils');
+global.CWD = Utils.calculatePath(__filename);
 
 if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
   Args.showHelp();

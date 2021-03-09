@@ -297,6 +297,8 @@ async function parseCommand(Argv, cb) {
 
 Router.get('/all.json', (req, res, next) => {
 
+  Log.info(`requested all list, total: ${Config.M3U.length}`);
+
   let resp = Config.M3U.map( (m) => {
     return {
       Name: m.Name,
@@ -313,6 +315,8 @@ Router.get('/all.json', (req, res, next) => {
 
 });
 Router.get('/all/groups.json', (req, res, next) => {
+
+  Log.info(`requested all list with groups, total: ${Config.M3U.length}`);
 
   let resp = Config.M3U.map( (m) => {
     let m3u = M3UList.find(n => n.Name === m.Name);
@@ -336,6 +340,8 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
   const format = req.params.format || 'json';
 
+  Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)}`);
+
 
   let m3us = M3UList.map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
     let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
@@ -347,6 +353,7 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
       res.set('content-type', 'application/x-mpegURL');
       let chls = [];
       for ( let m3u of m3us ) {
+        Log.info(`produce m3u for ${m3u.m3u.Name} and ${m3u.g.length}`);
         // for( let g of m3u.g ){
           m3u.g.forEach(g => chls.splice(chls.length, 0, ...g.channels.slice(0).map(c => {
             let m3uConfig = Config.M3U.find(m => m.Name === m3u.m3u.Name);
@@ -365,12 +372,15 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
         return n_a > n_b ? 1 : -1;
       });
 
+      Log.info(`total channels: ${chls.length}`);
+
       return chls.map( (c, i) => c.toM3U(i == 0, c._direct) ).join('\n');
 
     } else {
       res.set('content-type', 'application/json');
       const response = {};
       for ( let m3u of m3us ) {
+        Log.info(`produce m3u for ${m3u.m3u.Name} and ${m3u.g.length}`);
         response[ m3u.m3u.Name ] = m3u.g;
       }
       return JSON.stringify( response );
@@ -468,7 +478,7 @@ function respondAllGroups(format, M3U) {
 Router.get('/:list_name/groups.:format?', (req, res, next) => {
 
   const format = req.params.format;
-  Log.info(`List all groups with ${format || 'm3u'}`);
+  Log.info(`List all groups with ${format || 'm3u'} for ${req.M3U.Name}`);
 
   const response = respondAllGroups(format, req.M3U);
 
@@ -515,8 +525,8 @@ function respondSingleGroup(M3U, groupId, format, direct) {
 
 
 Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
-
-  Log.info(`Request list by group ${req.params.group}. Respond with ${req.params.format || 'm3u'}`);
+  const format = req.params.format || 'm3u';
+  Log.info(`Requested list by group ${req.params.group}. Respond with ${format} for ${req.M3U.Name}`);
 
   let direct = req.M3UConfig.UseDirectLink;
   if ( 'direct' in req.query ){
@@ -529,8 +539,6 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
     res.status(404).end( 'No group found by ' + req.params.group);
     return;
   }
-
-  const format = req.params.format;
 
   res.status(200);
 
@@ -555,6 +563,8 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
   if ( 'direct' in req.query ){
     direct = req.query.direct == 'true';
   }
+
+  Log.info(`Search channel ${query} in ${format} for ${req.M3U.Name}`);
 
   const result = {};
   for ( let group of req.M3U.groups ) {
@@ -640,7 +650,7 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
     direct = req.query.direct == 'true';
   }
 
-  Log.info(`Requested entire list. Respond with ${format || 'm3u'}`);
+  Log.info(`Requested entire list. Respond with ${format || 'm3u'} for ${req.M3U.Name}`);
   Log.info(`Filter by ${groups}`);
 
   const response = respondList(req.M3U, groups, format, direct);
