@@ -4,8 +4,6 @@ import Moment from 'moment'
 import 'bootstrap'
 
 
-const socket = io.connect(`${document.location.hostname}:${window.Config.SocketPort || 14432}/`);
-
 const ParentLogEl = document.getElementById('logger');
 const LogEl = document.getElementById('log');
 const ClearLog = document.getElementById('clear_log');
@@ -57,8 +55,6 @@ function logmessage({message, level}) {
 
 window.LogMessage = logmessage;
 
-socket.on('logmessage', logmessage);
-
 if ( ParentLogEl ) {
   ParentLogEl.addEventListener('scroll', () => {
     if ( (ParentLogEl.scrollTop + ParentLogEl.offsetHeight) >= ParentLogEl.scrollHeight ) {
@@ -69,11 +65,14 @@ if ( ParentLogEl ) {
   });
 }
 
+if ( ! window.Config.RO ) {
+  const socket = io.connect(`${document.location.hostname}:${window.Config.SocketPort || 14432}/`);
+  socket.on('logmessage', logmessage);
 
-socket.on('connect', () => {
-  logmessage({message: '(connected)'});
-});
-socket.on('disconnect', () => {
-  logmessage({message: '!disconnected!'});
-});
-
+  socket.on('connect', () => {
+    logmessage({message: '(connected)'});
+  });
+  socket.on('disconnect', () => {
+    logmessage({message: '!disconnected!'});
+  });
+}
