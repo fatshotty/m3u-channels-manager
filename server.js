@@ -62,7 +62,7 @@ function checkLocalRequest(req) {
   let ip_local = req.connection.localAddress;
   let ip_remot = req.connection.remoteAddress
 
-  Log.info(`local ip is: ${ip_local} - remote ip is: ${ip_remot} - ${JSON.stringify(req.ips)}`);
+  Log.debug(`local ip is: ${ip_local} - remote ip is: ${ip_remot} - ${JSON.stringify(req.ips)}`);
 
   if ( ip_local === ip_remot ) {
     return true;
