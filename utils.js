@@ -655,6 +655,7 @@ const DEFAULT_CONFIG = () => {
   return {
     "LogLevel": "info",
     "Log": `${global.CWD}/manager.log`,
+    "UseCache": false,
     "M3U": [{
       "UUID": '',
       "Name": "list_1",

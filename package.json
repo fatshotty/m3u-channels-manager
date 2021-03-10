@@ -39,7 +39,8 @@
     "express-basic-auth": "1.2.0",
     "dotenv": "8.0.0",
     "shortid": "2.2.15",
-    "chokidar": "3.5.1"
+    "chokidar": "3.5.1",
+    "redis": "3.0.2"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

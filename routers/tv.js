@@ -6,6 +6,8 @@ const Utils = require('../utils');
 const Request = Utils.request;
 const M3UK = require('../modules/m3u').M3U;
 
+const CacheRouter = require('./cache_router');
+
 const Chokidar = require('chokidar');
 
 const PERSONAL_FILE_SUFFIX = '_personal.json';
@@ -138,6 +140,10 @@ async function loadNewM3UFile(path, force) {
     M3UList.push(m3u);
   }
 
+  // invalidate cache
+  CacheRouter.invalidateSimple(m3u.Name);
+  CacheRouter.invalidateSimple('all');
+
   m3u.clear();
   await m3u.loadFromFile(path);
   m3u.removeGroups( m3u.ExcludeGroups );
@@ -177,9 +183,12 @@ async function loadPersonalM3UFile(path, forceSave) {
       if ( forceSave ) {
         // used in case of "watching file changes"
         m3u.Personal = personalData;
+        // invalidate cache
+        CacheRouter.invalidateSimple(m3u.Name);
       }
     }
   }
+
   return personalData;
 }
 
@@ -294,6 +303,24 @@ async function parseCommand(Argv, cb) {
 
 }
 
+Router.use('/', (req, res, next) => {
+
+  let old_end = res.end;
+  res.end = function(data, encoding, callback) {
+
+    let ret = old_end.apply(res, arguments);
+
+    if ( req.CACHE_KEY ) {
+      CacheRouter.set(req.CACHE_KEY, [res.get('content-type'),data].join('|||'));
+    }
+
+    return ret;
+
+  };
+
+  next();
+})
+
 
 Router.get('/all.json', (req, res, next) => {
 
@@ -336,9 +363,18 @@ Router.get('/all/groups.json', (req, res, next) => {
 
 });
 
+
+Router.param('format', (req, res, next, value) => {
+  req.params.format = value || 'json';
+  next();
+});
+
+
+Router.use('/all/groups/merge.:format?', CacheRouter.get);
+
 Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
-  const format = req.params.format || 'json';
+  const format = req.params.format; // || 'json';
 
   Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)}`);
 
@@ -447,7 +483,8 @@ Router.get('/:list_name/update', async (req, res, next) => {
 
   res.status(204);
   res.end();
-});
+  next();
+}, CacheRouter.invalidate);
 
 
 function respondAllGroups(format, M3U) {
