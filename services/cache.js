@@ -38,7 +38,9 @@ function computeKey(req, simple) {
 if ( !global.Config.UseCache || String(global.Config.UseCache) == 'false' ) {
 
 
-  function get(){}
+  function get(){
+    return Promise.resolve(null);
+  }
   function set(){}
   function remove(){}
 
