@@ -35,8 +35,10 @@ let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
       Config.M3U.forEach( (m3uConfig) => {
         let m3u = M3UList.find(m => m3uConfig.Name == m.Name);
         if ( !m3u ) {
-          M3UList.push( new M3UK( m3uConfig.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3uConfig.Name}/live` ) );
+          m3u = new M3UK( m3uConfig.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3uConfig.Name}/live`, m3uConfig.RewriteUrl );
+          M3UList.push( m3u );
         }
+        m3u._rewriteUrl = m3uConfig.RewriteUrl;
       });
 
       fileWatcher();
@@ -136,13 +138,15 @@ async function loadNewM3UFile(path, force) {
   }
   let m3u = M3UList.find(m => m.Name === m3uConfig.Name);
   if ( !m3u ) {
-    m3u = new M3UK( m3uConfig.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3uConfig.Name}/live` );
+    m3u = new M3UK( m3uConfig.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3uConfig.Name}/live`, m3uConfig.RewriteUrl );
     M3UList.push(m3u);
   }
 
   // invalidate cache
   CacheRouter.invalidateSimple(m3u.Name);
   CacheRouter.invalidateSimple('all');
+
+  m3u._rewriteUrl = m3uConfig.RewriteUrl;
 
   m3u.clear();
   await m3u.loadFromFile(path);
@@ -213,7 +217,7 @@ async function loadM3Us() {
       Log.warn(`no cache file for list ${m3u.Name}, file: ${M3U_CACHE_FILE}`);
 
       // create a placeholder at startup
-      let M3U = new M3UK( m3u.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/live` );
+      let M3U = new M3UK( m3u.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/live`,  m3u.RewriteUrl );
       M3UList.push(M3U);
     }
 
@@ -397,7 +401,12 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
             if ( 'direct' in req.query ){
               direct = req.query.direct == 'true';
             }
+            if ( 'rewrite' in req.query && req.query.rewrite == 'true' && m3u.m3u._rewriteUrl){
+              c._rewrite = m3u.m3u._rewriteUrl;
+              direct = false;
+            }
             c._direct = direct;
+            c._m3uName = m3u.m3u.Name
             return c;
           })));
         // }
@@ -410,7 +419,14 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
       Log.info(`total channels: ${chls.length}`);
 
-      return chls.map( (c, i) => c.toM3U(i == 0, c._direct) ).join('\n');
+      return chls.map( (c, i) => {
+        let nc = c.clone();
+        if ( c._rewrite ) {
+          nc.Redirect = Utils.rewriteChannelUrl(c._rewrite, nc, c._m3uName);
+          c._direct = false;
+        }
+        return nc.toM3U(i == 0, c._direct)
+      }).join('\n');
 
     } else {
       res.set('content-type', 'application/json');
@@ -536,7 +552,7 @@ Router.get('/:list_name/groups.:format?', (req, res, next) => {
 
 
 
-function respondSingleGroup(M3U, groupId, format, direct) {
+function respondSingleGroup(M3U, groupId, format, direct, rewrite) {
 
   const group = M3U.getGroupById( groupId );
 
@@ -556,7 +572,14 @@ function respondSingleGroup(M3U, groupId, format, direct) {
         return n_a > n_b ? 1 : -1;
       });
 
-      return chls.map( (c, i) => c.toM3U(i == 0, direct) ).join('\n');
+      return chls.map( (c, i) => {
+        let nc = c.clone();
+        if ( rewrite ) {
+          nc.Redirect = Utils.rewriteChannelUrl(M3U._rewriteUrl, nc, M3U.Name);
+          direct = false;
+        }
+        return nc.toM3U(i == 0, direct);
+      }).join('\n');
   }
 }
 
@@ -570,7 +593,12 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
     direct = req.query.direct == 'true';
   }
 
-  const response = respondSingleGroup( req.M3U, req.params.group, req.params.format, direct );
+  let rewrite = false;
+  if ( 'rewrite' in req.query && req.query.rewrite == 'true' && req.M3UConfig.RewriteUrl) {
+    rewrite = req.M3UConfig.RewriteUrl;
+  }
+
+  const response = respondSingleGroup( req.M3U, req.params.group, req.params.format, direct, rewrite );
 
   if ( ! response ) {
     res.status(404).end( 'No group found by ' + req.params.group);
@@ -624,11 +652,20 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
       res_result = JSON.stringify(result);
       break;
     default:
+      let rewrite = false;
+      if ( 'rewrite' in req.query && req.query.rewrite == 'true' && req.M3UConfig.RewriteUrl) {
+        rewrite = req.M3UConfig.RewriteUrl;
+      }
       let m3u_res = [];
       res.set('content-type', 'application/x-mpegURL');
       for( let k of keys ) {
         m3u_res = m3u_res.concat( result[ k ].map( (chl) => {
-          return chl.toM3U(false, direct)
+          let nc = chl.clone();
+          if ( rewrite ) {
+            nc.Redirect = Utils.rewriteChannelUrl(req.M3U._rewriteUrl, nc, req.M3U.Name);
+            direct = false;
+          }
+          return nc.toM3U(false, direct);
         }) );
       }
       res_result = ['#EXTM3U', m3u_res.join('\n')].join('\n');
@@ -639,7 +676,7 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
 
 
 
-function respondList(M3U, groups, format, direct) {
+function respondList(M3U, groups, format, direct, rewrite) {
   let all_groups = M3U.groups;
 
   if ( groups && groups.length ) {
@@ -672,7 +709,14 @@ function respondList(M3U, groups, format, direct) {
         return n_a > n_b ? 1 : -1;
       });
 
-      return chls.map( (c, i) => c.toM3U(i == 0, direct) ).join('\n');
+      return chls.map( (c, i) => {
+        let nc = c.clone();
+        if ( rewrite ) {
+          nc.Redirect = Utils.rewriteChannelUrl(M3U._rewriteUrl, nc, M3U.Name);
+          direct = false;
+        }
+        return nc.toM3U(i == 0, direct)
+      }).join('\n');
       // all_groups.map( (g, i) => { return g.toM3U(i === 0, direct) }).join('\n');
   }
 }
@@ -690,7 +734,12 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
   Log.info(`Requested entire list. Respond with ${format || 'm3u'} for ${req.M3U.Name}`);
   Log.info(`Filter by ${groups}`);
 
-  const response = respondList(req.M3U, groups, format, direct);
+  let rewrite = false;
+  if ( 'rewrite' in req.query && req.query.rewrite == 'true' && req.M3UConfig.RewriteUrl) {
+    rewrite = req.M3UConfig.RewriteUrl;
+  }
+
+  const response = respondList(req.M3U, groups, format, direct, rewrite);
 
   res.status(200);
 

@@ -665,7 +665,8 @@ const DEFAULT_CONFIG = () => {
       "UseForStream": false,
       "UseFullDomain": true,
       "UseDirectLink": false,
-      "Enabled": true
+      "Enabled": true,
+      "RewriteUrl": ""
     }],
     "Port": Argv.port || 3000,
     "SocketPort": Argv.socketport || 14332,
@@ -677,4 +678,46 @@ const DEFAULT_CONFIG = () => {
   };
 }
 
-module.exports = {DEFAULT_CONFIG, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive};
+
+function rewriteChannelUrl(rewrite, channel, listName) {
+  let streamurl = channel.Redirect;
+  if ( rewrite ) {
+
+    let sourceobj = {
+      channel,
+      ListName: listName
+    }
+
+    let surl = rewrite;
+    let re = /\{(.*?)\}/;
+    let reFn = /\{(((.*?)\()?)(.*?)\)?\}/;
+    surl = surl.replace( new RegExp(re, "gi"), function(s){
+      let exp = s.match( reFn )[4];
+      let fn = s.match(reFn)[3];
+
+      let obj = sourceobj;
+      let exps = exp.split('.');
+      while ( exps.length && obj ) {
+        obj = obj[ exps.shift() ];
+      }
+
+      if ( obj ) {
+        if ( fn ) {
+          fn = sourceObj[ fn ];
+          if ( fn ) {
+            obj = fn( obj );
+          }
+        }
+        return obj
+      }
+
+      return s;
+    });
+    // streamurl
+    return surl;
+  }
+
+  return streamurl;
+}
+
+module.exports = {DEFAULT_CONFIG, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive, rewriteChannelUrl};

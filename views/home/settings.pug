@@ -48,7 +48,7 @@
               i(@click="removeM3U(index)") rimuovi
             label(for='tv_enabled' style="float: right; margin-right: 10px")
               | attivato
-              input#tv_enabled(type="checkbox" v-model="m3u.Enabled")
+              input(type="checkbox" v-model="m3u.Enabled")
 
             .form-group
               label Nome della lista
@@ -76,6 +76,14 @@
               label Gruppi da escludere
               input.form-control(type='text', placeholder="" v-model="m3u.ExcludeGroupsStr" )
               small.form-text.text-muted specificare i gruppi da escludere separati da virgola
+
+            .form-group
+              label Elaborazione dell'url
+              input.form-control(type='text', placeholder="http://domain.com/channel/{GroupName}/{Name}" v-model="m3u.RewriteUrl" )
+              small.form-text.text-muted specificare l'url di ri-elaborazione. È possibile usare le variabili interpolate con &nbsp;
+                code {
+                | &nbsp;e&nbsp;
+                code }
 
 
       hr

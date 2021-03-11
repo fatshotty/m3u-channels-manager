@@ -6,11 +6,12 @@ const FS = require('fs');
 
 class M3U {
 
-  constructor(name, baseUrl) {
+  constructor(name, baseUrl, rewriteUrl) {
     this.Name = name;
     this.groups = [];
     this.headers = {};
     this._baseUrl = baseUrl ? baseUrl : '';
+    this._rewriteUrl = rewriteUrl;
     Log.debug(`M3U module instanciated using a baseurl '${baseUrl}'`);
   }
 
