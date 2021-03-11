@@ -676,6 +676,14 @@ class TempCh {
     this.data.GroupName = v;
   }
 
+  get Props() {
+    return this.data.Props;
+  }
+
+  get Extra() {
+    return this.data.Extra;
+  }
+
 
   constructor(data, basepath) {
     this.data = data;
