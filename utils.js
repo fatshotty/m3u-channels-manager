@@ -683,37 +683,47 @@ function rewriteChannelUrl(rewrite, channel, listName) {
   let streamurl = channel.Redirect;
   if ( rewrite ) {
 
-    let sourceobj = {
-      channel,
-      ListName: listName
-    }
+    // let sourceobj = {
+    //   channel,
+    //   ListName: listName
+    // }
 
     let surl = rewrite;
     let re = /\{(.*?)\}/;
     let reFn = /\{(((.*?)\()?)(.*?)\)?\}/;
     surl = surl.replace( new RegExp(re, "gi"), function(s){
       let exp = s.match( reFn )[4];
-      let fn = s.match(reFn)[3];
+      // let fn = s.match(reFn)[3];
 
-      let obj = sourceobj;
-      let exps = exp.split('.');
-      while ( exps.length && obj ) {
-        obj = obj[ exps.shift() ];
-      }
 
-      if ( obj ) {
-        if ( fn ) {
-          fn = sourceObj[ fn ];
-          if ( fn ) {
-            obj = fn( obj );
-          }
+      let bodyFn = `
+        try {
+          return ${exp};
+        } catch(e) {
+          Log.warn("cannot rewrite url ${exp}");
+          return '';
         }
-        return obj
-      }
+      `;
+      let execFn = new Function('channel', 'ListName', bodyFn);
 
-      return s;
+      // let obj = sourceobj;
+      // let exps = exp.split('.');
+      // while ( exps.length && obj ) {
+      //   obj = obj[ exps.shift() ];
+      // }
+
+      // if ( obj ) {
+      //   if ( fn ) {
+      //     fn = sourceObj[ fn ];
+      //     if ( fn ) {
+      //       obj = fn( obj );
+      //     }
+      //   }
+      //   return obj
+      // }
+      let ret = execFn(channel, listName);
+      return ret;
     });
-    // streamurl
     return surl;
   }
 
