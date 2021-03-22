@@ -629,6 +629,7 @@ function calculateLogPath(filename) {
       }
     } catch(e) {
       console.warn(logfilepath, 'error', e);
+      path = Path.dirname(logfilepath);
     }
 
     if ( FS.existsSync(path) ) {
@@ -637,7 +638,7 @@ function calculateLogPath(filename) {
       console.warn(logfilepath, 'does not exist');
     }
   }
-  return calculatePath(filename);
+  return Constants.calculatePath(filename);
 }
 
 
