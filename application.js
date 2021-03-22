@@ -171,8 +171,12 @@ global.Argv = Args
 
 
 
+const Constants = require('./constants');
+
+global.CWD = Constants.calculatePath(__filename);
+
 if ( ! FS.existsSync(Argv.config) ) {
-  const def_conf = Utils.DEFAULT_CONFIG();
+  const def_conf = Constants.DEFAULT_CONFIG();
 
   FS.writeFileSync(Argv.config, JSON.stringify( def_conf, null, 2), {encoding: 'utf-8'});
 }
@@ -188,13 +192,12 @@ if ( Argv.socketport ) {
 }
 
 
+const Utils = require('./utils');
+
 if ( ! FS.existsSync(Config.Path) ) {
   Utils.Log.info(`create cache folder ${Config.Path}`);
   FS.mkdirSync(Config.Path);
 }
-
-const Utils = require('./utils');
-global.CWD = Utils.calculatePath(__filename);
 
 if ( !Argv.m3u && !Argv.epg && !Argv.serve ) {
   Args.showHelp();

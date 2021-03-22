@@ -5,7 +5,7 @@ const XMLWriter = require('xml-writer');
 const Winston = require('winston');
 const Moment = require('moment');
 const Path = require('path');
-const Constant = require('./constants.json');
+const Constants = require('./constants');
 const FS = require('fs');
 
 
@@ -598,7 +598,7 @@ function extractCategoryByGenre(genre, subgenre, index) {
 
   Log.debug(`extracting category from ${genre}`);
 
-  let Categories = Constant.Categories;
+  let Categories = Constants.Categories;
 
   if ( genre in Categories ) {
     Log.debug(`found category ${genre}`);
@@ -616,16 +616,6 @@ function extractCategoryByGenre(genre, subgenre, index) {
 
 }
 
-
-function calculatePath(filename) {
-  const dir = Path.dirname(filename);
-  let path = dir.split( Path.sep );
-  const index = path.indexOf('node_modules');
-  if ( index > -1 ) {
-    path = path.splice( 0, index );
-  }
-  return path.join(Path.sep);
-}
 
 function calculateLogPath(filename) {
   let logfilepath = global.Argv.logfilepath || global.Config.Log;
@@ -648,34 +638,6 @@ function calculateLogPath(filename) {
     }
   }
   return calculatePath(filename);
-}
-
-
-const DEFAULT_CONFIG = () => {
-  return {
-    "LogLevel": "info",
-    "Log": `${global.CWD}/manager.log`,
-    "UseCache": false,
-    "M3U": [{
-      "UUID": '',
-      "Name": "list_1",
-      "Url": "",
-      "ExcludeGroups": [],
-      "UserAgent": "VLC",
-      "UseForStream": false,
-      "UseFullDomain": true,
-      "UseDirectLink": false,
-      "Enabled": true,
-      "RewriteUrl": ""
-    }],
-    "Port": Argv.port || 3000,
-    "SocketPort": Argv.socketport || 14332,
-    "Path": `${global.CWD}/cache`,
-    "EPG": {
-      "bulk": 2,
-      "Sock": ""
-    }
-  };
 }
 
 
@@ -730,4 +692,4 @@ function rewriteChannelUrl(rewrite, channel, listName) {
   return streamurl;
 }
 
-module.exports = {DEFAULT_CONFIG, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, calculatePath, createXMLKodiLive, rewriteChannelUrl};
+module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, createXMLKodiLive, rewriteChannelUrl};

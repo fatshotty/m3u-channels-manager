@@ -1,4 +1,45 @@
-{
+const Path = require('path');
+
+const DEFAULT_CONFIG = () => {
+  return {
+    "LogLevel": "info",
+    "Log": `${global.CWD}/manager.log`,
+    "UseCache": false,
+    "M3U": [{
+      "UUID": '',
+      "Name": "list_1",
+      "Url": "",
+      "ExcludeGroups": [],
+      "UserAgent": "VLC",
+      "UseForStream": false,
+      "UseFullDomain": true,
+      "UseDirectLink": false,
+      "Enabled": true,
+      "RewriteUrl": ""
+    }],
+    "Port": global.Argv.port || 3000,
+    "SocketPort": global.Argv.socketport || 14332,
+    "Path": `${global.CWD}/cache`,
+    "EPG": {
+      "bulk": 2,
+      "Sock": ""
+    }
+  };
+};
+
+function calculatePath(filename) {
+  const dir = Path.dirname(filename);
+  let path = dir.split( Path.sep );
+  const index = path.indexOf('node_modules');
+  if ( index > -1 ) {
+    path = path.splice( 0, index );
+  }
+  return path.join(Path.sep);
+}
+
+module.exports = {
+  DEFAULT_CONFIG,
+  calculatePath,
   "Categories": {
     "informazione": {
       "notiziario":          ["News and current affairs", "News / Current affairs"],

@@ -7,6 +7,7 @@ const Path = require('path')
 const Package = require('./package.json');
 const Express = require("express");
 const Cluster = require('cluster');
+const Constants = require('./constants');
 
 
 let Config = null;
@@ -24,7 +25,7 @@ if ( !global.Config ) {
 
 Config = global.Config;
 
-require('dotenv').config({ path: `${Argv.envfile || Utils.calculatePath(__filename)}/.env` });
+require('dotenv').config({ path: Path.join(Argv.envfile || Constants.calculatePath(__filename), '.env') });
 let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
 
 Config.Log = Path.resolve(global.CWD, Config.Log);
@@ -241,7 +242,7 @@ function serveHTTP() {
 
       settings.M3U.forEach(m => m.UUID = m.UUID || ShortUUID.generate());
 
-      const defConfig = Utils.DEFAULT_CONFIG();
+      const defConfig = Constants.DEFAULT_CONFIG();
       Config = global.Config = Object.assign({}, defConfig, settings);
 
       Config.M3U.forEach(m => m.Name = m.Name.replace(/[^\w]/g, '_').toLowerCase() );
