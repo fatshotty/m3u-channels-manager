@@ -196,7 +196,7 @@ class M3U {
       }
     }
 
-    Log.info(`loaded ${channels.length} channels`);
+    Log.info(`${this.Name} loaded ${channels.length} channels`);
     // Organize list
     this.organize( channels );
     this.sort();
@@ -204,7 +204,7 @@ class M3U {
     for( let g of this.groups ) {
       chl_count += g.channels.length;
     }
-    Log.info(`Loaded ${this.groups.length} groups and ${chl_count} channels`);
+    Log.info(`${this.Name} Loaded ${this.groups.length} groups and ${chl_count} channels`);
 
   }
 

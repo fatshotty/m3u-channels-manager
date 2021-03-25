@@ -142,6 +142,8 @@ async function loadNewM3UFile(path, force) {
     M3UList.push(m3u);
   }
 
+  Log.info(`loading m3u for channels and groups: ${m3uConfig.Name}`)
+
   // invalidate cache
   CacheRouter.invalidateSimple(m3u.Name);
   CacheRouter.invalidateSimple('all');
@@ -154,6 +156,9 @@ async function loadNewM3UFile(path, force) {
 
   // load personal
   m3u.Personal =  await loadPersonalM3UFile( Path.join( Path.resolve(Config.Path) , `${basename}${PERSONAL_FILE_SUFFIX}` ) );
+
+  Log.info(`m3u LOADED: ${m3uConfig.Name}`);
+
   // let personalPath = Path.join(  );
   // if ( FS.existsSync(personalPath) ) {
   //   let personalData = FS.readFileSync(personalPath, {encoding: 'utf-8'});
@@ -203,6 +208,8 @@ async function loadM3Us() {
   let M3Us = Config.M3U;
   for ( let m3u of M3Us ) {
 
+    Log.info(`start loading m3u file: ${m3u.Name} (${m3u.UUID})`);
+
     // let M3U = new M3UK( m3u.Name, `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/live` );
 
     const M3U_CACHE_FILE = Path.resolve( Path.join( Config.Path , `${m3u.UUID}.txt` ) );
@@ -237,13 +244,14 @@ function refreshM3U(m3u) {
     }
     const M3U_CACHE_FILE = Path.resolve( Path.join( Config.Path , `${m3u.UUID}.txt` ) );
     if ( (`${m3u.Url}`).indexOf('http') == 0 ) {
-      Log.info(`Refreshing M3U list from remote url`);
+      Log.info(`Refreshing M3U list from remote url: ${m3u.Name} (${m3u.UUID})`);
       Log.debug(`remote url: ${m3u.Url}`);
       Request(m3u.Url, {'User-Agent': m3u.Url.UserAgent || 'kodi'}, (err, body) => {
         if ( !err ) {
           // M3U_LIST_STRING = body;
           // M3UList.clear();
           // loadM3U();
+          Log.info(`write cache file: ${M3U_CACHE_FILE}`)
           FS.writeFileSync(M3U_CACHE_FILE, body, {encoding: 'utf-8'});
           Log.info('M3U file correctly cached');
           return resolve(`${m3u.Name} - OK`);
@@ -251,12 +259,13 @@ function refreshM3U(m3u) {
         reject(new Error(err));
       })
     } else {
-      Log.info(`Refreshing M3U list from local m3u file`);
+      Log.info(`Refreshing M3U list from local file: ${m3u.Name} (${m3u.UUID})`);
       Log.debug(`local file: ${Config.M3U.Url}`);
       const filedata = FS.readFileSync(m3u.Url, {encoding: 'utf-8'})
       // M3U_LIST_STRING = filedata;
       // M3UList.clear();
       // loadM3U();
+      Log.info(`write cache file: ${M3U_CACHE_FILE}`)
       FS.writeFileSync(M3U_CACHE_FILE, filedata, {encoding: 'utf-8'});
       process.nextTick( () => {
         resolve(`${m3u.Name} - OK`);
