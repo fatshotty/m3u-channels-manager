@@ -155,7 +155,8 @@ Vue.component('Group', {
             result.push({
               "ID": comp_ch.channel.Id,
               "MapTo": comp_ch.channel_ref || comp_ch.channel.Id,
-              "Number": comp_ch.channel_num || 0
+              "Number": comp_ch.channel_num || 0,
+              "ReuseID": comp_ch.reuseTvgID
             });
           }
         }
@@ -190,7 +191,8 @@ Vue.component('Channel', {
       channel_ref: '',
       channel_num: '',
       selected_epg_str: '',
-      selectedEPG: null
+      selectedEPG: null,
+      reuseTvgID: false
     }
   },
 
@@ -200,6 +202,7 @@ Vue.component('Channel', {
       this.channel_ref = `${this.selectedId.MapTo}`;
       this.channel_num = `${this.selectedId.Number}`;
       this.selected_epg_str = `${this.selectedId.MapTo}`;
+      this.reuseTvgID = this.selectedId.ReuseID;
     } else {
       this.channel_ref = this.channel.Name;
       this.channel_num = this.channel.Number;

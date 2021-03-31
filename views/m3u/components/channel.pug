@@ -1,19 +1,22 @@
 .channel-item(:data-channel-id="channel.Id" :class="{'disabled': !isEnabled}")
   .row.hoverable.channel-item
-    .col-1.enable-disable
+    .col-5.name
       input(type="checkbox" v-model="isEnabled")
-
-    .col-1.number {{channel.Number}}
-
-    .col-4.name
+      span ( {{channel.Number}} )
       span {{channel.Name}}
       small
         | &nbsp; (
         a(:href="channel.StreamUrl") link originale
         | )
 
+    .col-2.tvgid
+      label
+        input(type="checkbox" v-model="reuseTvgID")
+        | &nbsp;
+        small {{channel.Id}}
 
-    .col-6(v-if="isEnabled")
+
+    .col-5(v-if="isEnabled")
       input(type="number" v-model="channel_num" placeholder="Numero" v-if="!isEdit")
       input(type="text" v-model="channel_ref" v-if="!isEdit")
       button(v-if="!isEdit" @click="edit()") Modifica

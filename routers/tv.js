@@ -855,7 +855,9 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
 
           let temp_ch = channel.clone();
 
-          temp_ch.TvgId = personalChannel.MapTo;
+          if ( ! personalChannel.ReuseID ) {
+            temp_ch.TvgId = personalChannel.MapTo;
+          }
           temp_ch.TvgName = personalChannel.MapTo;
           temp_ch.Name = personalChannel.MapTo;
           temp_ch.Number = personalChannel.Number;
