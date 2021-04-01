@@ -309,7 +309,7 @@ class M3U {
 
   organize(channels) {
 
-    Log.debug(`splitting channels by groups`);
+    Log.debug(`splitting channels by groups (${this.Name})`);
 
     for ( let [i, channel] of channels.entries() ) {
       if ( !channel ) {

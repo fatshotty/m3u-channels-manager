@@ -855,6 +855,8 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
 
           let temp_ch = channel.clone();
 
+          temp_ch.__map_to__ = personalChannel.MapTo;
+
           if ( ! personalChannel.ReuseID ) {
             temp_ch.TvgId = personalChannel.MapTo;
           }
@@ -868,9 +870,9 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
             // let url_paths = temp_redirect.split('?');
             // url_paths.shift();
             if ( fulldomain ) {
-              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
+              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
             } else {
-              temp_redirect = `${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}`;
+              temp_redirect = `${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
             }
 
             temp_ch.Redirect = temp_redirect;
@@ -888,8 +890,8 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
   if ( direct ) {
 
     for await (let chl of result_channels) {
-      let id = chl.TvgId;
-      let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id);
+      let id = chl.__map_to__;
+      let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
       chl.Redirect = url;
     }
   }
