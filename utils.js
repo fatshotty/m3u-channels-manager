@@ -663,11 +663,11 @@ function rewriteChannelUrl(rewrite, channel, listName) {
         try {
           return ${exp};
         } catch(e) {
-          Log.warn("cannot rewrite url ${exp}");
+          Log.warn("cannot rewrite url '${exp}' - " + e);
           return '';
         }
       `;
-      let execFn = new Function('channel', 'ListName', bodyFn);
+      let execFn = new Function('channel', 'ListName', 'Log', bodyFn);
 
       // let obj = sourceobj;
       // let exps = exp.split('.');
@@ -684,7 +684,7 @@ function rewriteChannelUrl(rewrite, channel, listName) {
       //   }
       //   return obj
       // }
-      let ret = execFn(channel, listName);
+      let ret = execFn(channel, listName, Log);
       return ret;
     });
     return surl;

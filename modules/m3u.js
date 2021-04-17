@@ -153,11 +153,11 @@ class M3U {
         const obj_channel = channels[ channel_index ] ||  (channels[ channel_index ] = {extra: {}, props: []});
 
         const parts = row.match( /([\w\-]+)+:(.*)/ );
+        // const parts = row.match( /(\w+)+:(.*)/ );
 
         if ( parts && parts[1] ) {
 
-          switch ( parts[1] ) {
-            case 'EXTINF':
+          if ( parts[1] == 'EXTINF') {
               if ( parts[2] ) {
                 let infos = parts[ 2 ];
                 infos = infos.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g);
@@ -173,18 +173,31 @@ class M3U {
                   }
                 }
               }
-              break;
-            case 'EXT-X-STREAM-INF':
-              let infos = parts[ 2 ];
-              infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
-              for( let j = 0, info; info = infos[ j++ ]; ) {
-                const kv = info.split('=');
-                obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
-              }
-              break;
-            default:
-              obj_channel.props.push( row );
+          } else {
+            if ( ! (parts[1] in obj_channel.extra ) ) {
+              obj_channel.extra[ parts[1] ] = [];
+            }
+            let extraKeyValues = obj_channel.extra[ parts[1] ];
+            let infos = parts[ 2 ];
+            infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
+            let rowValues = {};
+            for( let j = 0, info; info = infos[ j++ ]; ) {
+              const kv = info.split('=');
+              // obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
+              rowValues[ kv[0] ] = kv[1];
+            }
+            extraKeyValues.push( rowValues );
           }
+            // case 'EXT-X-STREAM-INF':
+            //   let infos = parts[ 2 ];
+            //   infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
+            //   for( let j = 0, info; info = infos[ j++ ]; ) {
+            //     const kv = info.split('=');
+            //     obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
+            //   }
+            //   break;
+            // default:
+            //   obj_channel.props.push( row );
 
         }
 
@@ -690,20 +703,21 @@ class TempCh {
   }
 
   toM3U(header, direct) {
-    const res = [];
+    let res = [];
 
     for ( let prop of this.data.Props ) {
       res.push( `${prop}` );
     }
 
-    let keys = Object.keys(this.data.Extra);
-    let str = [];
-    for ( let key of keys ) {
-      str.push(`${key}=${this.data.Extra[key]}`);
-    }
-    if ( str.length ) {
-      res.push(`#EXT-X-STREAM-INF:${str.join(',')}`);
-    }
+    // let keys = Object.keys(this.data.Extra);
+    // let str = [];
+    // for ( let key of keys ) {
+    //   str.push(`${key}=${this.data.Extra[key]}`);
+    // }
+    // if ( str.length ) {
+    //   res.push(`#EXT-X-STREAM-INF:${str.join(',')}`);
+    // }
+    res = res.concat( this.addExtraKeys() );
 
     const row = []
     row.push(`#EXTINF:${this.Duration || -1}`);
@@ -728,6 +742,28 @@ class TempCh {
     }
 
     return res.join('\n');
+  }
+
+
+  addExtraKeys() {
+    let res = [];
+    let extraKeysValues = Object.keys(this.data.Extra);
+    for ( let extraKeyValues of extraKeysValues ) {
+      let values = this.data.Extra[ extraKeyValues ];
+      let details = [];
+      for ( let keyValuePair of values ) {
+        let str = [];
+        let keys = Object.keys(keyValuePair);
+        for ( let k of keys ) {
+          str.push(`${k}=${keyValuePair[k]}`)
+        }
+        res.push(`#${extraKeyValues}:${str.join(',')}`)
+      }
+      
+    }
+
+    return res;
+
   }
 
 }
