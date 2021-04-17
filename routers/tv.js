@@ -381,28 +381,12 @@ Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
 });
 
 
-Router.use('/:list_name/*.:format?', (req, res, next) => {
-
-  if (req.method == 'GET' ) {
-    Log.info(`ROUTER FOR CACHE`, req.params )
-    return CacheRouter.get(req, res, next);
-  }
-  next();
-});
-
-
-Router.param('format', (req, res, next, value) => {
-  req.params.format = value || 'json';
-  next();
-});
-
-
 // Router.use('/all/groups/merge.:format?', CacheRouter.get);
 
 
-Router.get('/all/groups/merge.:format?', (req, res, next) => {
+Router.get('/all/groups/merge.:format?', CacheRouter.get, (req, res, next) => {
 
-  const format = req.params.format; // || 'json';
+  const format = req.params.format || 'json';
 
   Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)}`);
 
@@ -465,6 +449,23 @@ Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
   res.end( execute() );
 
+});
+
+
+
+Router.use('/:list_name/*.:format?', (req, res, next) => {
+
+  if (req.method == 'GET' ) {
+    Log.debug(`ROUTER FOR CACHE`, req.params )
+    return CacheRouter.get(req, res, next);
+  }
+  next();
+});
+
+
+Router.param('format', (req, res, next, value) => {
+  req.params.format = value || 'json';
+  next();
 });
 
 
