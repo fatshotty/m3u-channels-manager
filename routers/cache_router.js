@@ -15,7 +15,7 @@ async function read(req, res, next) {
   let cachevaluestring = await Cache.get(cachekey);
 
   if ( cachevaluestring ) {
-    req.CACHE_KEY = null;
+    delete req.CACHE_KEY;
     Log.info('GOT FROM CACHE');
     res.set('x-response-from-cache', 'true');
 
@@ -28,7 +28,7 @@ async function read(req, res, next) {
     return res.end( cachevaluestring );
 
   } else {
-    Log.info('not found in cache');
+    Log.info('[CACHE] not found in cache');
     res.set('x-response-from-cache', 'false');
   }
 
@@ -59,4 +59,4 @@ async function invalidate(req, res, next) {
 }
 
 
-module.exports = {get: read, set: write, invalidate, invalidateSimple};
+module.exports = {computeKey: Cache.computeKey, get: read, set: write, invalidate, invalidateSimple};

@@ -55,6 +55,8 @@ if ( !global.Config.UseCache || String(global.Config.UseCache) == 'false' ) {
 
 } else {
 
+  Log.info('CACHE MODULE LOADED!');
+
   Module = require('./cache/redis');
   module.exports = {...Module, computeKey};
 }

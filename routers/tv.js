@@ -323,7 +323,7 @@ Router.use('/', (req, res, next) => {
 
     let ret = old_end.apply(res, arguments);
 
-    if ( req.CACHE_KEY ) {
+    if ( req.CACHE_KEY && res.statusCode < 300 && res.statusCode != 204 && arguments.length > 0 ) {
       CacheRouter.set(req.CACHE_KEY, [res.get('content-type'),data].join('|||'));
     }
 
@@ -335,9 +335,11 @@ Router.use('/', (req, res, next) => {
 })
 
 
-Router.get('/all.json', (req, res, next) => {
+Router.get('/all.json', CacheRouter.get, (req, res, next) => {
 
   Log.info(`requested all list, total: ${Config.M3U.length}`);
+
+  // req.CACHE_KEY = CacheRouter.computeKey(req);
 
   let resp = Config.M3U.map( (m) => {
     return {
@@ -354,9 +356,11 @@ Router.get('/all.json', (req, res, next) => {
   res.end( JSON.stringify(resp) );
 
 });
-Router.get('/all/groups.json', (req, res, next) => {
+Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
 
   Log.info(`requested all list with groups, total: ${Config.M3U.length}`);
+
+  // req.CACHE_KEY = CacheRouter.computeKey(req);
 
   let resp = Config.M3U.map( (m) => {
     let m3u = M3UList.find(n => n.Name === m.Name);
@@ -377,13 +381,24 @@ Router.get('/all/groups.json', (req, res, next) => {
 });
 
 
+Router.use('/:list_name/*.:format?', (req, res, next) => {
+
+  if (req.method == 'GET' ) {
+    Log.info(`ROUTER FOR CACHE`, req.params )
+    return CacheRouter.get(req, res, next);
+  }
+  next();
+});
+
+
 Router.param('format', (req, res, next, value) => {
   req.params.format = value || 'json';
   next();
 });
 
 
-Router.use('/all/groups/merge.:format?', CacheRouter.get);
+// Router.use('/all/groups/merge.:format?', CacheRouter.get);
+
 
 Router.get('/all/groups/merge.:format?', (req, res, next) => {
 
