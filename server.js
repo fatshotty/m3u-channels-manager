@@ -350,7 +350,7 @@ if ( Argv.serve ) {
 
 //catches uncaught exceptions
 process.on('uncaughtException', function(err) {
-  Log.error(`** Error: ${err}`);
+  Log.error(`** Error: ${err} - ${err.stack}`);
   console.error('** Error occurred **', err);
 });
 process.on('unhandledRejection', function(reason, p) {

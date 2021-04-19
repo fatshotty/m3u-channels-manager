@@ -28,7 +28,7 @@ async function read(req, res, next) {
     return res.end( cachevaluestring );
 
   } else {
-    Log.info('[CACHE] not found in cache');
+    Log.info(`[CACHE] not found in cache: ${cachekey}`);
     res.set('x-response-from-cache', 'false');
   }
 

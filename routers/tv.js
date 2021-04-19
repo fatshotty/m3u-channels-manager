@@ -325,6 +325,8 @@ Router.use('/', (req, res, next) => {
 
     if ( req.CACHE_KEY && res.statusCode < 300 && res.statusCode != 204 && arguments.length > 0 ) {
       CacheRouter.set(req.CACHE_KEY, [res.get('content-type'),data].join('|||'));
+    } else {
+      Log.info(`Response will not store in cache: ${req.CACHE_KEY} - ${res.statusCode} - ${arguments.length}`)
     }
 
     return ret;
