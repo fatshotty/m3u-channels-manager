@@ -1037,7 +1037,7 @@ async function saveM3uPersonal(m3u, m3uConfig, data) {
 
 
   FS.writeFileSync( path, JSON.stringify(data, null, 2), {encoding: 'utf-8'} );
-  m3u.Personal = await loadPersonalM3UFile(path);
+  m3u.Personal = await loadPersonalM3UFile(path, true);
 
   Log.info('Correctly saved!');
 }
