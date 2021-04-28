@@ -206,6 +206,7 @@ Vue.component('Channel', {
     } else {
       this.channel_ref = this.channel.Name;
       this.channel_num = this.channel.Number;
+      this.reuseTvgID = true
     }
 
     this.isEnabled = !!this.selectedId || this.defaultEnabled;
