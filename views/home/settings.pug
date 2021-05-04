@@ -41,6 +41,11 @@
       fieldset
         h5 Canali TV
 
+        .form-group
+          label(for='ftpsrv') Usa server FTP
+            input(type="checkbox" v-model="settings.UseFTP")
+          input.form-control(type="number", v-model="settings.FtpPort" :disabled="!settings.UseFTP")
+
         ul.nav.nav-tabs(role="tablist")
           li.nav-item(v-for="m3u,index in settings.M3U")
             a.nav-link.nav-item(role="tab" href="#" @click="changeM3UTab(index)" :class="{'active': currentM3UTab == index}") {{m3u.Name || '_'}}

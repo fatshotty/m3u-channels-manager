@@ -5,6 +5,7 @@ const Router = Express.Router();
 const Utils = require('../utils');
 const Request = Utils.request;
 const M3UK = require('../modules/m3u').M3U;
+const FtpServer = require('../ftpserver');
 
 const CacheRouter = require('./cache_router');
 
@@ -40,6 +41,10 @@ let Watcher = FS.watch(Argv.config, 'utf-8', (eventType, filename) => {
         }
         m3u._rewriteUrl = m3uConfig.RewriteUrl;
       });
+
+
+      settingUpFTP()
+
 
       fileWatcher();
 
@@ -1069,6 +1074,29 @@ function info() {
 };
 
 
+function settingUpFTP() {
+
+  FtpServer.stop();
+
+  if ( Config.UseFTP ) {
+
+    FtpServer.setM3UList( () => {
+      return M3UList;
+    });
+    FtpServer.setM3UConfig( () => {
+      return Config.M3U;
+    });
+
+    FtpServer.setConfig( () => {
+      return Config;
+    })
+
+    FtpServer.start();
+  }
+}
+
+settingUpFTP();
+
 module.exports = {
   Router,
   MountPath: MOUNTH_PATH,
@@ -1081,4 +1109,4 @@ module.exports = {
   info,
   // updateSettings,
   fileWatcher: () => {}
- };
+};

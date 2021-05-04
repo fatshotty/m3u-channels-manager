@@ -10,8 +10,6 @@ const Cluster = require('cluster');
 const Constants = require('./constants');
 
 
-let Config = null;
-
 if ( !global.Config ) {
   global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
 
@@ -23,7 +21,7 @@ if ( !global.Config ) {
   }
 }
 
-Config = global.Config;
+let Config = global.Config;
 
 require('dotenv').config({ path: Path.join(Argv.envfile || Constants.calculatePath(__filename), '.env') });
 let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
@@ -340,6 +338,7 @@ function serveHTTP() {
   Server.listen(Config.Port, process.env.BIND_IP || '127.0.0.1', () => {
     Log.info(`Server listing on port ${process.env.BIND_IP || '127.0.0.1'}:${Config.Port}`);
   });
+
 }
 
 loadRouters()

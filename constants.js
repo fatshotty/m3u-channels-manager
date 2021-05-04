@@ -5,6 +5,8 @@ const DEFAULT_CONFIG = () => {
     "LogLevel": "info",
     "Log": `${global.CWD}/manager.log`,
     "UseCache": false,
+    "FtpPort": 0,
+    "UseFTP": false,
     "M3U": [{
       "UUID": '',
       "Name": "list_1",
