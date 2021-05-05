@@ -22,14 +22,14 @@ class MyFileSystem extends FileSystem {
     let parts = this.cwd.split(Path.sep);
     let lastPath = parts.pop();
 
-    Log.info(`[FTP] get ${this.cwd} -> ${lastPath}`);
+    Log.info(`[FTP] get ${this.cwd} -> ${fileName} -> ${lastPath || 'tvchannels'}`);
 
     return {
       name: lastPath || 'tvchannels',
       uid: lastPath || 'tvchannels',
       mtime: Date.now(),
       birthtimeMs: Date.now(),
-      size: 0,
+      size: 1,
       isDirectory: function() {
         return !fileName.endsWith('.strm');
       },
@@ -233,7 +233,11 @@ const Ftp = {
 
     Log.info(`[FTP] Starting FTP server on ${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`);
 
-    FtpServer = new FtpSrv({url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`, root: "."});
+    FtpServer = new FtpSrv({
+      url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`,
+      root: ".",
+      pasv_url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`
+    });
 
     let HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
     let BASIC_AUTH_OVERALL = process.env.BASIC_AUTH_OVERALL == 'true';
@@ -278,6 +282,10 @@ const Ftp = {
 
       resolve({fs: new MyFileSystem()});
 
+    });
+
+    FtpServer.on ( 'client-error', (connection, context, error) => {
+      console.log ( `error: ${error}`,context );
     });
 
     FtpServer.listen();

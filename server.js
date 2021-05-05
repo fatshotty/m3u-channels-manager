@@ -23,7 +23,6 @@ if ( !global.Config ) {
 
 let Config = global.Config;
 
-require('dotenv').config({ path: Path.join(Argv.envfile || Constants.calculatePath(__filename), '.env') });
 let HAS_BASIC_AUTH = global.HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
 
 Config.Log = Path.resolve(global.CWD, Config.Log);

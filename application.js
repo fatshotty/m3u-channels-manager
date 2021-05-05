@@ -191,6 +191,8 @@ if ( Argv.socketport ) {
   global.Config.SocketPort = Argv.socketport
 }
 
+require('dotenv').config({ path: Path.join(Argv.envfile || Constants.calculatePath(__filename), '.env') });
+
 
 const Utils = require('./utils');
 
