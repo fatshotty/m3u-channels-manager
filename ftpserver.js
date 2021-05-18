@@ -10,8 +10,8 @@ const Log = Utils.Log;
 
 class MyFileSystem extends FileSystem {
 
-  constructor(user) {
-    super();
+  constructor(connection, {root, cwd} = {}) {
+    super(connection, {root: '/', cwd: '/'});
   }
 
   chdir(path) {
@@ -175,17 +175,23 @@ class MyFileSystem extends FileSystem {
       switch( step ) {
 
         case 'lists':
-          Log.debug(`[FTP] compute lists`);
+          Log.debug(`[FTP] compute all lists`);
           resObj = remapLists();
           break;
         case 'groups':
           currList = Ftp.M3U().find(m => m.Name == part );
-          Log.debug(`[FTP] compute groups for ${currList}`);
+          if ( !currList ) {
+            throw new errors.FileSystemError(`[FTP] list ${part} not exists`);
+          }
+          Log.info(`[FTP] compute groups for ${currList.Name}`);
           resObj = remapGroups( currList );
           break;
         case 'channels':
           let grp = currList.groups.find( g => g.Name == part );
-          Log.debug(`[FTP] compute channels for ${grp}`);
+          if ( !currList ) {
+            throw new errors.FileSystemError(`[FTP] group ${part} not exists`);
+          }
+          Log.info(`[FTP] compute channels for ${grp.Name}`);
           resObj = remapChannels( grp );
           break;
 
@@ -301,8 +307,8 @@ const Ftp = {
 
     FtpServer = new FtpSrv({
       url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`,
-      root: ".",
-      pasv_url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`,
+      root: "/",
+      pasv_url: `${process.env.BIND_IP || '127.0.0.1'}`,
       pasv_range: '8400-8500'
     });
 
@@ -345,12 +351,15 @@ const Ftp = {
       if ( (!isLocal && HAS_BASIC_AUTH) || (HAS_BASIC_AUTH && BASIC_AUTH_OVERALL == 'true')) {
 
         if ( username != process.env.BASIC_USER || password != process.env.BASIC_PWD ){
+          Log.error(`[FTP] cannot login`)
           return reject();
         }
 
       }
 
-      resolve({fs: new MyFileSystem()});
+      Log.info(`[FTP] connection logged in successfully`)
+
+      resolve({fs: new MyFileSystem(connection)});
       // resolve({root: '/Users/fatshotty/Desktop', cwd: '/'});
 
     });
