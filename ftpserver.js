@@ -3,6 +3,8 @@ const FTPErrors = require('ftp-srv/src/errors');
 const Path = require('path');
 const { Readable } = require("stream");
 const Utils = require('./utils');
+const FS = require('fs');
+const { loggers } = require('winston');
 
 const Log = Utils.Log;
 
@@ -13,28 +15,77 @@ class MyFileSystem extends FileSystem {
   }
 
   chdir(path) {
+    // console.log('chdir', this.cwd, `"${path}"`);
+
+    if ( path.startsWith('/') ) {
+      this.cwd = '/'; // Path.join(this.cwd, path);
+    }
+
+    if ( path.endsWith('.strm') ) {
+      Log.error(`[FTP] .strm file is not a directory: ${this.cwd} - ${path}`);
+      throw new FTPErrors.FileSystemError(`Folder not exists ${this.cwd} - ${path}`);
+    }
+
     this.cwd = Path.join(this.cwd, path);
+    Log.info(`[FTP] chdir to ${this.cwd}`, );
     return this.cwd;
   }
 
   get(fileName) {
+    let fullpath = Path.join(this.cwd, fileName);
+    Log.info(`[FTP] get ${fullpath}`);
+    
+    let parts = (fullpath.startsWith('/') ? fullpath.substring(1) : fullpath).split('/');
 
-    let parts = this.cwd.split(Path.sep);
+    if ( parts.length > 2 ) {
+      if ( parts[2].endsWith('.strm') ) {
+        if ( parts.length > 3 ) {
+          Log.error(`[FTP] Invalid path requested: ${fullpath}`);
+          throw new FTPErrors.FileSystemError(`Invalid path requested: ${fullpath}`);
+        }
+      } else {
+        Log.error(`[FTP] Invalid file requested: ${fullpath}`);
+        throw new FTPErrors.FileSystemError(`Invalid file requested: ${fullpath}`);
+      }
+    }
+
     let lastPath = parts.pop();
 
-    Log.info(`[FTP] get ${this.cwd} -> ${fileName} -> ${lastPath || 'tvchannels'}`);
+    Log.info(`[FTP] get part -> ${lastPath || 'tvchannels'}`);
+
+    let isFile = fileName.endsWith('.strm');
+    let list = this.loopFolder(isFile, fullpath);
+    let size = 0;
+
+    if (isFile) {
+      let chl = list; // list.find(c => c.name == lastPath );
+      if ( !chl ) {
+        Log.error(`[FTP] Cannot found channel by name ${fileName}`);
+        throw new FTPErrors.FileSystemError(`Cannot read channel ${fileName}`);
+      }
+      size = chl.size;
+    } else if ( list.length > 0 ) {
+      size = list.reduce( (acc, item) => {
+        acc = isNaN(acc) ? 0 : acc;
+        acc += item.size;
+        return acc;
+      })
+    }
+
+
+    Log.info(`[FTP] Responding get -> ${lastPath || 'tvchannels'} - size: ${size} - file: ${isFile}`);
 
     return {
       name: lastPath || 'tvchannels',
       uid: lastPath || 'tvchannels',
       mtime: Date.now(),
       birthtimeMs: Date.now(),
-      size: 1,
+      size: size,
       isDirectory: function() {
-        return !fileName.endsWith('.strm');
+        return !isFile;
       },
       isFile: function() {
-        return fileName.endsWith('.strm');
+        return isFile;
       }
     };
 
@@ -61,15 +112,23 @@ class MyFileSystem extends FileSystem {
   }
 
   read(fileName, {start = undefined} = {}) {
-    Log.info(`[FTP] Responding file ${fileName}`);
+    // console.log('try to read', fileName, start);
+    let filepath = Path.join(this.cwd, fileName);
+    Log.info(`[FTP] Responding file ${filepath}`);
     let list = this.loopFolder(false);
     let chl = list.find(c => c.name == fileName );
     if ( !chl ) {
-      Log.error(`[FTP] Cannot found channel by name ${chl.name}`);
+      Log.error(`[FTP] Cannot found channel by name ${fileName}`);
       throw new FTPErrors.FileSystemError(`Cannot read channel ${fileName}`);
     }
     Log.info( `[FTP] Found streamUrl for ${chl.name} -> ${chl.link}`);
-    return Readable.from([chl.link]);
+    let stream = Readable.from([chl.link]);
+    stream.path = filepath
+    // console.log('Found file', stream.path, 'for ->', chl.link);
+    return stream;
+    // FS.writeFileSync('/Users/fatshotty/Desktop/myfile.strm', `${chl.link}\n`, 'utf-8');
+    // return FS.createReadStream('/Users/fatshotty/Desktop/myfile.strm');
+
   }
 
   delete(path) {
@@ -94,16 +153,16 @@ class MyFileSystem extends FileSystem {
   }
 
 
-  loopFolder(single) {
+  loopFolder(single, currentPath) {
 
-    Log.info(`[FTP] Listing ${this.cwd}`);
+    Log.info(`[FTP] Listing ${currentPath || this.cwd}`);
 
-    let currentPath = this.cwd;
+    currentPath = currentPath || this.cwd;
     if ( currentPath == '/' ) {
       currentPath = '';
     }
 
-    let parts = currentPath.split( Path.sep );
+    let parts = currentPath.split( '/' );
 
     let resObj = [];
     let currList = null;
@@ -125,7 +184,7 @@ class MyFileSystem extends FileSystem {
           resObj = remapGroups( currList );
           break;
         case 'channels':
-          let grp = currList.groups.find( g => g.Id == part );
+          let grp = currList.groups.find( g => g.Name == part );
           Log.debug(`[FTP] compute channels for ${grp}`);
           resObj = remapChannels( grp );
           break;
@@ -134,8 +193,15 @@ class MyFileSystem extends FileSystem {
 
     }
 
+    let lastPart = parts.pop();
+    single = single || lastPart.endsWith('.strm');
+
+    if ( single ) {
+      resObj = resObj.find(i => i.name == lastPart );
+    }
+
     Log.info(`[FTP] Respond ${single ? 'first result' : resObj.length + ' items'}`);
-    return single ? resObj[0] : resObj;
+    return single ? resObj : resObj;
   }
 
 
@@ -184,7 +250,7 @@ function remapChannels(group) {
   return group.channels.map( c => {
     let chl = c.clone();
     return {
-      name: `${chl.Name}.strm`,
+      name: `${chl.Name}.strm`.trim(),
       uid: chl.TvgId,
       mtime: Date.now(),
       birthtimeMs: Date.now(),
@@ -218,16 +284,16 @@ const Ftp = {
   setConfig(getter) {
     this.Config = getter;
   },
-  stop() {
+  async stop() {
     if ( FtpServer ) {
       Log.info(`[FTP] Stopping FTP server`);
-      FtpServer.close();
+      await FtpServer.close();
       FtpServer = null;
     }
   },
 
-  start() {
-    this.stop();
+  async start() {
+    await this.stop();
 
     let self = this;
 
@@ -236,7 +302,8 @@ const Ftp = {
     FtpServer = new FtpSrv({
       url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`,
       root: ".",
-      pasv_url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`
+      pasv_url: `ftp://${process.env.BIND_IP || '127.0.0.1'}:${this.Config().FtpPort}`,
+      pasv_range: '8400-8500'
     });
 
     let HAS_BASIC_AUTH = process.env.BASIC_AUTH == "true";
@@ -267,12 +334,15 @@ const Ftp = {
       }
     }
 
+
+    // let MYFS = new MyFileSystem();
+
     FtpServer.on('login', ({connection, username, password}, resolve, reject) => {
 
       // check login
       let isLocal = checkLocalRequest(connection);
 
-      if ( (!isLocal && HAS_BASIC_AUTH) || (HAS_BASIC_AUTH && process.env.BASIC_AUTH_OVERALL == 'true')) {
+      if ( (!isLocal && HAS_BASIC_AUTH) || (HAS_BASIC_AUTH && BASIC_AUTH_OVERALL == 'true')) {
 
         if ( username != process.env.BASIC_USER || password != process.env.BASIC_PWD ){
           return reject();
@@ -281,11 +351,18 @@ const Ftp = {
       }
 
       resolve({fs: new MyFileSystem()});
+      // resolve({root: '/Users/fatshotty/Desktop', cwd: '/'});
 
     });
 
     FtpServer.on ( 'client-error', (connection, context, error) => {
-      console.log ( `error: ${error}`,context );
+      console.log ( 'client-error:', connection, context, error );
+      Log.error(`[FTP] client-error ${error}`);
+    });
+
+    FtpServer.on ( 'error', (connection, context, error) => {
+      console.log ( 'error:', connection, context, error );
+      Log.error(`[FTP] error ${error}`);
     });
 
     FtpServer.listen();

@@ -6,6 +6,7 @@ const Utils = require('../utils');
 const Request = Utils.request;
 const M3UK = require('../modules/m3u').M3U;
 const FtpServer = require('../ftpserver');
+// const WebdavServer = require('../webdav-server');
 
 const CacheRouter = require('./cache_router');
 
@@ -1074,9 +1075,9 @@ function info() {
 };
 
 
-function settingUpFTP() {
+async function settingUpFTP() {
 
-  FtpServer.stop();
+  await FtpServer.stop();
 
   if ( Config.UseFTP ) {
 
@@ -1096,6 +1097,30 @@ function settingUpFTP() {
 }
 
 settingUpFTP();
+
+function settingUpWebDav() {
+
+  WebdavServer.stop();
+
+  if ( Config.UseWebDav ) {
+
+    WebdavServer.setM3UList( () => {
+      return M3UList;
+    });
+    WebdavServer.setM3UConfig( () => {
+      return Config.M3U;
+    });
+
+    WebdavServer.setConfig( () => {
+      return Config;
+    })
+
+    WebdavServer.start();
+  }
+
+}
+
+// settingUpWebDav();
 
 module.exports = {
   Router,
