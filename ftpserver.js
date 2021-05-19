@@ -34,7 +34,7 @@ class MyFileSystem extends FileSystem {
   get(fileName) {
     let fullpath = Path.join(this.cwd, fileName);
     Log.info(`[FTP] get ${fullpath}`);
-    
+
     let parts = (fullpath.startsWith('/') ? fullpath.substring(1) : fullpath).split('/');
 
     if ( parts.length > 2 ) {
@@ -108,7 +108,7 @@ class MyFileSystem extends FileSystem {
 
 
   write(fileName, {append = false, start = undefined} = {}) {
-    throw new errors.FileSystemError('cannot write');
+    throw new FTPErrors.FileSystemError('cannot write');
   }
 
   read(fileName, {start = undefined} = {}) {
@@ -132,19 +132,19 @@ class MyFileSystem extends FileSystem {
   }
 
   delete(path) {
-    throw new errors.FileSystemError('Cannot delete');
+    throw new FTPErrors.FileSystemError('Cannot delete');
   }
 
   mkdir(path) {
-    throw new errors.FileSystemError('Cannot create directory');
+    throw new FTPErrors.FileSystemError('Cannot create directory');
   }
 
   rename(from, to) {
-    throw new errors.FileSystemError('Cannot rename');
+    throw new FTPErrors.FileSystemError('Cannot rename');
   }
 
   chmod(path, mode) {
-    throw new errors.FileSystemError('Cannot change permission');
+    throw new FTPErrors.FileSystemError('Cannot change permission');
   }
 
   getUniqueName() {
@@ -181,7 +181,7 @@ class MyFileSystem extends FileSystem {
         case 'groups':
           currList = Ftp.M3U().find(m => m.Name == part );
           if ( !currList ) {
-            throw new errors.FileSystemError(`[FTP] list ${part} not exists`);
+            throw new FTPErrors.FileSystemError(`[FTP] list ${part} not exists`);
           }
           Log.info(`[FTP] compute groups for ${currList.Name}`);
           resObj = remapGroups( currList );
@@ -189,7 +189,7 @@ class MyFileSystem extends FileSystem {
         case 'channels':
           let grp = currList.groups.find( g => g.Name == part );
           if ( !currList ) {
-            throw new errors.FileSystemError(`[FTP] group ${part} not exists`);
+            throw new FTPErrors.FileSystemError(`[FTP] group ${part} not exists`);
           }
           Log.info(`[FTP] compute channels for ${grp.Name}`);
           resObj = remapChannels( grp );
