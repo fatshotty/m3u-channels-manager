@@ -184,7 +184,7 @@ class M3U {
             for( let j = 0, info; info = infos[ j++ ]; ) {
               const kv = info.split('=');
               // obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
-              rowValues[ kv[0] ] = kv[1];
+              rowValues[ kv[0].trim() ] = kv[1].trim();
             }
             extraKeyValues.push( rowValues );
           }
