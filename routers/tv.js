@@ -399,10 +399,12 @@ Router.get('/all/groups/merge.:format?', CacheRouter.get, (req, res, next) => {
   Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)}`);
 
 
-  let m3us = M3UList.map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
-    let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
-    return {m3u: s.m3u, g: s.m3u.groups.filter(g => groups.indexOf('*') > -1 || groups.indexOf(g.Id) > -1) };   //    groups.filter(g => !!s.m3u.getGroupById( g ))}
-  }).filter(s => s.g.length > 0);
+  let m3us = M3UList.filter(
+    (m) => !!Config.M3U.find( (_m) => _m.Name == m.Name && _m.Enabled )
+    ).map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
+      let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
+      return {m3u: s.m3u, g: s.m3u.groups.filter(g => groups.indexOf('*') > -1 || groups.indexOf(g.Id) > -1) };   //    groups.filter(g => !!s.m3u.getGroupById( g ))}
+    }).filter(s => s.g.length > 0);
 
   const execute = () => {
     if (format.indexOf('m3u') == 0 ) {
@@ -576,6 +578,10 @@ Router.get('/:list_name/groups.:format?', (req, res, next) => {
       res.set('content-type', 'application/xml');
       break;
     default:
+      if ( req.M3UConfig.Enabled !== true ) {
+        Log.warn('list is not enabled');
+        return res.status(409).end('list is not enabled');
+      }
       res.set('content-type', 'application/x-mpegURL');
   }
 
@@ -645,6 +651,10 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
       res.set('content-type', 'application/json');
       break;
     default:
+      if ( req.M3UConfig.Enabled !== true ) {
+        Log.warn('list is not enabled');
+        return res.status(409).end('list is not enabled');
+      }
       res.set('content-type', 'application/x-mpegURL');
       break;
   }
@@ -685,6 +695,12 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
       res_result = JSON.stringify(result);
       break;
     default:
+
+      if ( req.M3UConfig.Enabled !== true ) {
+        Log.warn('list is not enabled');
+        return res.status(409).end('list is not enabled');
+      }
+
       let rewrite = false;
       if ( 'rewrite' in req.query && req.query.rewrite == 'true' && req.M3UConfig.RewriteUrl) {
         rewrite = req.M3UConfig.RewriteUrl;
@@ -758,6 +774,11 @@ function respondList(M3U, groups, format, direct, rewrite) {
 Router.get('/:list_name/list.:format?', (req, res, next) => {
   const format = req.params.format;
   const groups = req.query.groups;
+
+  if ( req.M3UConfig.Enabled !== true ) {
+    Log.warn('stream is not enabled');
+    return res.status(422).end('stream is not enabled');
+  }
 
   let direct = req.M3UConfig.UseDirectLink;
   if ( 'direct' in req.query ){
