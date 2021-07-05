@@ -939,6 +939,11 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   let format = req.params.format || 'html';
   let fulldomain = req.query.domain == 'true';
 
+  if ( req.M3UConfig.Enabled !== true ) {
+    Log.warn('list is not enabled');
+    return res.status(409).end('list is not enabled');
+  }
+
   let direct = req.M3UConfig.UseDirectLink;
   if ( 'direct' in req.query ){
     direct = req.query.direct == 'true';
