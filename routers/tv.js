@@ -878,7 +878,7 @@ Router.get('/:list_name/live', async (req, res, next) => {
 
 
 
-async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
+async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, rewrite) {
 
   fulldomain = fulldomain || m3uConfig.UseFullDomain;
 
@@ -937,8 +937,18 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct) {
     for await (let chl of result_channels) {
       let id = chl.__map_to__;
       let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
+
       chl.Redirect = url;
     }
+  } else if ( rewrite && m3uConfig.RewriteUrl ) {
+
+    for await (let chl of result_channels) {
+      let id = chl.__map_to__;
+      // let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
+      let url = Utils.rewriteChannelUrl(m3uConfig.RewriteUrl, chl, m3u.Name);
+      chl.Redirect = url;
+    }
+
   }
 
 
@@ -970,6 +980,8 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
     direct = req.query.direct == 'true';
   }
 
+  let rewrite = 'rewrite' in req.query && req.query.rewrite == 'true';
+
   if ( format === 'json' ) {
 
     res.set('content-type', 'application/json');
@@ -978,7 +990,7 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   } else if ( format.indexOf('m3u') === 0 ) {
 
     try {
-      let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct);
+      let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct, rewrite);
       res.set('content-type', 'application/x-mpegURL');
       res.status(200).end( resp );
     } catch(e) {
