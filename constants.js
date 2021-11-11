@@ -17,6 +17,7 @@ const DEFAULT_CONFIG = () => {
       "UseFullDomain": true,
       "UseDirectLink": false,
       "Enabled": true,
+      "StreamEnabled": true,
       "RewriteUrl": ""
     }],
     "Port": global.Argv.port || 3000,

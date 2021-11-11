@@ -57,8 +57,11 @@
             a(href="#" style="float: right; margin-right: 10px")
               i(@click="removeM3U(index)") rimuovi
             label(for='tv_enabled' style="float: right; margin-right: 10px")
-              | attivato
+              | lista pubblica
               input(type="checkbox" v-model="m3u.Enabled")
+            label(for='tv_stream_enabled' style="float: right; margin-right: 10px")
+              | attiva per stream
+              input(type="checkbox" v-model="m3u.StreamEnabled")
 
             .form-group
               label Nome della lista

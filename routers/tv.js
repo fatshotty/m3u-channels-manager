@@ -859,7 +859,7 @@ async function getStreamUrlOfChannel(M3U, M3UConfig, channel, group) {
 
 Router.get('/:list_name/live', async (req, res, next) => {
 
-  if ( req.M3UConfig.Enabled !== true ) {
+  if ( req.M3UConfig.StreamEnabled !== true ) {
     Log.warn('stream is not enabled');
     return res.status(422).end('stream is not enabled');
   }
