@@ -578,7 +578,7 @@ Router.get('/:list_name/groups.:format?', (req, res, next) => {
       res.set('content-type', 'application/xml');
       break;
     default:
-      if ( req.M3UConfig.Enabled !== true ) {
+      if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
         Log.warn('list is not enabled');
         return res.status(409).end('list is not enabled');
       }
@@ -651,7 +651,7 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
       res.set('content-type', 'application/json');
       break;
     default:
-      if ( req.M3UConfig.Enabled !== true ) {
+      if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
         Log.warn('list is not enabled');
         return res.status(409).end('list is not enabled');
       }
@@ -696,7 +696,7 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
       break;
     default:
 
-      if ( req.M3UConfig.Enabled !== true ) {
+      if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
         Log.warn('list is not enabled');
         return res.status(409).end('list is not enabled');
       }
@@ -775,7 +775,7 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
   const format = req.params.format;
   const groups = req.query.groups;
 
-  if ( req.M3UConfig.Enabled !== true ) {
+  if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
     Log.warn('stream is not enabled');
     return res.status(422).end('stream is not enabled');
   }
@@ -859,7 +859,7 @@ async function getStreamUrlOfChannel(M3U, M3UConfig, channel, group) {
 
 Router.get('/:list_name/live', async (req, res, next) => {
 
-  if ( req.M3UConfig.StreamEnabled !== true ) {
+  if ( req.M3UConfig.StreamEnabled !== true && !req.IS_ADMIN ) {
     Log.warn('stream is not enabled');
     return res.status(422).end('stream is not enabled');
   }
@@ -970,7 +970,7 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   let format = req.params.format || 'html';
   let fulldomain = req.query.domain == 'true';
 
-  if ( req.M3UConfig.Enabled !== true ) {
+  if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
     Log.warn('list is not enabled');
     return res.status(409).end('list is not enabled');
   }
@@ -1041,7 +1041,7 @@ async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id, group) {
 
 Router.get('/:list_name/personal/live', async (req, res, next) => {
 
-  if ( req.M3UConfig.Enabled !== true ) {
+  if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
     Log.warn('stream is not enabled');
     return res.status(422).end('stream is not enabled');
   }
