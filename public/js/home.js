@@ -46,6 +46,7 @@ const VM = new Vue({
     addNewM3U() {
       this.currentM3UTab = this.settings.M3U.push({
         "Name": `list_${this.lenLists++}`,
+        "DisplayName": `lista ${this.lenLists}`,
         "Url": "",
         "ExcludeGroups": [],
         "UserAgent": "VLC",

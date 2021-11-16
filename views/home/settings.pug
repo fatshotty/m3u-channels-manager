@@ -64,9 +64,15 @@
               input(type="checkbox" v-model="m3u.StreamEnabled")
 
             .form-group
-              label Nome della lista
+              label Nome univoco della lista
               input.form-control(type='text' v-model="m3u.Name")
               small.form-text.text-muted specifica un nome identificativo della lista
+            
+            .form-group
+              label Nome da visualizzare
+              input.form-control(type='text' v-model="m3u.DisplayName")
+              small.form-text.text-muted specifica il nome da visualizzare
+              
 
             .form-group
               label Percorso da cui recuperare la lista M3U

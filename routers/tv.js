@@ -365,6 +365,7 @@ Router.get('/all.json', CacheRouter.get, (req, res, next) => {
   }).map( (m) => {
     return {
       Name: m.Name,
+      DisplayName: m.DisplayName,
       UserAgent: m.UserAgent,
       UseForStream: m.UseForStream,
       UseFullDomain: m.UseFullDomain,
@@ -401,6 +402,7 @@ Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
     let m3u = M3UList.find(n => n.Name === m.Name);
     return {
       Name: m.Name,
+      DisplayName: m.DisplayName,
       UserAgent: m.UserAgent,
       UseForStream: m.UseForStream,
       UseFullDomain: m.UseFullDomain,

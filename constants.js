@@ -10,6 +10,7 @@ const DEFAULT_CONFIG = () => {
     "M3U": [{
       "UUID": '',
       "Name": "list_1",
+      "DisplayName": "lista 1",
       "Url": "",
       "ExcludeGroups": [],
       "UserAgent": "VLC",
