@@ -18,7 +18,8 @@ const DEFAULT_CONFIG = () => {
       "UseDirectLink": false,
       "Enabled": true,
       "StreamEnabled": true,
-      "RewriteUrl": ""
+      "RewriteUrl": "",
+      "Tags": []
     }],
     "Port": global.Argv.port || 3000,
     "SocketPort": global.Argv.socketport || 14332,

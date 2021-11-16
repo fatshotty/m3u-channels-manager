@@ -345,18 +345,32 @@ Router.use('/', (req, res, next) => {
 
 Router.get('/all.json', CacheRouter.get, (req, res, next) => {
 
-  Log.info(`requested all list, total: ${Config.M3U.length}`);
+  let tags = req.query.tags;
+  if ( tags ) {
+    tags = tags.split(';').map(t => t.toLowerCase().trim());
+  }
+
+  Log.info(`requested all list, total: ${Config.M3U.length}, filter by '${tags}'`);
 
   // req.CACHE_KEY = CacheRouter.computeKey(req);
 
-  let resp = Config.M3U.map( (m) => {
+  let resp = Config.M3U.filter(m => {
+    if (!tags) return true;
+    for (let t of tags){
+      if ( m.Tags.indexOf(t) > -1 ) {
+        return true;
+      }
+    }
+    return false;
+  }).map( (m) => {
     return {
       Name: m.Name,
       UserAgent: m.UserAgent,
       UseForStream: m.UseForStream,
       UseFullDomain: m.UseFullDomain,
       UseDirectLink: m.UseDirectLink,
-      Enabled: m.Enabled
+      Enabled: m.Enabled,
+      Tags: m.Tags
     };
   });
 
@@ -366,11 +380,24 @@ Router.get('/all.json', CacheRouter.get, (req, res, next) => {
 });
 Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
 
-  Log.info(`requested all list with groups, total: ${Config.M3U.length}`);
+  let tags = req.query.tags;
+  if ( tags ) {
+    tags = tags.split(';').map(t => t.toLowerCase().trim());
+  }
+
+  Log.info(`requested all list with groups, total: ${Config.M3U.length}, filter by '${tags}'`);
 
   // req.CACHE_KEY = CacheRouter.computeKey(req);
 
-  let resp = Config.M3U.map( (m) => {
+  let resp = Config.M3U.filter(m => {
+    if (!tags) return true;
+    for (let t of tags){
+      if ( m.Tags.indexOf(t) > -1 ) {
+        return true;
+      }
+    }
+    return false;
+  }).map( (m) => {
     let m3u = M3UList.find(n => n.Name === m.Name);
     return {
       Name: m.Name,
@@ -379,7 +406,8 @@ Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
       UseFullDomain: m.UseFullDomain,
       UseDirectLink: m.UseDirectLink,
       Enabled: m.Enabled,
-      Groups: m3u ? m3u.groups.map(g => ({Id: g.Id, Name: g.Name, Count: g.channels.length})) : []
+      Groups: m3u ? m3u.groups.map(g => ({Id: g.Id, Name: g.Name, Count: g.channels.length})) : [],
+      Tags: m.Tags
     };
   });
 
@@ -395,12 +423,25 @@ Router.get('/all/groups.json', CacheRouter.get, (req, res, next) => {
 Router.get('/all/groups/merge.:format?', CacheRouter.get, (req, res, next) => {
 
   const format = req.params.format || 'json';
+  let tags = req.query.tags;
+  if ( tags ) {
+    tags = tags.split(';').map(t => t.toLowerCase().trim());
+  }
 
-  Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)}`);
+  Log.info(`requested a merge for ${format} - ${JSON.stringify(req.query)} filter by '${tags}'`);
 
+  let configM3Us = Config.M3U.filter(m => {
+    if (!tags) return true;
+    for (let t of tags){
+      if ( m.Tags.indexOf(t) > -1 ) {
+        return true;
+      }
+    }
+    return false;
+  });
 
   let m3us = M3UList.filter(
-    (m) => !!Config.M3U.find( (_m) => _m.Name == m.Name && _m.Enabled )
+    (m) => !!configM3Us.find( (_m) => _m.Name == m.Name && _m.Enabled )
     ).map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
       let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
       return {m3u: s.m3u, g: s.m3u.groups.filter(g => groups.indexOf('*') > -1 || groups.indexOf(g.Id) > -1) };   //    groups.filter(g => !!s.m3u.getGroupById( g ))}
@@ -522,7 +563,7 @@ Router.get('/:list_name/update', async (req, res, next) => {
   }
 
   try {
-    let exit = await refreshM3U(req.M3UConfig);
+    await refreshM3U(req.M3UConfig);
   } catch(e) {
     Log.error(e);
     return next(e);

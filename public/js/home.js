@@ -23,6 +23,10 @@ const VM = new Vue({
 
   created() {
     PromSettings.then( (setts) => {
+      setts.M3U = setts.M3U.map(m => {
+        m.TagsStr = m.Tags ? m.Tags.join('; ') : ''
+        return m;
+      });
       this.settings = setts;
       this.lenLists = this.settings.M3U.length;
       this.loaded = true;
@@ -48,9 +52,12 @@ const VM = new Vue({
         "UseForStream": false,
         "UseFullDomain": true,
         "UseDirectLink": false,
-        "Enabled": true
+        "Enabled": true,
+        "StreamEnabled": true,
+        "RewriteUrl": "",
+        "Tags": [],
+        'TagsStr': ''
       }) - 1;
-
     },
     removeM3U(index) {
       this.settings.M3U.splice(index, 1);
@@ -78,6 +85,11 @@ const VM = new Vue({
         alert('Ho trovato dei nomi di lista duplicati o non validi. Meglio usare dei nomi validi e univoci');
         return;
       }
+
+      this.settings.M3U.forEach(m => {
+        m.Tags = m.TagsStr ? m.TagsStr.split(';').map(t => t.toLowerCase().trim()) : [];
+        delete m.TagsStr;
+      })
 
       $.ajax({
         method: 'POST',

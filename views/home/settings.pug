@@ -89,6 +89,11 @@
               label Gruppi da escludere
               input.form-control(type='text', placeholder="" v-model="m3u.ExcludeGroupsStr" )
               small.form-text.text-muted specificare i gruppi da escludere separati da virgola
+            
+            .form-group
+              label Tag della lista
+              input.form-control(type='text', placeholder="" v-model="m3u.TagsStr" )
+              small.form-text.text-muted specificare i tag relativi alla lista separati da ;
 
             .form-group
               label Elaborazione dell'url
