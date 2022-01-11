@@ -680,7 +680,7 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
     rewrite = req.M3UConfig.RewriteUrl;
   }
 
-  const response = respondSingleGroup( req.M3U, req.params.group, req.params.format, direct, rewrite );
+  const response = respondSingleGroup( req.M3U, req.params.group, format, direct, rewrite );
 
   if ( ! response ) {
     res.status(404).end( 'No group found by ' + req.params.group);
@@ -703,6 +703,71 @@ Router.get('/:list_name/list/:group.:format?', (req, res, next) => {
   }
   res.end( response );
 })
+
+
+
+function respondSingleChannelInGroup(M3U, groupId, chl, format, direct, rewrite) {
+
+  const channel = M3U.getChannelById( chl, groupId );
+
+  if ( ! channel ) {
+    Log.error('No channel found by id', chl, 'in', groupId);
+    return null;
+  }
+
+  switch (format) {
+    case 'json':
+      return JSON.stringify(channel.toJson());
+    default:
+      let nc = channel.clone();
+      if ( rewrite ) {
+        nc.Redirect = Utils.rewriteChannelUrl(M3U._rewriteUrl, nc, M3U.Name);
+        direct = false;
+      }
+      return nc.toM3U(true, direct);
+  }
+}
+
+
+
+Router.get('/:list_name/list/:group/:channel.:format?', (req, res, next) => {
+  const format = req.params.format || 'json';
+  Log.info(`Requested channel '${req.params.channel}' in group '${req.params.group}'. Respond with ${format} for ${req.M3U.Name}`);
+
+  let direct = req.M3UConfig.UseDirectLink;
+  if ( 'direct' in req.query ){
+    direct = req.query.direct == 'true';
+  }
+
+  let rewrite = false;
+  if ( 'rewrite' in req.query && req.query.rewrite == 'true' && req.M3UConfig.RewriteUrl) {
+    rewrite = req.M3UConfig.RewriteUrl;
+  }
+
+  const response = respondSingleChannelInGroup( req.M3U, req.params.group, req.params.channel, format, direct, rewrite );
+
+  if ( ! response ) {
+    res.status(404).end( 'No channel found by ' + req.params.channel);
+    return;
+  }
+
+  res.status(200);
+
+  switch (format) {
+    case 'json':
+      res.set('content-type', 'application/json');
+      break;
+    default:
+      if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
+        Log.warn('list is not enabled');
+        return res.status(409).end('list is not enabled');
+      }
+      res.set('content-type', 'application/x-mpegURL');
+      break;
+  }
+  res.end( response );
+})
+
 
 
 Router.get('/:list_name/search.:format', (req, res, next) => {

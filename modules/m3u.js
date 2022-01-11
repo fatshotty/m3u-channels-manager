@@ -28,33 +28,20 @@ class M3U {
       }
     }
 
-    for( let g of this.groups ) {
-      if ( g.Id == name ) {
-        return g;
-      }
-    }
-
-    return null;
+    return this.getGroupById(name);
   }
 
   getGroupById(id) {
 
-    for( let g of this.groups ) {
-      if ( g.Id == name ) {
-        return g;
-      }
-    }
-
-    return null;
-  }
-
-  getGroupById(id) {
     for( let g of this.groups ) {
       if ( g.Id == id ) {
         return g;
       }
     }
+
+    return null;
   }
+
 
   getChannelById(id, group) {
 

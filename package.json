@@ -13,6 +13,11 @@
   "bin": "./tvchannelsmanagerita",
   "author": "fatshotty",
   "license": "ISC",
+  "pkg": {
+    "scripts": "application.js",
+    "assets": ["public/**/*", "views/**/*", "cache/"],
+    "outputPath": "dist"
+  },
   "dependencies": {
     "batch-promise": "1.0.0",
     "body-parser": "1.18.3",

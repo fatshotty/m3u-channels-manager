@@ -6,7 +6,7 @@ config.json
 node_modules/
 yarn.lock
 package-lock.json
-
+dist/
 .env
 public/js/epg_old.js
 
