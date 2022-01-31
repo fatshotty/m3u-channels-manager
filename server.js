@@ -128,6 +128,10 @@ App.use( (req, res, next) => {
 
   next();
 
+});
+
+App.get('/online', (req, res, next) => {
+  res.status(204).end();
 })
 
 

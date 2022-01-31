@@ -327,10 +327,18 @@ Router.use('/', (req, res, next) => {
   let old_end = res.end;
   res.end = function(data, encoding, callback) {
 
+    let ts = new Date( Date.now() );
+    ts.setMilliseconds(0);
+
+    let usingCache = ( req.CACHE_KEY && res.statusCode < 300 && res.statusCode != 204 && arguments.length > 0 );
+    if (usingCache) {
+      res.set('last-modified', ts.toUTCString() );
+    }
+
     let ret = old_end.apply(res, arguments);
 
-    if ( req.CACHE_KEY && res.statusCode < 300 && res.statusCode != 204 && arguments.length > 0 ) {
-      CacheRouter.set(req.CACHE_KEY, [res.get('content-type'),data].join('|||'));
+    if (usingCache) {
+      CacheRouter.set(req.CACHE_KEY, [ ts.getTime(), res.get('content-type'), data].join('|||') );
     } else {
       Log.info(`Response will not store in cache: ${req.CACHE_KEY} - ${res.statusCode} - ${arguments.length}`)
     }

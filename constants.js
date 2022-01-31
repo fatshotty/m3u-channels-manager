@@ -20,7 +20,8 @@ const DEFAULT_CONFIG = () => {
       "Enabled": true,
       "StreamEnabled": true,
       "RewriteUrl": "",
-      "Tags": []
+      "Tags": [],
+      "ExternalScript": ""
     }],
     "Port": global.Argv.port || 3000,
     "SocketPort": global.Argv.socketport || 14332,
