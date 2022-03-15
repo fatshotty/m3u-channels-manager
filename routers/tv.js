@@ -451,7 +451,7 @@ Router.get('/all/groups/merge.:format?', CacheRouter.get, (req, res, next) => {
   });
 
   let m3us = M3UList.filter(
-    (m) => !!configM3Us.find( (_m) => _m.Name == m.Name && _m.Enabled )
+    (m) => !!configM3Us.find( (_m) => _m.Name == m.Name && (_m.Enabled || req.IS_ADMIN) )
     ).map(m => ({m3u: m, g: req.query[m.Name]})).filter(s => !!s.g).map((s) => {
       let groups = Array.isArray(s.g) ? s.g : s.g.split(',');
       return {m3u: s.m3u, g: s.m3u.groups.filter(g => groups.indexOf('*') > -1 || groups.indexOf(g.Id) > -1) };   //    groups.filter(g => !!s.m3u.getGroupById( g ))}
