@@ -116,11 +116,12 @@ App.use( (req, res, next) => {
 
   req.IS_ADMIN = false;
 
-  let ADMIN_TOKEN = process.env.ADMIN_TOKEN;
-  if  ( ADMIN_TOKEN ) {
+  let WHOLE_TOKEN = process.env.WHOLE_TOKEN;
+  if  ( WHOLE_TOKEN ) {
+    let tokens = WHOLE_TOKEN.split(',').map(t => t.trim());
     let header = req.get('x-admin-token');
     let query = req.query.apikey;
-    req.IS_ADMIN = (header || query) === ADMIN_TOKEN;
+    req.IS_ADMIN = tokens.includes(header || query);
     if ( req.IS_ADMIN ) {
       Log.info(`request from admin token ${req.url}`);
     }
