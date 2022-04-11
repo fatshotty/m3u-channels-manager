@@ -4,7 +4,8 @@
   "description": "M3U channels list splitter and serves channel links",
   "main": "application.js",
   "scripts": {
-    "watch": "webpack --config webpack-config.js"
+    "watch": "webpack --config webpack-config.js",
+    "start": "node application.js $@"
   },
   "repository": {
     "type": "git",
