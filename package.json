@@ -30,7 +30,7 @@
     "express-basic-auth": "1.2.0",
     "ftp-srv": "4.4.0",
     "jquery": "3.4.1",
-    "moment": "2.24.0",
+    "moment": "2.29.2",
     "node-gzip": "1.1.2",
     "node-html-parser": "1.1.16",
     "popper.js": "1.15.0",
