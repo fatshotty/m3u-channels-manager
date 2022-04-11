@@ -143,7 +143,7 @@ function loadRouters() {
 
   if ( Argv.serve ) {
     Server = require('http').createServer(App);
-    if ( !Argv.ro ) {
+    if ( !Argv.ro && String(Config.SocketPort) !== "0" ) {
       const IO = require('socket.io')(Config.SocketPort || 14432);
       require('./socket-io')(IO, Argv.debug ? 'debug' : undefined);
     }
