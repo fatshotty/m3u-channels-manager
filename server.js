@@ -95,21 +95,21 @@ App.use( BodyParser.urlencoded({ extended: false }) );
 App.use( BodyParser.json({ extended: false }) );
 App.use( Express.urlencoded({ extended: false }) );
 
-App.use( (err, req, res, next) => {
-  Log.error(`Error got in request: ${req.originalUrl} ${err}`);
-  Log.error( JSON.stringify(err.stack, null, 2) );
-  next(err);
-})
-
 if ( Argv.ro ) {
   App.use( (req, res, next) => {
     if ( req.method === 'GET' ) {
       next();
     } else {
-      next(`Cannot perform method`);
+      next(`Cannot perform method, ${req.method.toUpperCase()} ${req.url}`);
     }
   })
 }
+
+App.use( function(error, req, res, next) {
+  Log.error(`Error got in request: ${req.originalUrl} ${error}`);
+  Log.error( JSON.stringify(error.stack, null, 2) );
+  next(error);
+});
 
 
 App.use( (req, res, next) => {

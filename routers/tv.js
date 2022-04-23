@@ -19,7 +19,7 @@ const EPG = require('../modules/epg');
 const Log = Utils.Log;
 
 const MOUNTH_PATH = '/tv';
-let DOMAIN_URL = `http://${Config.LocalIp}`; // `:${Config.Port}`;
+let DOMAIN_URL = `${process.env.PROXY_PROTOCOL || 'http'}://${Config.LocalIp}`; // `:${Config.Port}`;
 
 let M3UList = [];
 
