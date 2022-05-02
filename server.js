@@ -103,14 +103,16 @@ if ( Argv.ro ) {
       next();
     } else {
       res.status(400);
-      next(`Cannot perform method, ${req.ip} ${req.method.toUpperCase()} ${req.url} - ${JSON.stringify(req.headers)}`);
+      next( `Cannot perform method due to RO setting`);
     }
   })
 }
 
 App.use( function(error, req, res, next) {
-  Log.error(`Error got in request: ${req.originalUrl} ${error}`);
-  Log.error( JSON.stringify(error.stack, null, 2) );
+  Log.error(`${error} - ${req.ip} ${req.method.toUpperCase()} ${req.url} - ${JSON.stringify(req.headers)}`);
+  if ( error.stack ) {
+    Log.error( JSON.stringify(error.stack, null, 2) );
+  }
   next(error);
 });
 
