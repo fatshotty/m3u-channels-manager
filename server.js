@@ -39,6 +39,8 @@ const OS = require('os');
 const BodyParser = require('body-parser');
 const CORS = require('cors')
 
+App.set('trust proxy', true)
+
 App.disable('x-powered-by');
 
 App.set('view engine', 'pug');
