@@ -100,7 +100,8 @@ if ( Argv.ro ) {
     if ( req.method === 'GET' ) {
       next();
     } else {
-      next(`Cannot perform method, ${req.method.toUpperCase()} ${req.url}`);
+      res.status(400);
+      next(`Cannot perform method, ${req.ip} ${req.method.toUpperCase()} ${req.url} - ${JSON.stringify(req.headers)}`);
     }
   })
 }
