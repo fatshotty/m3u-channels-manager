@@ -337,10 +337,10 @@ Router.use('/', (req, res, next) => {
 
     let ret = old_end.apply(res, arguments);
 
-    if (usingCache) {
+    if (usingCache && data) {
       CacheRouter.set(req.CACHE_KEY, [ ts.getTime(), res.get('content-type'), data].join('|||') );
     } else {
-      Log.info(`Response will not store in cache: ${req.CACHE_KEY} - ${res.statusCode} - ${arguments.length}`)
+      Log.info(`Response will not store in cache: ${req.CACHE_KEY} - ${res.statusCode} - ${arguments.length} (${!!data})`)
     }
 
     return ret;
