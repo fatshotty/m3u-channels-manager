@@ -102,7 +102,7 @@ if ( Argv.ro ) {
     if ( req.method === 'GET' ) {
       next();
     } else {
-      res.status(400);
+      res.status(405);
       next( `Cannot perform method due to RO setting`);
     }
   })
