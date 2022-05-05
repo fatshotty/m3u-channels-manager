@@ -125,8 +125,9 @@ App.use( (req, res, next) => {
   if  ( WHOLE_TOKEN ) {
     let tokens = WHOLE_TOKEN.split(',').map(t => t.trim());
     let header = req.get('x-admin-token');
+    let header_2 = req.get('x-api-key');
     let query = req.query.apikey;
-    req.IS_ADMIN = tokens.includes(header || query);
+    req.IS_ADMIN = tokens.includes(header || header_2 || query);
     if ( req.IS_ADMIN ) {
       Log.info(`request from admin token ${req.url}`);
     }
