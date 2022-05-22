@@ -29,7 +29,7 @@
     "express": "4.16.3",
     "express-basic-auth": "1.2.0",
     "ftp-srv": "4.4.0",
-    "jquery": "3.4.1",
+    "jquery": "3.5.0",
     "moment": "2.24.0",
     "node-gzip": "1.1.2",
     "node-html-parser": "1.1.16",
