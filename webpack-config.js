@@ -7,7 +7,8 @@ module.exports = {
     "home": "./public/js/home.js",
     "epg": "./public/js/epg.js",
     "m3u": "./public/js/m3u.js",
-    "m3u-manager": "./public/js/m3u-manager.js"
+    "m3u-manager": "./public/js/m3u-manager.js",
+    "m3u-manager2": "./public/js/m3u-manager2.js"
   },
 
   devtool: '#eval',

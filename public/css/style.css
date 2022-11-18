@@ -40,6 +40,14 @@ a[href=""], a:not([href]) {
   margin-left: 10px;
 }
 
+.margin-top {
+  margin-top: 10px;
+}
+
+.margin-bottom {
+  margin-bottom: 10px;
+}
+
 .disabled {
   opacity: 0.5;
 }
@@ -227,3 +235,5 @@ body.read-only .page {
 .sidebar-item .sidebar-nav {
   padding-left: 15px;
 }
+
+

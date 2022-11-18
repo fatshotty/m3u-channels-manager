@@ -1,0 +1,15 @@
+.streams-wrapper
+  .row.stream-item.hoverable.clickable(v-for="stream, index in streams")
+    .col-1
+    .col-1
+      input(type="radio" :name="channel.name" :value="index" v-model="selectedStream")
+      small.margin-left [{{stream.q}}]
+    .col-4
+      span.name {{stream.CHNA}}
+    .col-5
+      span {{stream.GNA}}
+    .col-1
+      button.btn.btn-outline-danger.btn-sm(@click="removeStream(index)") X
+
+  .row
+    button.btn.btn-outline-info.btn-sm(@click="addStream(index)") Add

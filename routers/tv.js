@@ -7,6 +7,7 @@ const Request = Utils.request;
 const M3UK = require('../modules/m3u').M3U;
 const FtpServer = require('../ftpserver');
 // const WebdavServer = require('../webdav-server');
+const ChannelList = require('../mocks/channels.json');
 
 const CacheRouter = require('./cache_router');
 
@@ -188,7 +189,10 @@ async function loadPersonalM3UFile(path, forceSave) {
   let m3uConfig = Config.M3U.find(m => m.UUID == basename);
   if ( m3uConfig ) {
     let m3u = M3UList.find(m => m3uConfig.Name == m.Name);
-    if ( m3u && FS.existsSync(path) ) {
+    if ( m3u ) {
+      if ( ! FS.existsSync(path) ) {
+        FS.writeFileSync(path, JSON.stringify(ChannelList, null, 2), {encoding: 'utf-8'});
+      }
       personalData = FS.readFileSync(path, {encoding: 'utf-8'});
       try {
         personalData = JSON.parse(personalData);
@@ -348,7 +352,12 @@ Router.use('/', (req, res, next) => {
   };
 
   next();
-})
+});
+
+Router.get('/:list_name/channel-list', (req, res, next) => {
+  res.set('content-type', 'application/json');
+  res.end( JSON.stringify(ChannelList) );
+});
 
 
 Router.get('/all.json', CacheRouter.get, (req, res, next) => {
@@ -998,54 +1007,109 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
   fulldomain = fulldomain || m3uConfig.UseFullDomain;
 
-  let result_channels = [];
-  if ( m3u.Personal && Object.keys(m3u.Personal).length ) {
-    let group_keys = Object.keys(m3u.Personal);
+  let result_channels = m3u.Personal
+    .filter( ch => ch.enabled )
+    .sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1)
+    .map( (ch, index) => {
 
-    for ( let grp_key of group_keys ) {
-      let personalChannels = m3u.Personal[ grp_key ];
-      let group = m3u.getGroupById( grp_key );
-      if ( group ) {
-        for ( let personalChannel of personalChannels) {
-          let personalId = personalChannel.ID;
-          let channel = group.getChannelById(personalId);
-          if ( ! channel ) {
-            Log.warn(`no channel '${personalId}' found in '${grp_key}' (${m3uConfig.Name})`);
-            continue;
-          }
+      const stream = ch.streams && ch.streams[0];
 
-          let temp_ch = channel.clone();
-
-          temp_ch.__map_to__ = personalChannel.MapTo;
-
-          if ( ! personalChannel.ReuseID ) {
-            temp_ch.TvgId = personalChannel.MapTo;
-          }
-          temp_ch.TvgName = personalChannel.MapTo;
-          temp_ch.Name = personalChannel.MapTo;
-          temp_ch.Number = personalChannel.Number;
-
-          let temp_redirect = temp_ch.Redirect;
-
-          if ( temp_redirect ) {
-            // let url_paths = temp_redirect.split('?');
-            // url_paths.shift();
-            if ( fulldomain ) {
-              temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
-            } else {
-              temp_redirect = `${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
-            }
-
-            temp_ch.Redirect = temp_redirect;
-          }
-
-          result_channels.push( temp_ch );
-
-        }
+      if ( !stream ) {
+        Log.info(`no stream found for channel ${ch.chname}`);
+        return;
       }
-    }
 
-  }
+      let group = m3u.getGroupById( stream.GID );
+      if (!group) {
+        Log.warn(`no group found by id: ${stream.GID}`);
+        return;
+      }
+
+      let channel = group.getChannelById(stream.CHID);
+      if (!channel) {
+        Log.warn(`no channel found by id: ${stream.CHID} in group ${stream.GID}`);
+        return;
+      }
+
+      let temp_ch = channel.clone();
+
+      temp_ch.__map_to__ = ch.remap;
+
+      if ( ! ch.reuseid ) {
+        temp_ch.TvgId = ch.remap;
+      }
+      temp_ch.TvgName = ch.remap;
+      temp_ch.Name = ch.remap;
+      temp_ch.Number = ch.chno;
+
+      let temp_redirect = temp_ch.Redirect;
+
+      if ( temp_redirect ) {
+        // let url_paths = temp_redirect.split('?');
+        // url_paths.shift();
+        if ( fulldomain ) {
+          temp_redirect = encodeURI(`${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}&group=${temp_ch.GroupId}`);
+        } else {
+          temp_redirect = encodeURI(`${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}&group=${temp_ch.GroupId}`);
+        }
+
+        temp_ch.Redirect = temp_redirect;
+      }
+
+      return temp_ch;
+
+    })
+    .filter(Boolean);
+
+
+
+  // if ( m3u.Personal && Object.keys(m3u.Personal).length ) {
+  //   let group_keys = Object.keys(m3u.Personal);
+
+  //   for ( let grp_key of group_keys ) {
+  //     let personalChannels = m3u.Personal[ grp_key ];
+  //     let group = m3u.getGroupById( grp_key );
+  //     if ( group ) {
+  //       for ( let personalChannel of personalChannels) {
+  //         let personalId = personalChannel.ID;
+  //         let channel = group.getChannelById(personalId);
+  //         if ( ! channel ) {
+  //           Log.warn(`no channel '${personalId}' found in '${grp_key}' (${m3uConfig.Name})`);
+  //           continue;
+  //         }
+
+  //         let temp_ch = channel.clone();
+
+  //         temp_ch.__map_to__ = personalChannel.MapTo;
+
+  //         if ( ! personalChannel.ReuseID ) {
+  //           temp_ch.TvgId = personalChannel.MapTo;
+  //         }
+  //         temp_ch.TvgName = personalChannel.MapTo;
+  //         temp_ch.Name = personalChannel.MapTo;
+  //         temp_ch.Number = personalChannel.Number;
+
+  //         let temp_redirect = temp_ch.Redirect;
+
+  //         if ( temp_redirect ) {
+  //           // let url_paths = temp_redirect.split('?');
+  //           // url_paths.shift();
+  //           if ( fulldomain ) {
+  //             temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
+  //           } else {
+  //             temp_redirect = `${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(personalChannel.MapTo)}&group=${temp_ch.GroupId}`;
+  //           }
+
+  //           temp_ch.Redirect = temp_redirect;
+  //         }
+
+  //         result_channels.push( temp_ch );
+
+  //       }
+  //     }
+  //   }
+
+  // }
 
 
   if ( direct ) {
@@ -1068,11 +1132,11 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
   }
 
 
-  result_channels.sort( (a, b) => {
-    let n_a = parseInt(a.Number || 0, 10);
-    let n_b = parseInt(b.Number || 0, 10);
-    return n_a > n_b ? 1 : -1;
-  });
+  // result_channels.sort( (a, b) => {
+  //   let n_a = parseInt(a.Number || 0, 10);
+  //   let n_b = parseInt(b.Number || 0, 10);
+  //   return n_a > n_b ? 1 : -1;
+  // });
 
   let resultm3u = result_channels.map( c => c.toM3U() );
 
@@ -1115,7 +1179,7 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
 
   } else if ( !Argv.ro ) {
     // html or other format
-    res.render('m3u/manager', {M3UList: req.M3U, Channels: EPG.GroupedChannels});
+    res.render('m3u/manager2', {M3UList: req.M3U, Channels: EPG.GroupedChannels});
   } else {
     next(`cannot perform action`);
   }
@@ -1126,32 +1190,65 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
 
 async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id, group) {
   Log.info(`MappedLive streaming requested for '${req_chl_id}' of '${group}'`);
-  if ( ! m3u.Personal || ! Object.keys(m3u.Personal).length ) {
+  if ( ! m3u.Personal || ! m3u.Personal.length ) {
     Log.error(`No map found, it must be set from /tv/personal`);
     throw new Error(`No mapped channels have been set`);
   }
 
-  let groups_keys = Object.keys(m3u.Personal);
 
-  if ( group && (group in m3u.Personal) ) {
-    Log.debug(`Searching map for '${req_chl_id}' in '${group}'`);
-    groups_keys = [ group ];
+  const channel = m3u.Personal.find(ch => ch.remap == req_chl_id);
+
+  if ( !channel ) {
+    Log.error(`no channel found by name: ${req_chl_id}`);
+    throw new Error(`no channel found by name: ${req_chl_id}`);
+  } else if (!channel.enabled) {
+    Log.error(`channel ${req_chl_id} is not enabled`);
+    throw new Error(`channel ${req_chl_id} is not enabled`);
+  } else if ( !channel.streams || channel.streams.length <= 0) {
+    Log.error(`channel ${req_chl_id} has no streams`);
+    throw new Error(`channel ${req_chl_id} has no streams`);
   }
 
+  const stream = channel.streams[0];
 
-  for ( let grp_key of groups_keys ) {
-    Log.debug(`Searcing in group: '${grp_key}'`);
-    let chls = m3u.Personal[ grp_key ];
+  const chGroup = m3u.getGroupById( stream.GID );
 
-    for ( let chl of chls ) {
-      if ( chl.MapTo == req_chl_id ) {
-        Log.info(`found channels '${chl.ID}' by '${req_chl_id}' of '${grp_key}'`);
-        return await getStreamUrlOfChannel(m3u, m3uConfig, chl.ID, grp_key);
-      }
-    }
+  if ( !chGroup ) {
+    Log.error(`no group found by ID: ${stream.GID}`);
+    throw new Error(`no group found by ID: ${stream.GID}`);
   }
 
-  throw `No channel found searching for '${req_chl_id}' in '${group}'`;
+  const chStream = chGroup.getChannelById( stream.CHID );
+
+  if ( !chStream ) {
+    Log.error(`no channel found by ID: ${stream.CHID} in group ${stream.GID}`);
+    throw new Error(`no channel found by ID: ${stream.CHID} in group ${stream.GID}`);
+  }
+
+  Log.info(`found channels '${chStream.Id}' by '${req_chl_id}' of '${stream.GID}'`);
+  return await getStreamUrlOfChannel(m3u, m3uConfig, chStream.Id, stream.GID);
+
+  // let groups_keys = Object.keys(m3u.Personal);
+
+  // if ( group && (group in m3u.Personal) ) {
+  //   Log.debug(`Searching map for '${req_chl_id}' in '${group}'`);
+  //   groups_keys = [ group ];
+  // }
+
+
+  // for ( let grp_key of groups_keys ) {
+  //   Log.debug(`Searcing in group: '${grp_key}'`);
+  //   let chls = m3u.Personal[ grp_key ];
+
+  //   for ( let chl of chls ) {
+  //     if ( chl.MapTo == req_chl_id ) {
+  //       Log.info(`found channels '${chl.ID}' by '${req_chl_id}' of '${grp_key}'`);
+  //       return await getStreamUrlOfChannel(m3u, m3uConfig, chl.ID, grp_key);
+  //     }
+  //   }
+  // }
+
+  // throw `No channel found searching for '${req_chl_id}' in '${group}'`;
 }
 
 
