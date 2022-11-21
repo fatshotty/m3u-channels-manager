@@ -21,6 +21,9 @@ const EPG = EpgModule;
 
 const MOUNT_PATH = '/epg';
 
+
+const CHANNELS_LIST_FILE = Path.join( Config.Path , 'channels_list.json' );
+
 const EPG_CACHE_FILE = Path.join( Config.Path , 'epg_cache.json' );
 const EPG_CACHE_FILE_ASSOCIATIONS = Path.join( Config.Path , 'epg_cache_associations.json' );
 
@@ -203,6 +206,52 @@ function updateAndReturnEPG(shift, format, details, association, cb) {
     }
   });
 }
+
+
+async function extractChannelList() {
+  const channels = {};
+  const epg = EPG.EPG;
+  for ( const mod in epg ) {
+    if ( epg.hasOwnProperty( mod ) ) {
+      const chls = epg[ mod ];
+      for ( let ch of chls ) {
+        let name = ch.Name;
+        const num = ch.Number;
+
+        name = name.replace( /(\s?\+\d+)?(\s?HD)?$/i, '' );
+        if ( name.toLowerCase() in channels ) {
+          // channel already present in list
+          continue;
+        }
+
+        channels[ name.toLowerCase() ] = {
+          // module: mod,
+          chno: num,
+          chname: name
+        };
+      }
+    }
+  }
+  return Object.values(channels);
+}
+
+
+Router.post('/channels/names', async (req, res, next) => {
+  const result = await extractChannelList();
+
+
+  FS.writeFileSync( CHANNELS_LIST_FILE, JSON.stringify(result, null, 2), {encoding: 'utf-8'});
+
+  if ( result.length ) {
+    res.status(201);
+    res.set('content-type', 'application/json');
+    res.end( JSON.stringify(result) );
+  } else {
+    next('no channels associations found');
+  }
+
+});
+
 
 Router.get('/channels/update', (req, res, next) => {
   if ( Argv.ro ) {

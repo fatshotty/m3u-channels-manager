@@ -1,22 +1,22 @@
-.channel-item(:data-channel-id="channel.chname" :class="{'disabled': !channel.enabled}")
+.channel-item(:data-channel-id="channel.chname" :class="{'disabled': !isEnabled}")
   .row.hoverable.channel-item
     .col-3.name
       span.clickable(v-if="isOpened" @click="openClose()") -
       span.clickable(v-else="" @click="openClose()") +
-      input.margin-left(type="checkbox" v-model="channel.enabled")
+      input.margin-left(type="checkbox" v-model="isEnabled")
       span {{channel.chname}}
 
     .col-2.tvch
-      input(type="number" v-model="channel.chno" placeholder="Numero" v-if="!isEdit")
+      input(type="number" v-model="channel_num" placeholder="Numero" v-if="!isEdit")
 
 
-    .col-5(v-if="channel.enabled")
+    .col-6
+      input(type="checkbox" v-model="channel.reuseID")
+      input.margin-left(type="text" v-model="channel.remap" v-if="!isEdit" :disabled="channel.reuseID")
+      button.btn.btn-outline-secondary.btn-sm(v-if="!isEdit && !channel.reuseID" @click="edit()") Modifica
 
-      input(type="text" v-model="channel.remap" v-if="!isEdit")
-      button.btn.btn-outline-secondary.btn-sm(v-if="!isEdit" @click="edit()") Modifica
 
-
-      select(v-if="isEdit" v-model="channel.remap")
+      select(v-if="isEdit" v-model="channel_ref")
         option(value="")
         optgroup(v-for="chls, grp in EPG" :label="grp")
           option(v-for="chl in chls" :value="chl.IdEpg") {{chl.IdEpg}} - {{chl.Name}}
@@ -24,6 +24,6 @@
       button.btn.btn-outline-info.btn-sm(v-if="isEdit" @click="cancelEdit()") Annulla
 
 
-  .stream-container.margin-top(v-if="isOpened")
-    Streams(:channel="channel" :streams="channel.streams")
+  .stream-container.margin-top
+    Streams(:channel="channel" :streams="channel.streams" :isShown="isOpened")
     hr(v-if="isOpened")

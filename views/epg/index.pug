@@ -4,7 +4,8 @@ block content
   #epg-page
     h3 Electronic Program Guide
       if !RO
-        button#update-chl.btn.btn-primary.btn-sm(@click="updateChannels" :disabled="executing" title="Aggiorna la lista canali") Aggiorna lista canali
+        button#update-chl.btn.btn-primary.btn-sm(@click.prevent="updateChannels" :disabled="executing" title="Aggiorna la lista canali") Aggiorna lista canali
+        button#build-chl.btn.btn-outline-primary.btn-sm(@click.prevent="buildChannels" :disabled="executing" title="Estrai la lista canali") Estrai lista canali
     small Qui puoi visualizzare la lista canali del palinsesto tv
 
     p Canali attuali: {{channels_count}}
@@ -23,7 +24,7 @@ block content
               input#full.form-control.form-control-sm(type="checkbox" v-model="fullDetailed" title="Indicare se caricare il dettaglio di ogni programma" )
               |  Dettagliato?
         if !RO
-          button.btn.btn-primary(@click="updateEpg()" :disabled="executing" title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
+          button.btn.btn-primary(@click.prevent="updateEpg()" :disabled="executing" title="Calcola EPG e genera nuovo XMLTV") Calcola EPG
 
       hr
 

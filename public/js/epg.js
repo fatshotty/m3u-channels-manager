@@ -153,6 +153,25 @@ window.VM = new Vue({
   },
   methods: {
 
+
+    buildChannels() {
+      const rs = confirm(`
+        Verrà estratta la lista canali dall'EPG per usarla nelle liste canali.
+        Continuare?
+      `);
+      if ( rs ) {
+        this.executing = true;
+        $.post(`${PATH}/channels/names`).then( () => {
+          alert('Lista canali creata con successo');
+          this.executing = false;
+          window.location.reload();
+        }, () => {
+          alert('Si è verificato un errore');
+          this.executing = false;
+        });
+      }
+    },
+
     updateChannels() {
       const rs = confirm(`
         Aggiornando la lista canali verranno perse tutte le informazioni sul palinsesto dei programmi.

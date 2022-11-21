@@ -39,6 +39,9 @@ const VM = new Vue({
   },
 
   methods: {
+    selectAll() {
+      this.$emit('select-all');
+    },
     unselectAll() {
       this.$emit('unselect-all');
     },
@@ -48,22 +51,23 @@ const VM = new Vue({
     },
 
     saveAll() {
-      let result = {};
-      for ( let comp_gr of this.$children ) {
-        let gr_componentTag = comp_gr.$options._componentTag.toLowerCase();
-        if ( gr_componentTag == 'group' ) {
-          let chnls = comp_gr.getSelectedChannels();
+      let result = [];
+      for ( let comp_ch of this.$children ) {
+        let gr_componentTag = comp_ch.$options._componentTag.toLowerCase();
+        if ( gr_componentTag == 'channel' ) {
+          // let chnls = comp_ch.getSelectedChannels();
 
-          if ( Object.keys(chnls).length > 0 ) {
-            result[ comp_gr.group.id ] = chnls;
-          }
+          // if ( Object.keys(chnls).length > 0 ) {
+          //   result[ comp_ch.group.id ] = chnls;
+          // }
+          result.push( comp_ch.getChannelData() );
         }
       }
-      if ( Object.keys(result).length <= 0  ) {
-        if ( ! confirm('Nessun canale impostato, procedo ugualmente?') ) {
-          return;
-        }
-      }
+      // if ( Object.keys(result).length <= 0  ) {
+      //   if ( ! confirm('Nessun canale impostato, procedo ugualmente?') ) {
+      //     return;
+      //   }
+      // }
 
       $.ajax({
         type: 'POST',
@@ -79,6 +83,8 @@ const VM = new Vue({
         },
         contentType: "application/json"
       });
+
+      console.log(result);
 
     }
   }
@@ -107,18 +113,21 @@ Vue.component('Channel', {
 
   created() {
 
-    if ( this.selectedId && this.selectedId.MapTo ) {
-      this.channel_ref = `${this.selectedId.MapTo}`;
-      this.channel_num = `${this.selectedId.Number}`;
-      this.selected_epg_str = `${this.selectedId.MapTo}`;
-      this.reuseTvgID = this.selectedId.ReuseID;
-    } else {
-      this.channel_ref = this.channel.Name;
-      this.channel_num = this.channel.Number;
-      this.reuseTvgID = true
-    }
+    this.isEnabled = !this.channel.enabled ? false : !!this.channel.streams.find(s => s.selected);
 
-    this.isEnabled = !!this.selectedId || this.defaultEnabled;
+    this.channel_ref = this.channel.remap;
+    this.channel_num = this.channel.chno;
+
+    // if ( this.selectedId && this.selectedId.MapTo ) {
+    //   this.channel_ref = `${this.selectedId.MapTo}`;
+    //   this.channel_num = `${this.selectedId.Number}`;
+    //   this.selected_epg_str = `${this.selectedId.MapTo}`;
+    //   this.reuseTvgID = this.selectedId.ReuseID;
+    // } else {
+    //   this.channel_ref = this.channel.Name;
+    //   this.channel_num = this.channel.Number;
+    //   this.reuseTvgID = true
+    // }
 
     VM.$on('unselect-all', () => {
       console.log('global unselect')
@@ -141,19 +150,19 @@ Vue.component('Channel', {
 
   watch: {
 
-    selected_epg_str: function(nvalue) {
-      let groups_keys = Object.keys(Channels);
-      for (let group of groups_keys ) {
-        let chls = Channels[ group ];
-        for ( let chl of chls ) {
-          if ( chl.IdEpg === nvalue ) {
-            this.selectedEPG = chl;
-            return;
-          }
-        }
-      }
-      this.selectedEPG = null;
-    }
+    // selected_epg_str: function(nvalue) {
+    //   let groups_keys = Object.keys(Channels);
+    //   for (let group of groups_keys ) {
+    //     let chls = Channels[ group ];
+    //     for ( let chl of chls ) {
+    //       if ( chl.IdEpg === nvalue ) {
+    //         this.selectedEPG = chl;
+    //         return;
+    //       }
+    //     }
+    //   }
+    //   this.selectedEPG = null;
+    // }
   },
 
 
@@ -177,18 +186,65 @@ Vue.component('Channel', {
       this.isEdit = true;
     },
     saveEdit() {
-      if ( ! this.selectedEPG ) {
-        this.channel_ref = '';
-        this.channel_nul = '';
-      } else {
-        this.channel_ref = this.selectedEPG.IdEpg;
-        this.channel_num = this.selectedEPG.Number;
-      }
 
+      const chref = this.channel_ref;
+      const chno = this.channel_num;
+
+      if ( ! this.channel_ref ) {
+        this.channel.remap = '';
+        this.channel.chno = 0;
+      } else {
+
+        for (let grp in Channels ) {
+          if ( Channels.hasOwnProperty(grp) ) {
+            const chls = Channels[grp];
+            for ( let chl of chls ) {
+              if ( chl.IdEpg === chref ) {
+                this.channel.remap = chl.IdEpg;
+                this.channel.chno = chl.Number;
+                break;
+              }
+            }
+          }
+        }
+
+      }
       this.cancelEdit();
+
     },
     cancelEdit() {
       this.isEdit = false;
+      this.channel_ref = this.channel.remap;
+      this.channel_num = this.channel.chno;
+    },
+
+    getChannelData() {
+      const streams = this.getStreamsByChannel();
+      return {
+        "enabled": this.isEnabled && !!streams.find(s => s.selected),
+        "reuseID": this.channel.reuseID,
+        "chno": this.channel.chno,
+        "remap": this.channel.remap,
+        "chname": this.channel.chname,
+        "streams": this.getStreamsByChannel()
+      }
+    },
+
+    getStreamsByChannel() {
+      let result = [];
+      for ( let comp_streams of this.$children ) {
+        let ch_componentTag = comp_streams.$options._componentTag.toLowerCase();
+        if ( ch_componentTag == 'streams' ) {
+          // result.push({
+          //   "ID": comp_streams.channel.Id,
+          //   "MapTo": comp_streams.channel_ref || comp_streams.channel.Id,
+          //   "Number": comp_streams.channel_num || 0,
+          //   "ReuseID": comp_streams.reuseTvgID
+          // });
+          return comp_streams.getStreamsData()
+        }
+      }
+      return result;
     }
   }
 
@@ -200,7 +256,7 @@ Vue.component('Streams', {
 
   template: streams_template(),
 
-  props: ['channel', 'streams'],
+  props: ['channel', 'streams', 'isShown'],
 
   data: function() {
     return {
@@ -232,12 +288,19 @@ Vue.component('Streams', {
     },
     addStream() {
       this.streams.push({
+        "custom": true,
         "q": "standard",
         "selected": false,
         "GID": "",
         "GNA": "",
         "CHID": "",
         "CHNA": ""
+      })
+    },
+    getStreamsData() {
+      return this.streams.map((s, i) => {
+        s.selected = i === this.selectedStream;
+        return s;
       })
     }
   }
