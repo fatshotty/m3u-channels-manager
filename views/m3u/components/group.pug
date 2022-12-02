@@ -10,5 +10,5 @@
       span.counter(title="espandi lista")
         small() {{group.count}} canali
   .channels-container(:class="{'hidden': !chlShown}")
-    Channel(v-for="channel, index in channels" :channel="channel" :key="channel.Id + index" :selectedId="channelSelectedData(channel.Id)")
+    Channel(v-for="channel, index in channels" :channel="channel" :key="channel.Id + index" )
     hr

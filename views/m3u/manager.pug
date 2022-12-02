@@ -18,7 +18,7 @@ block content
           button.btn.btn-primary.btn-sm(@click="saveAll()" style="float: right") Salva tutto
 
         .groups-container
-          Group(v-for="group in groups" :group="group" :key="group.id" :opened="isGroupOpened(group.id)" )
+          Group(v-for="group in groups" :group="group" :key="group.id" )
 
 
 

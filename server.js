@@ -93,9 +93,9 @@ App.use( (req, res, next) => {
 
 
 App.use( CORS() );
-App.use( BodyParser.urlencoded({ extended: false }) );
-App.use( BodyParser.json({ extended: false }) );
-App.use( Express.urlencoded({ extended: false }) );
+App.use( BodyParser.urlencoded({limit: '50mb', extended: false }) );
+App.use( BodyParser.json({limit: '50mb', extended: false }) );
+// App.use( Express.urlencoded({ extended: false }) );
 
 if ( Argv.ro ) {
   App.use( (req, res, next) => {
@@ -154,6 +154,8 @@ function loadRouters() {
       require('./socket-io')(IO, Argv.debug ? 'debug' : undefined);
     }
   }
+
+  // require('./routers/channels')
 
 
   if ( Argv.m3u ) {

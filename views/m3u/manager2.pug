@@ -2,7 +2,7 @@ extend ../layout
 
 block content
   #m3u-manager-page
-    h3 Gestore Canali TV
+    h3 Gestore Canali TV (advanced)
     small
       | Qui puoi creare la tua lista personale
       br
@@ -17,6 +17,8 @@ block content
           button.btn.btn-secondary.btn-sm(@click="selectAll()") Seleziona tutto
           button.btn.btn-secondary.btn-sm(@click="unselectAll()") Deseleziona tutto
           button.btn.btn-primary.btn-sm(@click="saveAll()" style="float: right") Salva tutto
+          button.btn.btn-outline-primary.btn-sm(@click="makeChannelsAssociations()" style="float: right") Carica flussi
+
 
         //- .groups-container
         //-   Group(v-for="group in groups" :group="group" :key="group.id" :opened="isGroupOpened(group.id)" )

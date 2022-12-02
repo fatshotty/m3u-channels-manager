@@ -8,7 +8,7 @@ const M3UK = require('../modules/m3u').M3U;
 const FtpServer = require('../ftpserver');
 // const WebdavServer = require('../webdav-server');
 const ChannelList = require('../mocks/channels.json');
-
+const Service = require('../services/merger');
 const CacheRouter = require('./cache_router');
 
 const Chokidar = require('chokidar');
@@ -21,6 +21,8 @@ const Log = Utils.Log;
 
 const MOUNTH_PATH = '/tv';
 let DOMAIN_URL = `${process.env.PROXY_PROTOCOL || 'http'}://${Config.LocalIp}`; // `:${Config.Port}`;
+
+const CHANNELS_LIST_FILE = Path.join( Config.Path , 'channels_list.json' );
 
 let M3UList = [];
 
@@ -191,7 +193,7 @@ async function loadPersonalM3UFile(path, forceSave) {
     let m3u = M3UList.find(m => m3uConfig.Name == m.Name);
     if ( m3u ) {
       if ( ! FS.existsSync(path) ) {
-        FS.writeFileSync(path, JSON.stringify(ChannelList, null, 2), {encoding: 'utf-8'});
+        FS.writeFileSync(path, JSON.stringify([], null, 2), {encoding: 'utf-8'});
       }
       personalData = FS.readFileSync(path, {encoding: 'utf-8'});
       try {
@@ -1048,9 +1050,9 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
         // let url_paths = temp_redirect.split('?');
         // url_paths.shift();
         if ( fulldomain ) {
-          temp_redirect = encodeURI(`${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}&group=${temp_ch.GroupId}`);
+          temp_redirect = encodeURI(`${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}`);
         } else {
-          temp_redirect = encodeURI(`${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}&group=${temp_ch.GroupId}`);
+          temp_redirect = encodeURI(`${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}`);
         }
 
         temp_ch.Redirect = temp_redirect;
@@ -1186,10 +1188,38 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
 
 });
 
+Router.get('/:list_name/old/personal.:format?', async (req, res, next) => {
+  res.render('m3u/manager', {M3UList: req.M3U, Channels: EPG.GroupedChannels});
+});
 
 
-async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id, group) {
-  Log.info(`MappedLive streaming requested for '${req_chl_id}' of '${group}'`);
+
+Router.post('/:list_name/channels', async (req, res, next) => {
+
+  let result = []
+
+  if ( FS.existsSync(CHANNELS_LIST_FILE) ) {
+    const data = FS.readFileSync( CHANNELS_LIST_FILE, 'utf-8');
+    try {
+      result = JSON.parse(data);
+    } catch(e) {
+      return next(e);
+    }
+
+    result = Service.merge(req.M3U.groups, result);
+
+  }
+
+  res.set('content-type', 'application/json');
+  res.end( JSON.stringify(result) );
+  return;
+
+});
+
+
+
+async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id) {
+  Log.info(`MappedLive streaming requested for '${req_chl_id}'`);
   if ( ! m3u.Personal || ! m3u.Personal.length ) {
     Log.error(`No map found, it must be set from /tv/personal`);
     throw new Error(`No mapped channels have been set`);
@@ -1209,7 +1239,7 @@ async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id, group) {
     throw new Error(`channel ${req_chl_id} has no streams`);
   }
 
-  const stream = channel.streams[0];
+  const stream = channel.streams.find(s => s.selected);
 
   const chGroup = m3u.getGroupById( stream.GID );
 
@@ -1264,7 +1294,7 @@ Router.get('/:list_name/personal/live', async (req, res, next) => {
   let pipe = !!req.query.p;
 
   try {
-    let live_channel = await getMappedStreamUrlOfChannel(req.M3U, req.M3UConfig, channel, group);
+    let live_channel = await getMappedStreamUrlOfChannel(req.M3U, req.M3UConfig, channel);
 
     if ( ! pipe ) {
       res.redirect(302, live_channel);

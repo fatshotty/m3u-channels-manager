@@ -39,23 +39,74 @@ const VM = new Vue({
       this.$emit('unselect-all');
     },
 
-    isGroupOpened(id) {
-      return id in PERSONAL
-    },
+    // isGroupOpened(id) {
+    //   return id in PERSONAL
+    // },
+
+    // saveAllOld() {
+    //   let result = {};
+    //   for ( let comp_gr of this.$children ) {
+    //     let gr_componentTag = comp_gr.$options._componentTag.toLowerCase();
+    //     if ( gr_componentTag == 'group' ) {
+    //       let chnls = comp_gr.getSelectedChannels();
+
+    //       if ( chnls.length > 0 ) {
+    //         result[ comp_gr.group.id ] = chnls;
+    //       }
+    //     }
+    //   }
+    //   if ( Object.keys(result).length <= 0  ) {
+    //     if ( ! confirm('Nessun canale impostato, procedo ugualmente?') ) {
+    //       return;
+    //     }
+    //   }
+
+    //   $.ajax({
+    //     type: 'POST',
+    //     url: `${PATH}/${window.M3U.Name}/personal`,
+    //     data: JSON.stringify( result ),
+    //     success: function(data) {
+    //       alert('Salvataggio eseguito correttamente');
+    //       window.location.reload();
+    //     },
+    //     error: function() {
+    //       console.info(arguments);
+    //       alert( `Qualcosa è andato storto, controlla il log` );
+    //     },
+    //     contentType: "application/json"
+    //   });
+
+    // },
 
     saveAll() {
-      let result = {};
+      let result = [];
       for ( let comp_gr of this.$children ) {
         let gr_componentTag = comp_gr.$options._componentTag.toLowerCase();
         if ( gr_componentTag == 'group' ) {
           let chnls = comp_gr.getSelectedChannels();
 
-          if ( Object.keys(chnls).length > 0 ) {
-            result[ comp_gr.group.id ] = chnls;
+
+          for ( let chl of chnls ) {
+            result.push({
+              enabled: true,
+              streams: [{
+                selected: true,
+                q: "standard",
+                GID: comp_gr.group.id,
+                GNA: comp_gr.group.name,
+                CHID: chl.ID,
+                CHNA: chl.Name
+              }],
+              reuseID: chl.ReuseID,
+              chno: chl.Number,
+              remap: chl.MapTo,
+              chname: chl.ID
+            })
           }
+
         }
       }
-      if ( Object.keys(result).length <= 0  ) {
+      if ( result.length <= 0  ) {
         if ( ! confirm('Nessun canale impostato, procedo ugualmente?') ) {
           return;
         }
@@ -86,7 +137,7 @@ Vue.component('Group', {
 
   template: group_template(),
 
-  props: ['group', 'opened'],
+  props: ['group'],
 
   data: function() {
     return {
@@ -96,7 +147,13 @@ Vue.component('Group', {
   },
 
   created() {
-    if ( this.opened ) this.showChannels();
+    // if ( this.opened ) this.showChannels();
+    const found = PERSONAL.find(chl => {
+      return !!chl.streams.find(s => s.selected && (s.GID === this.group.id));
+    });
+    if ( found ) {
+      this.showChannels();
+    }
   },
 
   mounted() {
@@ -109,35 +166,40 @@ Vue.component('Group', {
 
 
   computed: {
-    selectedChannels() {
-      return (PERSONAL && (PERSONAL[ this.group.id ] || [])) || [];
-    }
+    // selectedChannels() {
+    //   return (PERSONAL && (PERSONAL[ this.group.id ] || [])) || [];
+    // }
   },
 
 
   methods: {
 
-    channelSelectedData(chl_id) {
-      let arr = this.selectedChannels;
-      for ( let chl of arr ) {
-        if ( chl.ID == chl_id ) {
-          return chl;
-        }
-      }
-      return null;
+    // channelSelectedData(chl_id) {
+    //   let arr = this.selectedChannels;
+    //   for ( let chl of arr ) {
+    //     if ( chl.ID == chl_id ) {
+    //       return chl;
+    //     }
+    //   }
+    //   return null;
+    // },
+
+
+    loadChannels() {
+      return new Promise( (resolve, reject) => {
+        $.get(`${PATH}/${window.M3U.Name}/list/${this.group.id}.json?`).done( (channels) => {
+          this.channels.splice( 0, this.channels.length, ...channels );
+          resolve( channels );
+        }).catch( () => {
+          reject()
+        });
+      });
     },
 
     showChannels() {
       let p = Promise.resolve();
       if ( this.channels.length <= 0 ) {
-        p = new Promise( (resolve, reject) => {
-          $.get(`${PATH}/${window.M3U.Name}/list/${this.group.id}.json?`).done( (channels) => {
-            this.channels.splice( 0, this.channels.length, ...channels );
-            resolve( channels );
-          }).catch( () => {
-            reject()
-          });
-        });
+        p = this.loadChannels();
       }
 
       return p.then( () => {
@@ -154,6 +216,7 @@ Vue.component('Group', {
           if ( comp_ch.isEnabled ) {
             result.push({
               "ID": comp_ch.channel.Id,
+              "Name": comp_ch.channel.Name,
               "MapTo": comp_ch.channel_ref || comp_ch.channel.Id,
               "Number": comp_ch.channel_num || 0,
               "ReuseID": comp_ch.reuseTvgID
@@ -182,7 +245,7 @@ Vue.component('Channel', {
 
   template: channel_template(),
 
-  props: ['channel', 'selectedId'],
+  props: ['channel'],
 
   data: function() {
     return {
@@ -198,18 +261,30 @@ Vue.component('Channel', {
 
   created() {
 
-    if ( this.selectedId && this.selectedId.MapTo ) {
-      this.channel_ref = `${this.selectedId.MapTo}`;
-      this.channel_num = `${this.selectedId.Number}`;
-      this.selected_epg_str = `${this.selectedId.MapTo}`;
-      this.reuseTvgID = this.selectedId.ReuseID;
+    const ch = PERSONAL.find(chl => chl.chname === this.channel.Id);
+
+    // if ( this.selectedId && this.selectedId.MapTo ) {
+    //   this.channel_ref = `${this.selectedId.MapTo}`;
+    //   this.channel_num = `${this.selectedId.Number}`;
+    //   this.selected_epg_str = `${this.selectedId.MapTo}`;
+    //   this.reuseTvgID = this.selectedId.ReuseID;
+    // } else {
+    //   this.channel_ref = this.channel.Name;
+    //   this.channel_num = this.channel.Number;
+    //   this.reuseTvgID = true
+    // }
+    if ( ch ) {
+      this.channel_ref = `${ch.remap}`;
+      this.channel_num = `${ch.chno}`;
+      this.selected_epg_str = `${ch.remap}`;
+      this.reuseTvgID = ch.reuseID;
     } else {
       this.channel_ref = this.channel.Name;
       this.channel_num = this.channel.Number;
       this.reuseTvgID = true
     }
 
-    this.isEnabled = !!this.selectedId || this.defaultEnabled;
+    this.isEnabled = ch ? ch.enabled : false; // !!this.selectedId || this.defaultEnabled;
 
     VM.$on('unselect-all', () => {
       console.log('global unselect')

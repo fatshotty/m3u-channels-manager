@@ -226,7 +226,7 @@ async function extractChannelList() {
 
         channels[ name.toLowerCase() ] = {
           // module: mod,
-          chno: num,
+          chno: Number(num),
           chname: name
         };
       }

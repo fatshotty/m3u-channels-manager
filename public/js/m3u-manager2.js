@@ -22,14 +22,8 @@ const VM = new Vue({
   },
 
   created() {
-    PromPersonal.then( () => {
-      $.get(`${PATH}/${window.M3U.Name}/groups.json`).then( (groups) => {
-        // this.groups.splice( 0, this.groups.length, ...groups );
-
-        this.channels.splice(0, this.channels.length, ...PERSONAL);
-
-      });
-    })
+    this.init();
+    this.loadChannelsAssociations()
   },
 
   computed: {
@@ -39,6 +33,42 @@ const VM = new Vue({
   },
 
   methods: {
+
+    init() {
+      PromPersonal.then( () => {
+        // $.get(`${PATH}/${window.M3U.Name}/groups.json`).then( (groups) => {
+          // this.groups.splice( 0, this.groups.length, ...groups );
+
+          this.channels.splice(0, this.channels.length, ...PERSONAL);
+
+        // });
+      });
+    },
+
+    loadChannelsAssociations() {
+
+
+    },
+
+    makeChannelsAssociations() {
+      $.ajax({
+        type: 'POST',
+        url: `${PATH}/${window.M3U.Name}/channels`,
+        success: (data) => {
+          this.channels.splice(0, this.channels.length);
+          setTimeout(() => {
+            this.channels.splice(0, this.channels.length, ...data);
+          }, 1000);
+        },
+        error: () => {
+          console.info(arguments);
+          alert( `Qualcosa è andato storto, controlla il log` );
+        },
+        contentType: "application/json"
+      });
+    },
+
+
     selectAll() {
       this.$emit('select-all');
     },
@@ -84,7 +114,7 @@ const VM = new Vue({
         contentType: "application/json"
       });
 
-      console.log(result);
+      // console.log(result);
 
     }
   }
@@ -115,8 +145,10 @@ Vue.component('Channel', {
 
     this.isEnabled = !this.channel.enabled ? false : !!this.channel.streams.find(s => s.selected);
 
-    this.channel_ref = this.channel.remap;
+    this.channel_ref = this.channel.remap || this.channel.chname;
     this.channel_num = this.channel.chno;
+
+    // console.log(this.channel_ref, this.channel_num);
 
     // if ( this.selectedId && this.selectedId.MapTo ) {
     //   this.channel_ref = `${this.selectedId.MapTo}`;
@@ -223,8 +255,8 @@ Vue.component('Channel', {
       return {
         "enabled": this.isEnabled && !!streams.find(s => s.selected),
         "reuseID": this.channel.reuseID,
-        "chno": this.channel.chno,
-        "remap": this.channel.remap,
+        "chno": Number(this.channel_num) || 0,
+        "remap": this.channel_ref,
         "chname": this.channel.chname,
         "streams": this.getStreamsByChannel()
       }
