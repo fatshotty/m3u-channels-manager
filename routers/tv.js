@@ -1009,10 +1009,14 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
   fulldomain = fulldomain || m3uConfig.UseFullDomain;
 
-  let result_channels = m3u.Personal
-    .filter( ch => ch.enabled )
-    .sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1)
-    .map( (ch, index) => {
+  let result_channels = [];
+  try {
+    result_channels = m3u.Personal.filter( ch => ch.enabled );
+  } catch(e) {
+    Log.error('error while filtering Personal for', m3u.Name, typeof m3u.Personal, e);
+  }
+  result_channels = result_channels.sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1);
+  result_channels = result_channels.map( (ch, index) => {
 
       const stream = ch.streams && ch.streams.find(s => s.selected);
 
@@ -1050,9 +1054,9 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
         // let url_paths = temp_redirect.split('?');
         // url_paths.shift();
         if ( fulldomain ) {
-          temp_redirect = encodeURI(`${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}`);
+          temp_redirect = `${DOMAIN_URL}${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(ch.remap)}`;
         } else {
-          temp_redirect = encodeURI(`${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${ch.remap}`);
+          temp_redirect = `${MOUNTH_PATH}/${m3u.Name}/personal/live?channel=${encodeURIComponent(ch.remap)}`;
         }
 
         temp_ch.Redirect = temp_redirect;
@@ -1060,9 +1064,9 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
       return temp_ch;
 
-    })
-    .filter(Boolean);
-
+    });
+    
+  result_channels = result_channels.filter(Boolean);
 
 
   // if ( m3u.Personal && Object.keys(m3u.Personal).length ) {
