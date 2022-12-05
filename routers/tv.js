@@ -1230,14 +1230,14 @@ async function getMappedStreamUrlOfChannel(m3u, m3uConfig, req_chl_id) {
   }
 
 
-  const channel = m3u.Personal.find(ch => ch.remap == req_chl_id);
+  const channel = m3u.Personal.find(ch => ch.remap == req_chl_id && ch.enabled);
 
   if ( !channel ) {
-    Log.error(`no channel found by name: ${req_chl_id}`);
-    throw new Error(`no channel found by name: ${req_chl_id}`);
-  } else if (!channel.enabled) {
-    Log.error(`channel ${req_chl_id} is not enabled`);
-    throw new Error(`channel ${req_chl_id} is not enabled`);
+    Log.error(`no channel found by name: ${req_chl_id} or it is not enabled`);
+    throw new Error(`no channel found by name: ${req_chl_id} or it is not enabled`);
+  // } else if (!channel.enabled) {
+  //   Log.error(`channel ${req_chl_id} is not enabled`);
+  //   throw new Error(`channel ${req_chl_id} is not enabled`);
   } else if ( !channel.streams || channel.streams.length <= 0) {
     Log.error(`channel ${req_chl_id} has no streams`);
     throw new Error(`channel ${req_chl_id} has no streams`);
