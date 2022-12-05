@@ -218,7 +218,7 @@ async function extractChannelList() {
         let name = ch.Name;
         const num = ch.Number;
 
-        name = name.replace( /(\s?\+\d+)?(\s?HD)?$/i, '' );
+        name = name.replace( /(\s?HD)?$/i, '' );
         if ( name.toLowerCase() in channels ) {
           // channel already present in list
           continue;
@@ -262,7 +262,7 @@ Router.get('/channels/update', (req, res, next) => {
   ChlPromise.then( () => {
     res.status(204).end();
   }, (err) => {
-    res.status(500).end(`Si è verificato un errore ${err}`);
+    res.status(500).end(`Si ï¿½ verificato un errore ${err}`);
   });
 });
 

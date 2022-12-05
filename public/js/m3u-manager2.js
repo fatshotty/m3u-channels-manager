@@ -51,14 +51,12 @@ const VM = new Vue({
     },
 
     makeChannelsAssociations() {
+      const resp = confirm('Vuoi mantenere i canali abilitati?');
       $.ajax({
         type: 'POST',
         url: `${PATH}/${window.M3U.Name}/channels`,
         success: (data) => {
-          this.channels.splice(0, this.channels.length);
-          setTimeout(() => {
-            this.channels.splice(0, this.channels.length, ...data);
-          }, 1000);
+          this.mergeChannels(data, !!resp);
         },
         error: () => {
           console.info(arguments);
@@ -66,6 +64,37 @@ const VM = new Vue({
         },
         contentType: "application/json"
       });
+    },
+
+    mergeChannels(data, mergeAction) {
+      const oldChannels = this.getChannelsDataToSave();
+      if ( mergeAction ) {
+        for( let oldCh of oldChannels ) {
+          const ch = data.find(ch => ch.chname === oldCh.chname );
+          if ( ch ) {
+            ch.enabled = true;
+            ch.reuseID = oldCh.reuseID;
+            ch.chno = oldCh.chno;
+            ch.remap = oldCh.remap;
+
+            const oldSelStream = oldCh.streams.find(s => s.selected);
+            if (oldSelStream) {
+              const selStream = ch.streams.find(s => s.GID === oldSelStream.GID && s.CHID === oldSelStream.CHID)
+              if ( selStream ) {
+                selStream.selected = true;
+              }
+            }
+          } else {
+            data.push(oldCh);
+          }
+        }
+      }
+      data.sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1);
+      this.channels.splice(0, this.channels.length);
+      setTimeout(() => {
+        this.channels.splice(0, this.channels.length, ...data);
+      }, 500);
+
     },
 
 
@@ -80,7 +109,8 @@ const VM = new Vue({
       return id in PERSONAL
     },
 
-    saveAll() {
+
+    getChannelsDataToSave() {
       let result = [];
       for ( let comp_ch of this.$children ) {
         let gr_componentTag = comp_ch.$options._componentTag.toLowerCase();
@@ -93,6 +123,11 @@ const VM = new Vue({
           result.push( comp_ch.getChannelData() );
         }
       }
+      return result;
+    },
+
+    saveAll() {
+      const result = this.getChannelsDataToSave();
       // if ( Object.keys(result).length <= 0  ) {
       //   if ( ! confirm('Nessun canale impostato, procedo ugualmente?') ) {
       //     return;

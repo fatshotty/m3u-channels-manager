@@ -7,7 +7,7 @@ const Request = Utils.request;
 const M3UK = require('../modules/m3u').M3U;
 const FtpServer = require('../ftpserver');
 // const WebdavServer = require('../webdav-server');
-const ChannelList = require('../mocks/channels.json');
+// const ChannelList = require('../mocks/channels.json');
 const Service = require('../services/merger');
 const CacheRouter = require('./cache_router');
 
@@ -1014,7 +1014,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
     .sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1)
     .map( (ch, index) => {
 
-      const stream = ch.streams && ch.streams[0];
+      const stream = ch.streams && ch.streams.find(s => s.selected);
 
       if ( !stream ) {
         Log.info(`no stream found for channel ${ch.chname}`);
