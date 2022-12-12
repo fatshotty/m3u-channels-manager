@@ -98,7 +98,7 @@ const VM = new Vue({
                 CHNA: chl.Name
               }],
               reuseID: chl.ReuseID,
-              chno: chl.Number,
+              chno: Number(chl.Number) || 0,
               remap: chl.MapTo,
               chname: chl.ID
             })
@@ -114,7 +114,7 @@ const VM = new Vue({
 
       $.ajax({
         type: 'POST',
-        url: `${PATH}/${window.M3U.Name}/personal`,
+        url: `${PATH}/${window.M3U.Name}/old/personal`,
         data: JSON.stringify( result ),
         success: function(data) {
           alert('Salvataggio eseguito correttamente');
@@ -149,9 +149,15 @@ Vue.component('Group', {
   created() {
     // if ( this.opened ) this.showChannels();
     const found = PERSONAL.find(chl => {
-      return !!chl.streams.find(s => s.selected && (s.GID === this.group.id));
+      if (!chl.enabled) return false;
+      const stream = chl.streams.find(s => s.selected );
+      return stream && (stream.GID === this.group.id); //  !!chl.streams.find(s => {
+        //console.log('check group', this.group.id, '-', s.GID, '-', s.selected && (s.GID === this.group.id));
+      //   return s.selected && (s.GID === this.group.id)
+      // });
     });
     if ( found ) {
+      console.log(this.group.id, 'will be opened');
       this.showChannels();
     }
   },
@@ -245,7 +251,7 @@ Vue.component('Channel', {
 
   template: channel_template(),
 
-  props: ['channel'],
+  props: ['channel', 'gid'],
 
   data: function() {
     return {
@@ -261,7 +267,17 @@ Vue.component('Channel', {
 
   created() {
 
-    const ch = PERSONAL.find(chl => chl.chname === this.channel.Id);
+    let ch = PERSONAL.find(chl => {
+      const stream = chl.streams.find(s => {
+        if ( s.selected ) {
+          return (s.GID === this.gid) && (s.CHID === this.channel.Id);
+        }
+        return false;
+      });
+      return !!stream;
+    });
+
+    const stream = ch && ch.streams.find(s => s.selected);
 
     // if ( this.selectedId && this.selectedId.MapTo ) {
     //   this.channel_ref = `${this.selectedId.MapTo}`;
@@ -284,7 +300,7 @@ Vue.component('Channel', {
       this.reuseTvgID = true
     }
 
-    this.isEnabled = ch ? ch.enabled : false; // !!this.selectedId || this.defaultEnabled;
+    this.isEnabled = stream ? stream.selected : false; // !!this.selectedId || this.defaultEnabled;
 
     VM.$on('unselect-all', () => {
       console.log('global unselect')

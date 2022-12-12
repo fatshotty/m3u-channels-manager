@@ -1015,7 +1015,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
   } catch(e) {
     Log.error('error while filtering Personal for', m3u.Name, typeof m3u.Personal, e);
   }
-  result_channels = result_channels.sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1);
+  result_channels = result_channels.sort( (ch1, ch2) => Number(ch1.chno) > Number(ch2.chno) ? 1 : -1);
   result_channels = result_channels.map( (ch, index) => {
 
       const stream = ch.streams && ch.streams.find(s => s.selected);
@@ -1171,6 +1171,7 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   if ( format === 'json' ) {
 
     res.set('content-type', 'application/json');
+    req.M3U.Personal.sort( (ch1, ch2) => ch1.chno > ch2.chno ? 1 : -1 );
     res.status(200).end(  JSON.stringify( req.M3U.Personal )  );
 
   } else if ( format.indexOf('m3u') === 0 ) {
@@ -1340,7 +1341,73 @@ Router.post('/:list_name/personal', async (req, res, next) => {
   res.status(201).end('Salvataggio effettuato');
 });
 
+Router.post('/:list_name/old/personal', async (req, res, next) => {
+  // console.log( JSON.stringify(req.body, null, 2) );
+  // await saveM3uPersonal( req.M3U, req.M3UConfig, req.body );
 
+  let Personal = req.M3U.Personal;
+
+  if ( !Personal || Personal.length <= 0 ) {
+
+    Log.info('no Personal found for', req.M3UConfig.Name);
+
+    if ( FS.existsSync(CHANNELS_LIST_FILE) ) {
+      Log.info('load default channels list');
+
+      const data = FS.readFileSync( CHANNELS_LIST_FILE, 'utf-8');
+      try {
+        Personal = JSON.parse(data);
+      } catch(e) {
+        return next(e);
+      }
+
+    } else {
+      Log.warn('No channel list found');
+    }
+  }
+
+
+  const newPersonal = req.body;
+
+  for ( let newCh of newPersonal ) {
+
+    let oldCh = Personal.find(ch => ch.remap === newCh.remap );
+
+    if ( !oldCh ) {
+      Personal.push(newCh);
+    } else {
+
+      oldCh.chno = newCh.chno;
+      oldCh.enabled = newCh.enabled;
+
+      const newStrm = newCh.streams[0];
+
+      let foundStrm = false;
+
+      for (let oldStrm of oldCh.streams ) {
+
+        if ( oldStrm.GID === newStrm.GID && oldStrm.CHID === newStrm.CHID ) {
+          oldStrm.selected = true;
+          foundStrm = true;
+        } else {
+          oldStrm.selected = false;
+        }
+
+      }
+
+      if ( !foundStrm ) {
+        oldCh.streams.push(newStrm);
+      }
+
+    }
+
+
+  }
+
+  await saveM3uPersonal( req.M3U, req.M3UConfig, Personal );
+
+  res.status(201).end('Salvataggio effettuato');
+});
 
 
 function info() {
