@@ -24,7 +24,8 @@ function merge(m3uGroups, Channels, ) {
     Ch.streams = [];
 
     const isPlus = RPlus.test(chname);
-    let chnameReplaced = chname.replace(RPlus, '$1').trim();
+    const matchPlus = isPlus ? `(?:\\s|\\s+)?\\+?(?:\\s|\\s+)?${chname.match(RPlus)[1]}` : '';
+    let chnameReplaced = chname.replace(RPlus, '').trim();
 
     for ( let gr of m3uGroups ) {
 
@@ -32,14 +33,14 @@ function merge(m3uGroups, Channels, ) {
 
         let {Name} = ch;
 
-        if ( `${isPlus}` !== `${RPlus.test(Name)}` ) {
-          // skip +1
-          continue;
-        }
+        // if ( `${isPlus}` !== `${RPlus.test(Name)}` ) {
+        //   // skip +1
+        //   continue;
+        // }
 
         let newName = Name.replace(RPlus, '$1');
 
-        let r = new RegExp(`^${chnameReplaced}(?:\\s|\\s+)((U|F(?:ULL)?)?\\s?(H|S)D|H265|HEVC|4k|NVENC)?`, 'i');
+        let r = new RegExp(`^${chnameReplaced}${matchPlus}(?:\\s|\\s+)((U|F(?:ULL)?)?\\s?(H|S)D|H265|HEVC|4k|NVENC)?`, 'i');
         if ( r.test(newName) ) {
 
           const match = newName.match( r );
