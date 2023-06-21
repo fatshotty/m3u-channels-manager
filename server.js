@@ -9,6 +9,8 @@ const Express = require("express");
 const Cluster = require('cluster');
 const Constants = require('./constants');
 
+const {IpFilter} = require('express-ipfilter')
+
 
 if ( !global.Config ) {
   global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
@@ -57,28 +59,43 @@ App.use( Express.static(  Path.resolve( global.CWD, 'node_modules/bootstrap/dist
 //   App.use( BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }}) );
 // }
 
-function checkLocalRequest(req) {
+const IPFiltering = IpFilter([
+  '192.168.0.*', // lan
+  '172.18.*' // docker
+], { mode: 'allow' })
 
-  let ip_local = req.connection.localAddress;
-  let ip_remot = req.connection.remoteAddress
+function checkLocalRequest(req, res) {
 
-  Log.debug(`local ip is: ${ip_local} - remote ip is: ${ip_remot} - ${JSON.stringify(req.ips)}`);
+  // let ip_local = req.connection.localAddress;
+  // let ip_remot = req.connection.remoteAddress
 
-  if ( ip_local === ip_remot ) {
-    return true;
-  } else {
+  // Log.debug(`local ip is: ${ip_local} - remote ip is: ${ip_remot} - ${JSON.stringify(req.ips)}`);
+
+  // if ( ip_local === ip_remot ) {
+  //   return true;
+  // } else {
 
 
-    let ip_local_str = ip_local.split('.').slice(0, -2).join('.');
-    let ip_remot_str = ip_remot.split('.').slice(0, -2).join('.');
+  //   let ip_local_str = ip_local.split('.').slice(0, -2).join('.');
+  //   let ip_remot_str = ip_remot.split('.').slice(0, -2).join('.');
 
-    return ip_local_str === ip_remot_str;
-  }
+  //   return ip_local_str === ip_remot_str;
+  // }
+  return new Promise((resolve) => {
+    IPFiltering(req, res, (err) => {
+      if ( err ) {
+        Log.info(`access has been blocked by IP: ${req.connection.localAddress}`);
+      }
+      resolve(!err);
+    })
+  })
+
+
 }
 
-App.use( (req, res, next) => {
+App.use( async (req, res, next) => {
 
-  let isLocal = checkLocalRequest(req);
+  let isLocal = await checkLocalRequest(req, res);
 
   if ( (!isLocal && HAS_BASIC_AUTH) || (HAS_BASIC_AUTH && process.env.BASIC_AUTH_OVERALL == 'true')) {
     const BasicAuth = require('express-basic-auth');
