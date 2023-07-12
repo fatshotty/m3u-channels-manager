@@ -11,6 +11,8 @@ const Constants = require('./constants');
 
 const {IpFilter} = require('express-ipfilter')
 
+const {FILTER_IP_AUTH} = process.env;
+
 
 if ( !global.Config ) {
   global.Config = JSON.parse( FS.readFileSync( Argv.config, 'utf-8' ) );
@@ -59,10 +61,12 @@ App.use( Express.static(  Path.resolve( global.CWD, 'node_modules/bootstrap/dist
 //   App.use( BasicAuth({challenge: true, users: { [process.env.BASIC_USER]: process.env.BASIC_PWD }}) );
 // }
 
-const IPFiltering = IpFilter([
-  '192.168.0.*', // lan
-  '172.18.*' // docker
-], { mode: 'allow' })
+const IPFiltering = IpFilter({
+  detectIp: () => {
+    return req.headers['x-forwarded-for'] ? (req.headers['x-forwarded-for']).split(',')[0] : req.connection.localAddress;
+  },
+  filter: (FILTER_IP_AUTH || '').split(',')
+});
 
 function checkLocalRequest(req, res) {
 
@@ -82,14 +86,17 @@ function checkLocalRequest(req, res) {
   //   return ip_local_str === ip_remot_str;
   // }
   return new Promise((resolve) => {
-    IPFiltering(req, res, (err) => {
-      if ( err ) {
-        Log.info(`access has been blocked by IP: ${req.connection.localAddress}`);
-      }
-      resolve(!err);
-    })
-  })
-
+    if ( FILTER_IP_AUTH ) {
+      IPFiltering(req, res, (err) => {
+        if ( err ) {
+          Log.info(`access has been blocked by IP: ${req.connection.localAddress}`);
+        }
+        resolve(!err);
+      })
+    } else {
+      resolve(true);
+    }
+  });
 
 }
 
