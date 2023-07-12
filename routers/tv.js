@@ -1005,7 +1005,7 @@ Router.get('/:list_name/live', async (req, res, next) => {
 
 
 
-async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, rewrite) {
+async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, rewrite, alllinks) {
 
   fulldomain = fulldomain || m3uConfig.UseFullDomain;
 
@@ -1016,9 +1016,12 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
     Log.error('error while filtering Personal for', m3u.Name, typeof m3u.Personal, e);
   }
   result_channels = result_channels.sort( (ch1, ch2) => Number(ch1.chno) > Number(ch2.chno) ? 1 : -1);
-  result_channels = result_channels.map( (ch, index) => {
+  const compute_channels = [];
+  for ( let ch of result_channels ) {
 
-      const stream = ch.streams && ch.streams.find(s => s.selected);
+    const streams = ch.streams && (alllinks ? ch.streams : [ch.streams.find(s => s.selected)] );
+
+    for ( let stream of streams ) {
 
       if ( !stream ) {
         Log.info(`no stream found for channel ${ch.chname}`);
@@ -1050,7 +1053,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
       let temp_redirect = temp_ch.Redirect;
 
-      if ( temp_redirect ) {
+      if ( !alllinks && temp_redirect ) {
         // let url_paths = temp_redirect.split('?');
         // url_paths.shift();
         if ( fulldomain ) {
@@ -1062,11 +1065,12 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
         temp_ch.Redirect = temp_redirect;
       }
 
-      return temp_ch;
+      compute_channels.push(temp_ch);
+    }
 
-    });
+  }
     
-  result_channels = result_channels.filter(Boolean);
+  // compute_channels = compute_channels.filter(Boolean);
 
 
   // if ( m3u.Personal && Object.keys(m3u.Personal).length ) {
@@ -1120,7 +1124,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
   if ( direct ) {
 
-    for await (let chl of result_channels) {
+    for await (let chl of compute_channels) {
       let id = chl.__map_to__;
       let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
 
@@ -1128,7 +1132,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
     }
   } else if ( rewrite && m3uConfig.RewriteUrl ) {
 
-    for await (let chl of result_channels) {
+    for await (let chl of compute_channels) {
       let id = chl.__map_to__;
       // let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
       let url = Utils.rewriteChannelUrl(m3uConfig.RewriteUrl, chl, m3u.Name);
@@ -1144,7 +1148,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
   //   return n_a > n_b ? 1 : -1;
   // });
 
-  let resultm3u = result_channels.map( c => c.toM3U() );
+  let resultm3u = compute_channels.map( c => c.toM3U() );
 
   resultm3u.unshift('#EXTM3U');
   return resultm3u.join('\n');
@@ -1155,6 +1159,7 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   let format = req.params.format || 'html';
   let fulldomain = req.query.domain == 'true';
+  let alllinks = req.query.all == 'true';
 
   if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
     Log.warn(`'${req.M3UConfig.Name}' list is not enabled`);
@@ -1177,7 +1182,7 @@ Router.get('/:list_name/personal.:format?', async (req, res, next) => {
   } else if ( format.indexOf('m3u') === 0 ) {
 
     try {
-      let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct, rewrite);
+      let resp = await respondPersonalM3U(req.M3U, req.M3UConfig, format, fulldomain, direct, rewrite, alllinks);
       res.set('content-type', 'application/x-mpegURL');
       res.status(200).end( resp );
     } catch(e) {
