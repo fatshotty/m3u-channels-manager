@@ -1025,19 +1025,19 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
       if ( !stream ) {
         Log.info(`no stream found for channel ${ch.chname}`);
-        return;
+        continue;
       }
 
       let group = m3u.getGroupById( stream.GID );
       if (!group) {
         Log.warn(`no group found by id: ${stream.GID}`);
-        return;
+        continue;
       }
 
       let channel = group.getChannelById(stream.CHID);
       if (!channel) {
         Log.warn(`no channel found by id: ${stream.CHID} in group ${stream.GID}`);
-        return;
+        continue;
       }
 
       let temp_ch = channel.clone();
