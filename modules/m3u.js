@@ -687,6 +687,7 @@ class TempCh {
 
   constructor(data, basepath) {
     this.data = data;
+    this.originalData = JSON.parse(JSON.stringify(data))
   }
 
   toM3U(header, direct) {
@@ -721,7 +722,13 @@ class TempCh {
 
     row.push( `tvg-chno="${this.Number || ''}"`);
 
-    row.push( `group-title="${this.GroupName}"`);
+    const matchQ = this.originalData.Name.match( /(?:\s|\s+)((U|F(?:ULL)?)?\s?(H|S)D|H265|HEVC|4k|NVENC)?$/i  );
+    let q = '';
+    if ( matchQ && matchQ[0] ) {
+      q = `[${String(matchQ[0]).trim()}] `.toLowerCase();
+    }
+
+    row.push( `group-title="${q}${Utils.cleanName(this.GroupName, true, '-')}"`);
 
     res.push(`${row.join(' ')},${this.Name}`, direct ? this.StreamUrl : this.Redirect);
     if ( header ) {

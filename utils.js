@@ -8,7 +8,7 @@ const Path = require('path');
 const Constants = require('./constants');
 const FS = require('fs');
 
-
+const NAME_SEP = '_'
 const PVR_GENRE_INDEX = 0;
 const TV_HEAD_PVR_GENRE_INDEX = 1;
 
@@ -693,4 +693,19 @@ function rewriteChannelUrl(rewrite, channel, listName) {
   return streamurl;
 }
 
-module.exports = {cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, createXMLKodiLive, rewriteChannelUrl};
+function cleanName(name, lc, sep) {
+
+  sep = sep || NAME_SEP;
+
+  name = name.replace(/[^\w+]|[\+]/ig, ' ');
+
+  name = name.trim();
+
+  name = name.replace(/\s\s+/g, ' ');
+
+  name = name.replace(/[^\w+]/ig, sep);
+
+  return lc ? name.toLowerCase() : name;
+}
+
+module.exports = {cleanName, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, createXMLKodiLive, rewriteChannelUrl};
