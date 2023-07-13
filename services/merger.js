@@ -43,6 +43,14 @@ function merge(m3uGroups, Channels, ) {
         let r = new RegExp(`^${chnameReplaced}${matchPlus}(?:\\s|\\s+)((U|F(?:ULL)?)?\\s?(H|S)D|H265|HEVC|4k|NVENC)?`, 'i');
         if ( r.test(newName) ) {
 
+          if ( !isPlus ) {
+            if ( RPlus.test(Name) ) {
+              // Original channel is NOT +1; stream IS +1
+              // So it is not matched
+              continue;
+            }
+          }
+
           const match = newName.match( r );
           const grMatch = match[1] || 'standard';
 
