@@ -1126,9 +1126,13 @@ async function respondPersonalM3U(m3u, m3uConfig, format, fulldomain, direct, re
 
     for await (let chl of compute_channels) {
       let id = chl.__map_to__;
-      let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
 
-      chl.Redirect = url;
+      // We can skip "remap" function because it is "direct"
+      // let url = await getMappedStreamUrlOfChannel(m3u, m3uConfig, id, chl.GroupId);
+      // chl.Redirect = url;
+
+      // get the "direct" stream-url
+      chl.Redirect = chl.StreamUrl;
     }
   } else if ( rewrite && m3uConfig.RewriteUrl ) {
 
