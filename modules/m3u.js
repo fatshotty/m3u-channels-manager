@@ -398,7 +398,7 @@ class M3U {
   }
 
   toM3U() {
-    return ['#EXTM3U', this.groups.map( (g) => { g.toM3U() }) ].join('\n');
+    return ['#EXTM3U', this.groups.map( (g) => { return g.toM3U() }) ].join('\n');
   }
 
 

@@ -192,6 +192,8 @@ function loadRouters() {
         process.exit(0);
       });
     }
+    const s_router = require('./routers/s_router');
+    Modules[ '/s_list' ] = s_router;
   }
   if ( Argv.epg ) {
     Log.debug('loading module EPG...')
