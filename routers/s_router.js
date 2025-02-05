@@ -51,7 +51,7 @@ async function generateList(packs) {
   const m3uKlass = new M3U('s_now');
 
   for (const pack of packs) {
-    const group = new Group(pack.name);
+    const group = new Group((pack.name || '').trim().replace('[', '').replace(']', ''));
 
     for (const channel of pack.channels) {
 
@@ -61,22 +61,22 @@ async function generateList(packs) {
       ];
 
       if (channel.drmKey) {
-        url.push(`--demuxer-lavf-o=cenc_decryption_key='${channel.drmKey}'`)
+        url.push(`--demuxer-lavf-o=cenc_decryption_key='${channel.drmKey.trim()}'`)
       }
 
       if (channel.userAgent) {
-        url.push(`--http-header-fields="User-Agent: ${channel.userAgent}"`);
+        url.push(`--http-header-fields="User-Agent: ${channel.userAgent.trim()}"`);
       }
 
-      url.push(`"${channel.mpdUrl}"`);
+      url.push(`"${channel.mpdUrl.trim()}"`);
 
       Log.info(`add channel: ${channel.name}`);
 
       group.createAddChannel({
-        'name': channel.name,
+        'name': (channel.name || '').trim().replace('[', '').replace(']', ''),
         'duration': -1,
-        'tvg-id': channel.name,
-        'tvg-name': channel.name,
+        'tvg-id': (channel.name || '').trim().replace('[', '').replace(']', ''),
+        'tvg-name': (channel.name || '').trim().replace('[', '').replace(']', ''),
         'tvg-logo': '',
         'link': url.join(' '),
         'props': [],
@@ -95,7 +95,10 @@ async function generateList(packs) {
 
 
 Router.get('/', async (req, res, next) => {
-  if (!M3U_LIST) {
+
+  const force = req.params.force == 'true';
+
+  if (!M3U_LIST || force) {
     await buildList();
   }
 
