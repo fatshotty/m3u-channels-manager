@@ -15,6 +15,8 @@ let M3U_LIST = null;
 
 Router.post('/', async (req, res, next) => {
 
+  Log.info('proceed to create a new list');
+
   await buildList()
 
   res.status(204).end();
@@ -23,18 +25,22 @@ Router.post('/', async (req, res, next) => {
 
 
 async function buildList() {
+  Log.info('Login to s_list');
   await SService.login();
 
+  Log.info('get all packs');
   const packs = await SService.get_all_packs();
 
+  Log.info(`found ${packs.length} packs`);
 
   for await (const pack of packs) {
+    Log.info(`get channels for pack: ${pack.name}`);
     const chls = await SService.get_channels_for_pack(pack.id);
 
     pack.channels = chls;
   }
 
-
+  Log.info(`generate entire list`);
   generateList(packs);
 }
 
@@ -64,6 +70,8 @@ async function generateList(packs) {
 
       url.push(`"${channel.mpdUrl}"`);
 
+      Log.info(`add channel: ${channel.name}`);
+
       group.createAddChannel({
         'name': channel.name,
         'duration': -1,
@@ -90,6 +98,8 @@ Router.get('/', async (req, res, next) => {
   if (!M3U_LIST) {
     await buildList();
   }
+
+  Log.info(`respond list`);
 
   res.set('content-type', 'application/x-mpegURL');
   res.end( M3U_LIST.toM3U(true, true) );
