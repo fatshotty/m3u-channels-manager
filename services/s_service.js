@@ -1,4 +1,5 @@
 const GOT = require('got');
+const Path = require('path');
 
 
 let DNS = '';
@@ -15,6 +16,10 @@ async function login() {
 
   DNS = dns_data.dns;
 
+  if ( ! DNS.endsWith('/') ) {
+    DNS = `${DNS}/`;
+  }
+
   const login_data = await GOT.post(`${DNS}api/client/login`, {
     json: {
       "access_code": process.env.S_CODE
@@ -26,7 +31,9 @@ async function login() {
 
 
 async function get_all_packs() {
-  const all_packs = await GOT(`${DNS}api/pack/all`, {headers: {Authorization: ACCESS_TOKEN}}).json();
+  const all_parent = await GOT(`${DNS}api/parent/all`, {headers: {Authorization: ACCESS_TOKEN}}).json();
+  const italy = all_parent.find(p => p.name === 'Italy');
+  const all_packs = await GOT(`${DNS}api/pack/all/${italy._id}`, {headers: {Authorization: ACCESS_TOKEN}}).json();
 
   return all_packs.map( p => ({id: p._id, name: p.name}))
 

@@ -17,14 +17,16 @@ Router.post('/', async (req, res, next) => {
 
   Log.info('proceed to create a new list');
 
-  await buildList()
+  const tool = req.query.tool || 'ffmpeg';
+
+  await buildList(tool)
 
   res.status(204).end();
 
 });
 
 
-async function buildList() {
+async function buildList(tool /* ffmpeg | mpv */) {
   Log.info('Login to s_list');
   await SService.login();
 
@@ -41,12 +43,14 @@ async function buildList() {
   }
 
   Log.info(`generate entire list`);
-  generateList(packs);
+  generateList(packs, tool);
 }
 
 
 
-async function generateList(packs) {
+async function generateList(packs, tool) {
+
+  tool = tool || 'ffmpeg';
 
   const m3uKlass = new M3U('s_now');
 
@@ -55,20 +59,48 @@ async function generateList(packs) {
 
     for (const channel of pack.channels) {
 
-      let url = [
-        'pipe:///usr/bin/mpv',
-        '--of=mpegts'
-      ];
+      const url = [];
+
+      if (tool === 'mpv' ) {
+        url.push('pipe:///usr/bin/mpv');
+        url.push('--of=mpegts');
+      } else {
+        // default: ffmpeg
+        url.push('pipe:///usr/bin/ffmpeg');
+        url.push('-loglevel info');
+      }
 
       if (channel.drmKey) {
-        url.push(`--demuxer-lavf-o=cenc_decryption_key='${channel.drmKey.trim()}'`)
+        if (tool === 'mpv' ) {
+          url.push(`--demuxer-lavf-o=cenc_decryption_key='${channel.drmKey.trim()}'`)
+        } else {
+          // default: ffmpeg
+          url.push(`-cenc_decryption_key "${channel.drmKey.trim()}"`)
+        }
       }
 
       if (channel.userAgent) {
-        url.push(`--http-header-fields="User-Agent: ${channel.userAgent.trim()}"`);
+        if (tool === 'mpv' ) {
+          url.push(`--http-header-fields="User-Agent: ${channel.userAgent.trim()}"`);
+        } else {
+          // default: ffmpeg
+          url.push(`-headers "User-Agent: ${channel.userAgent.trim()}"`);
+        }
       }
 
-      url.push(`"${channel.mpdUrl.trim()}"`);
+      if (tool === 'mpv' ) {
+        url.push(`"${channel.mpdUrl.trim()}"`);
+      } else {
+        // default: ffmpeg
+        url.push(`-i "${channel.mpdUrl.trim()}"`);
+      }
+
+      if ( tool !== 'mpv' ) {
+        // default: ffmpeg
+        url.push('-c copy');
+        url.push('-f mpegts');
+        url.push('pipe:1');
+      }
 
       Log.info(`add channel: ${channel.name}`);
 
@@ -96,10 +128,11 @@ async function generateList(packs) {
 
 Router.get('/', async (req, res, next) => {
 
-  const force = req.params.force == 'true';
+  const force = req.query.force == 'true';
+  const tool = req.query.tool || 'ffmpeg';
 
   if (!M3U_LIST || force) {
-    await buildList();
+    await buildList(tool);
   }
 
   Log.info(`respond list`);
