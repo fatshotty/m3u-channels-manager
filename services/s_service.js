@@ -47,7 +47,7 @@ async function get_channels_for_pack(pack_id) {
     name: c.name,
     mpdUrl: c.mpdUrl,
     userAgent: c.userAgent,
-    drmKey: c.drmKey
+    drmKey: c.keys && c.keys.length ? c.keys[0].key : c.drmKey
   }))
 }
 
