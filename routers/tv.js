@@ -996,7 +996,8 @@ Router.get('/:list_name/live', async (req, res, next) => {
 
   try {
     let live_channel = await getStreamUrlOfChannel(req.M3U, req.M3UConfig, channel, group);
-    res.redirect(302, live_channel);
+    res.set('location', live_channel);
+    res.status(302).end();
   } catch(e) {
     res.status(404).end(e);
   }

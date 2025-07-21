@@ -1,7 +1,6 @@
 const GOT = require('got');
 const Path = require('path');
 
-
 let DNS = '';
 let ACCESS_TOKEN = '';
 
@@ -47,7 +46,8 @@ async function get_channels_for_pack(pack_id) {
     name: c.name,
     mpdUrl: c.mpdUrl,
     userAgent: c.userAgent,
-    drmKey: c.keys && c.keys.length ? c.keys[0].key : c.drmKey
+    drmKey: c.keys && c.keys.length ? c.keys[0].key : c.drmKey,
+    keys: c.keys
   }))
 }
 

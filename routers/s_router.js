@@ -43,7 +43,7 @@ async function buildList(tool /* ffmpeg | mpv */) {
   }
 
   Log.info(`generate entire list`);
-  generateList(packs, tool);
+  await generateList(packs, tool);
 }
 
 
