@@ -97,7 +97,11 @@ async function generateList(packs, tool) {
 
       if ( tool !== 'mpv' ) {
         // default: ffmpeg
-        url.push('-c copy');
+        url.push('-vf yadif');
+        url.push('-c:v libx264');
+        url.push('-preset ultrafast');
+        url.push('-c:a copy');
+        url.push('-tune zerolatency');
         url.push('-f mpegts');
         url.push('pipe:1');
       }
