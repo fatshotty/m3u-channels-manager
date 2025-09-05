@@ -37,9 +37,13 @@ async function buildList(tool /* ffmpeg | mpv */) {
 
   for await (const pack of packs) {
     Log.info(`get channels for pack: ${pack.name}`);
-    const chls = await SService.get_channels_for_pack(pack.id);
-
-    pack.channels = chls;
+    try {
+      const chls = await SService.get_channels_for_pack(pack.id);
+      pack.channels = chls;
+    }catch(e) {
+      console.error(e);
+      pack.channels = [];
+    }
   }
 
   Log.info(`generate entire list`);
@@ -84,7 +88,7 @@ async function generateList(packs, tool) {
           url.push(`--http-header-fields="User-Agent: ${channel.userAgent.trim()}"`);
         } else {
           // default: ffmpeg
-          url.push(`-headers "User-Agent: ${channel.userAgent.trim()}"`);
+          url.push(`-user_agent "${channel.userAgent.trim()}"`);
         }
       }
 
@@ -92,11 +96,15 @@ async function generateList(packs, tool) {
         url.push(`"${channel.mpdUrl.trim()}"`);
       } else {
         // default: ffmpeg
+        url.push(`-fflags`);
+        url.push(`+genpts`);
         url.push(`-i "${channel.mpdUrl.trim()}"`);
       }
 
       if ( tool !== 'mpv' ) {
         // default: ffmpeg
+        url.push('-avoid_negative_ts');
+        url.push('make_zero');
         url.push('-vf yadif');
         url.push('-c:v libx264');
         url.push('-preset ultrafast');
