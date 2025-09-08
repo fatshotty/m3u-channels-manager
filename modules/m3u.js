@@ -162,18 +162,21 @@ class M3U {
               }
           } else {
             if ( ! (parts[1] in obj_channel.extra ) ) {
-              obj_channel.extra[ parts[1] ] = [];
+              obj_channel.extra[ parts[1] ] = {};
             }
             let extraKeyValues = obj_channel.extra[ parts[1] ];
             let infos = parts[ 2 ];
-            infos = infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
-            let rowValues = {};
-            for( let j = 0, info; info = infos[ j++ ]; ) {
-              const kv = info.split('=');
-              // obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
-              rowValues[ kv[0].trim() ] = kv[1].trim();
-            }
-            extraKeyValues.push( rowValues );
+            infos = infos.split(/^([^=]+)(?:=(.*))?$/).filter(Boolean); // infos.split( /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/g );
+            extraKeyValues[ infos[0].trim() ] = infos.slice(1).join('').trim();
+            // let rowValues = {
+            //   [ infos[0].trim() ]: infos.slice(1).join('').trim()
+            // };
+            // for( const info of infos ) {
+            //   const kv = info.split('=');
+            //   // obj_channel.extra[ kv[0].toLowerCase() ] = kv[1];
+            //   rowValues[ kv[0].trim() ] = kv[1].trim();
+            // }
+            // extraKeyValues.push( rowValues );
           }
             // case 'EXT-X-STREAM-INF':
             //   let infos = parts[ 2 ];
@@ -750,12 +753,9 @@ class TempCh {
     for ( let extraKeyValues of extraKeysValues ) {
       let values = this.data.Extra[ extraKeyValues ];
       let details = [];
-      for ( let keyValuePair of values ) {
+      for ( let keyValuePair of Object.entries(values) ) {
         let str = [];
-        let keys = Object.keys(keyValuePair);
-        for ( let k of keys ) {
-          str.push(`${k}=${keyValuePair[k]}`)
-        }
+        str.push(`${keyValuePair[0]}=${keyValuePair[1]}`)
         res.push(`#${extraKeyValues}:${str.join(',')}`)
       }
       

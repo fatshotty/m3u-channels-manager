@@ -655,7 +655,8 @@ function rewriteChannelUrl(rewrite, channel, listName) {
     let re = /\{(.*?)\}/;
     let reFn = /\{(((.*?)\()?)(.*?)\)?\}/;
     surl = surl.replace( new RegExp(re, "gi"), function(s){
-      let exp = s.match( reFn )[4];
+      // let exp = s.match( reFn )[4];
+      let exp = s.substring(1, s.length - 1).trim();
       // let fn = s.match(reFn)[3];
 
 
