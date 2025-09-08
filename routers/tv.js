@@ -903,7 +903,7 @@ function respondList(M3U, groups, format, direct, rewrite, useRewrite) {
 Router.get('/:list_name/list.:format?', (req, res, next) => {
   const format = req.params.format;
   const groups = req.query.groups;
-  const rewrite = req.query.rewrite == 'true';
+  let rewrite = req.query.rewrite == 'true';
   const useRewrite = req.query.useRewrite === 'true';
 
   if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
