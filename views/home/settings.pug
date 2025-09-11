@@ -103,7 +103,7 @@
 
             .form-group
               label Elaborazione dell'url
-              input.form-control(type='text', placeholder="http://domain.com/channel/{GroupName}/{Name}" v-model="m3u.RewriteUrl" )
+              textarea.form-control(placeholder="http://domain.com/channel/{GroupName}/{Name}" v-model="m3u.RewriteUrl" )
               small.form-text.text-muted specificare l'url di ri-elaborazione. È possibile usare le variabili interpolate con &nbsp;
                 code {
                 | &nbsp;e&nbsp;

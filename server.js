@@ -194,6 +194,9 @@ function loadRouters() {
     }
     const s_router = require('./routers/s_router');
     Modules[ '/s_list' ] = s_router;
+
+    const proxy_router = require('./routers/proxy');
+    Modules[ '/proxy' ] = proxy_router;
   }
   if ( Argv.epg ) {
     Log.debug('loading module EPG...')

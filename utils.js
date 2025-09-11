@@ -8,6 +8,9 @@ const Path = require('path');
 const Constants = require('./constants');
 const FS = require('fs');
 
+const ChildProcess = require('child_process');
+const { spawn } = ChildProcess;
+
 const NAME_SEP = '_'
 const PVR_GENRE_INDEX = 0;
 const TV_HEAD_PVR_GENRE_INDEX = 1;
@@ -709,4 +712,82 @@ function cleanName(name, lc, sep) {
   return lc ? name.toLowerCase() : name;
 }
 
-module.exports = {cleanName, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, createXMLKodiLive, rewriteChannelUrl};
+
+function proxyViaExtTool(req, res, url, key = null, userAgent = null) {
+  
+  function kill(proc) {
+    if (proc) {
+      try {
+        proc.kill('SIGKILL');
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }
+
+  const args = ['-hide_banner', '-threads', '0'];
+
+  args.push('-loglevel', `error`);
+
+  if (userAgent){
+    args.push('-user_agent', userAgent);
+  }
+
+  if (key) {
+    args.push('-cenc_decryption_key', key);
+  }
+
+  args.push('-fflags', '+genpts')
+  args.push('-i', url);
+
+  args.push('-avoid_negative_ts', 'make_zero');
+
+  // args.push('-map', '0:V?', '-map', '0:a?', '-map', '0:s?');
+  args.push('-c:v', 'copy');
+  args.push('-c:a', 'mp2', '-b:a', '384k');
+  args.push('-c:s', 'copy');
+  
+  args.push('-pix_fmt', 'yuv420p', '-preset', 'veryfast', '-crf', '18', '-f', 'mpegts', '-mpegts_flags', '+pat_pmt_at_frames');
+  
+  args.push('pipe:1');
+
+  Log.info(`ffmpeg ${args.join(' ')}`);
+
+  const ffmpeg = spawn('ffmpeg', args);
+
+  ffmpeg.on('error', (e) => {
+    Log.error(`ERROR tool ${e}`);
+    kill(ffmpeg);
+    res.status(500).end();
+  });
+
+  ffmpeg.on('exit', () => {
+    Log.info('EXIT tool');
+    kill(ffmpeg);
+    res.status(500).end();
+  });
+
+  ffmpeg.on('spawn', () => {
+    res.status(200);
+    ffmpeg.stdout.pipe(res);
+    ffmpeg.stderr.on('data', (data) => {
+      Log.error(`[stderr] ${data.toString()}`);
+    });
+  });
+
+  req.on('close', () => {
+    Log.info('req closed');
+    kill(ffmpeg);
+    res.end();
+  });
+  req.on('error', ()=> {
+    Log.error('req error');
+    kill(ffmpeg);
+    res.end();
+  });
+
+
+}
+
+
+module.exports = {proxyViaExtTool, cleanName, cleanUpString, request, createXMLTV, Log, setLogLevel, computeChannelStreamUrl, _URL_, urlShouldBeComputed, createXMLKodiLive, rewriteChannelUrl};

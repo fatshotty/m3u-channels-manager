@@ -852,7 +852,7 @@ Router.get('/:list_name/search.:format', (req, res, next) => {
 
 
 
-function respondList(M3U, groups, format, direct, rewrite, useRewrite) {
+function respondList(M3U, groups, format, direct, rewrite, useRewrite, useTool) {
   let all_groups = M3U.groups;
 
   if ( groups && groups.length ) {
@@ -893,6 +893,9 @@ function respondList(M3U, groups, format, direct, rewrite, useRewrite) {
         } else if (useRewrite && M3U._rewriteUrl) {
           nc.Redirect = `${nc.Redirect}&rewrite=true`;
         }
+        if (useTool) {
+          nc.Redirect = `${nc.Redirect}&tool=true`;
+        }
         return nc.toM3U(i == 0, direct);
       }).join('\n');
       // all_groups.map( (g, i) => { return g.toM3U(i === 0, direct) }).join('\n');
@@ -905,6 +908,7 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
   const groups = req.query.groups;
   let rewrite = req.query.rewrite == 'true';
   const useRewrite = req.query.useRewrite === 'true';
+  const useTool = req.query.useTool === 'true';
 
   if ( req.M3UConfig.Enabled !== true && !req.IS_ADMIN ) {
     Log.warn(`'${req.M3UConfig.Name}' stream is not enabled`);
@@ -919,11 +923,18 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
   Log.info(`Requested entire list. Respond with ${format || 'm3u'} for ${req.M3U.Name}`);
   Log.info(`Filter by ${groups}`);
 
+// pipe:///usr/bin/ffmpeg -i "http://192.168.178.3:3000/tv/skyiptv/live?channel=SkyAtlantic.it&group=Sky%5F%5FIntrattenimento&rewrite=true" -c:a aac -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 2 -f mpegts -mpegts_flags +pat_pmt_at_frames -mpegts_service_id 1 pipe:1
+
+// pipe:///usr/bin/ffmpeg -hide_banner -loglevel fatal -i "http://192.168.178.3:3000/tv/skyiptv/live?channel=SkyAtlantic.it&group=Sky__Intrattenimento&rewrite=true"  -map 0  -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 18 -c:a mp2 -b:a 192 -c:s copy  -f mpegts -mpegts_flags +pat_pmt_at_frames pipe:1
+
+
+// mpv http://192.168.178.3:3000/tv/skyiptv/live?channel=SkyAtlantic.it&group=Sky%5F%5FIntrattenimento&rewrite=true --ovc=copy --oac=lavc --oacopts=acodec=mp2 --o=-
+
   if ( rewrite && req.M3UConfig.RewriteUrl) {
     rewrite = req.M3UConfig.RewriteUrl;
   }
 
-  const response = respondList(req.M3U, groups, format, direct, rewrite, useRewrite);
+  const response = respondList(req.M3U, groups, format, direct, rewrite, useRewrite, useTool);
 
   res.status(200);
 
@@ -940,33 +951,31 @@ Router.get('/:list_name/list.:format?', (req, res, next) => {
 
 
 
-function respondStreamUrl(M3U, chlId, group, rewrite) {
-  return new Promise( (resolve, reject) => {
-    Log.info(`Compute the channel stream-url for ${chlId}` )
+async function respondStreamUrl(M3U, chlId, group, rewrite) {
+  Log.info(`Compute the channel stream-url for ${chlId}` )
 
-    if ( !chlId ) {
-      Log.error('No channel specified');
-      return cb(null);
-    }
+  if ( !chlId ) {
+    Log.error('No channel specified');
+    return cb(null);
+  }
 
-    const live_channel = M3U.getChannelById( chlId, group );
-    if ( live_channel ) {
-      const cc = live_channel.clone();
-      Log.info(`found stram url '${cc.StreamUrl.split('/').pop()}'` )
-      // Utils.computeChannelStreamUrl(live_channel).then( (surl) => {
-      //   cb(surl);
-      // });
-      if (rewrite && M3U._rewriteUrl ) {
-        resolve( Utils.rewriteChannelUrl(M3U._rewriteUrl, cc, M3U.Name) );
-      } else {
-        resolve( cc.StreamUrl );
-      }
-
+  const live_channel = M3U.getChannelById( chlId, group );
+  if ( live_channel ) {
+    const cc = live_channel.clone();
+    Log.info(`found stram url '${cc.StreamUrl.split('/').pop()}'` )
+    // Utils.computeChannelStreamUrl(live_channel).then( (surl) => {
+    //   cb(surl);
+    // });
+    if (rewrite && M3U._rewriteUrl ) {
+      return Utils.rewriteChannelUrl(M3U._rewriteUrl, cc, M3U.Name);
     } else {
-      Log.error(`No live streaming found for channel ${chlId}`);
-      return reject(`No live streaming found for channel ${chlId}`);
+      return cc.StreamUrl;
     }
-  })
+
+  } else {
+    Log.error(`No live streaming found for channel ${chlId}`);
+    throw `No live streaming found for channel ${chlId}`;
+  }
 }
 
 
@@ -1002,11 +1011,16 @@ Router.get('/:list_name/live', async (req, res, next) => {
   let channel = req.query.channel;
   let group = req.query.group;
   let rewrite = req.query.rewrite == 'true';
+  let useTool = req.query.tool == 'true';
 
   try {
     let live_channel = await getStreamUrlOfChannel(req.M3U, req.M3UConfig, channel, group, rewrite);
-    res.set('location', live_channel);
-    res.status(303).end();
+    if ( !useTool ) {
+      res.set('location', live_channel);
+      res.status(303).end();
+    } else {
+      Utils.proxyViaExtTool(req, res, live_channel);
+    }
   } catch(e) {
     res.status(404).end(e);
   }
